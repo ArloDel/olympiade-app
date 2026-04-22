@@ -1,0 +1,139 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// NextAuth Models
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+enum Role {
+  STUDENT
+  ADMIN
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String?   @unique
+  emailVerified DateTime?
+  image         String?
+  role          Role      @default(STUDENT)
+  isLocked      Boolean   @default(false)
+  warnings      Int       @default(0)
+  
+  accounts      Account[]
+  sessions      Session[]
+  answers       Answer[]
+  sessionLogs   SessionLog[]
+}
+
+// Olym-App Models
+
+model Exam {
+  id          String   @id @default(cuid())
+  title       String
+  description String?
+  startTime   DateTime
+  endTime     DateTime
+  duration    Int      // in minutes
+  
+  questions   Question[]
+  sessionLogs SessionLog[]
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Question {
+  id        String   @id @default(cuid())
+  examId    String
+  text      String   @db.Text // Can contain KaTeX/MathJax string
+  order     Int
+  
+  exam      Exam     @relation(fields: [examId], references: [id], onDelete: Cascade)
+  options   Option[]
+  answers   Answer[]
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Option {
+  id         String   @id @default(cuid())
+  questionId String
+  text       String   @db.Text
+  isCorrect  Boolean  @default(false)
+  
+  question   Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  answers    Answer[]
+}
+
+model Answer {
+  id         String   @id @default(cuid())
+  userId     String
+  questionId String
+  optionId   String
+  
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  question   Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  option     Option   @relation(fields: [optionId], references: [id], onDelete: Cascade)
+  
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@unique([userId, questionId]) // One answer per user per question
+}
+
+model SessionLog {
+  id          String   @id @default(cuid())
+  userId      String
+  examId      String
+  eventType   String   // e.g. "SNAPSHOT", "TAB_SWITCH", "LOCKED", "START", "FINISH"
+  snapshotUrl String?  @db.Text
+  details     String?  @db.Text // additional json/text info
+  
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  exam        Exam     @relation(fields: [examId], references: [id], onDelete: Cascade)
+  
+  createdAt   DateTime @default(now())
+}
