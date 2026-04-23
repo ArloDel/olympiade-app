@@ -1,17 +1,18 @@
 import { PrismaClient } from "@prisma/client"
 import { PrismaPg } from "@prisma/adapter-pg"
+import { Pool } from "pg"
 
 const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined
 }
 
-const connectionString = process.env.DATABASE_URL || "postgresql://postgres:postgres@localhost:5432/postgres"
+const connectionString = process.env.DATABASE_URL
 
 const getPrisma = () => {
   if (globalForPrisma.prisma) return globalForPrisma.prisma
 
-  // For Prisma 7, we need to pass the adapter
-  const adapter = new PrismaPg({ connectionString })
+  const pool = new Pool({ connectionString })
+  const adapter = new PrismaPg(pool)
 
   const prisma = new PrismaClient({
     adapter,

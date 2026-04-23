@@ -23,20 +23,18 @@ export const authOptions: NextAuthOptions = {
           throw new Error("Missing credentials")
         }
 
-        // In a real app, you would verify the password against a hashed password in DB
-        // For this skeleton, we will find the user by email/identifier
-        // Assuming email is used as identifier for now
         const user = await prisma.user.findUnique({
           where: { email: credentials.identifier }
         })
+        console.log(user)
 
         if (!user) {
           throw new Error("User not found")
         }
-        
+
         // Simple mock check
         if (credentials.password !== "password123") {
-            throw new Error("Invalid password")
+          throw new Error("Invalid password")
         }
 
         // Check if user is locked
