@@ -65,7 +65,7 @@ export default function AdminDashboard() {
             <button className="p-2 text-slate-400 hover:text-white transition-colors">
               <Settings size={20} />
             </button>
-            <button onClick={() => signOut()} className="p-2 text-slate-400 hover:text-red-400 transition-colors">
+            <button onClick={() => signOut({ callbackUrl: '/login' })} className="p-2 text-slate-400 hover:text-red-400 transition-colors">
               <LogOut size={20} />
             </button>
           </div>

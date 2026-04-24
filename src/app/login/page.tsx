@@ -1,6 +1,6 @@
 "use client"
 
-import { signIn } from "next-auth/react"
+import { signIn, getSession } from "next-auth/react"
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 
@@ -26,7 +26,12 @@ export default function LoginPage() {
       setError(res.error)
       setIsLoading(false)
     } else {
-      router.push("/dashboard")
+      const session = await getSession()
+      if (session?.user?.role === "ADMIN") {
+        router.push("/admin")
+      } else {
+        router.push("/dashboard")
+      }
       router.refresh()
     }
   }
