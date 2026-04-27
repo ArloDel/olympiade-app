@@ -2,6 +2,7 @@
 
 import { useSession, signOut } from "next-auth/react"
 import { useRouter } from "next/navigation"
+import Link from "next/link"
 import { useEffect, useState } from "react"
 import { Users, AlertTriangle, CheckCircle, Video, Settings, LogOut, Search } from "lucide-react"
 
@@ -56,9 +57,9 @@ export default function AdminDashboard() {
               <span className="text-blue-500">Olym</span>Admin
             </div>
             <nav className="hidden md:flex gap-4">
-              <button className="px-3 py-2 bg-slate-800 rounded-md text-sm font-medium">Monitoring Ujian</button>
-              <button className="px-3 py-2 text-slate-400 hover:text-white hover:bg-slate-800 rounded-md text-sm font-medium transition-colors">Manajemen Soal</button>
-              <button className="px-3 py-2 text-slate-400 hover:text-white hover:bg-slate-800 rounded-md text-sm font-medium transition-colors">Peserta</button>
+              <Link href="/admin" className="px-3 py-2 bg-slate-800 rounded-md text-sm font-medium">Monitoring Ujian</Link>
+              <Link href="/admin/questions" className="px-3 py-2 text-slate-400 hover:text-white hover:bg-slate-800 rounded-md text-sm font-medium transition-colors">Manajemen Soal</Link>
+              <Link href="#" className="px-3 py-2 text-slate-400 hover:text-white hover:bg-slate-800 rounded-md text-sm font-medium transition-colors">Peserta</Link>
             </nav>
           </div>
           <div className="flex items-center gap-4">

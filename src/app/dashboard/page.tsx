@@ -11,12 +11,39 @@ export default function DashboardPage() {
   
   const [cameraPermission, setCameraPermission] = useState<"pending" | "granted" | "denied">("pending")
   const [checkingCamera, setCheckingCamera] = useState(false)
+  const [exam, setExam] = useState<any>(null)
+  const [examLoading, setExamLoading] = useState(true)
 
   useEffect(() => {
     if (status === "unauthenticated") {
       router.replace("/login")
+    } else if (status === "authenticated") {
+      fetchLatestExam()
     }
   }, [status, router])
+
+  const fetchLatestExam = async () => {
+    try {
+      const res = await fetch("/api/exams")
+      const data = await res.json()
+      if (data.success && data.data.length > 0) {
+        const latestExam = data.data[0]
+        // Fetch questions to get the total count
+        const qRes = await fetch(`/api/questions?examId=${latestExam.id}`)
+        const qData = await qRes.json()
+        const questionCount = qData.success ? qData.data.length : 0
+        
+        setExam({
+          ...latestExam,
+          totalQuestions: questionCount
+        })
+      }
+    } catch (err) {
+      console.error("Failed to fetch exams:", err)
+    } finally {
+      setExamLoading(false)
+    }
+  }
 
   const checkCamera = async () => {
     setCheckingCamera(true)
@@ -40,13 +67,8 @@ export default function DashboardPage() {
 
   if (!session) return null
 
-  // Mock available exams
-  const exam = {
-    id: "exam-123",
-    title: "Olimpiade Matematika Nasional 2026",
-    duration: 120, // 120 minutes
-    totalQuestions: 40,
-    startTime: new Date(Date.now() + 3600000).toLocaleString() // 1 hour from now
+  if (examLoading) {
+    return <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-900"><div className="text-slate-500">Memuat data ujian...</div></div>
   }
 
   return (
@@ -73,38 +95,45 @@ export default function DashboardPage() {
       <main className="max-w-5xl mx-auto px-4 mt-8 grid md:grid-cols-3 gap-6">
         {/* Left Column - Exam Info */}
         <div className="md:col-span-2 space-y-6">
-          <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-6">
-            <h2 className="text-2xl font-bold mb-2">{exam.title}</h2>
-            <p className="text-slate-600 dark:text-slate-400 mb-6">
-              Pastikan Anda membaca seluruh instruksi sebelum memulai ujian.
-            </p>
+          {exam ? (
+            <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-6">
+              <h2 className="text-2xl font-bold mb-2">{exam.title}</h2>
+              <p className="text-slate-600 dark:text-slate-400 mb-6">
+                Pastikan Anda membaca seluruh instruksi sebelum memulai ujian.
+              </p>
 
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
-              <div className="bg-slate-50 dark:bg-slate-900 p-4 rounded-lg border border-slate-100 dark:border-slate-800">
-                <div className="text-xs text-slate-500 uppercase font-semibold tracking-wider mb-1">Durasi</div>
-                <div className="font-medium text-lg">{exam.duration} Menit</div>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
+                <div className="bg-slate-50 dark:bg-slate-900 p-4 rounded-lg border border-slate-100 dark:border-slate-800">
+                  <div className="text-xs text-slate-500 uppercase font-semibold tracking-wider mb-1">Durasi</div>
+                  <div className="font-medium text-lg">{exam.duration} Menit</div>
+                </div>
+                <div className="bg-slate-50 dark:bg-slate-900 p-4 rounded-lg border border-slate-100 dark:border-slate-800">
+                  <div className="text-xs text-slate-500 uppercase font-semibold tracking-wider mb-1">Soal</div>
+                  <div className="font-medium text-lg">{exam.totalQuestions} Butir</div>
+                </div>
+                <div className="col-span-2 bg-slate-50 dark:bg-slate-900 p-4 rounded-lg border border-slate-100 dark:border-slate-800">
+                  <div className="text-xs text-slate-500 uppercase font-semibold tracking-wider mb-1">Jadwal Mulai</div>
+                  <div className="font-medium">{new Date(exam.startTime).toLocaleString()}</div>
+                </div>
               </div>
-              <div className="bg-slate-50 dark:bg-slate-900 p-4 rounded-lg border border-slate-100 dark:border-slate-800">
-                <div className="text-xs text-slate-500 uppercase font-semibold tracking-wider mb-1">Soal</div>
-                <div className="font-medium text-lg">{exam.totalQuestions} Butir</div>
-              </div>
-              <div className="col-span-2 bg-slate-50 dark:bg-slate-900 p-4 rounded-lg border border-slate-100 dark:border-slate-800">
-                <div className="text-xs text-slate-500 uppercase font-semibold tracking-wider mb-1">Jadwal Mulai</div>
-                <div className="font-medium">{exam.startTime}</div>
+
+              <div className="prose dark:prose-invert max-w-none text-sm">
+                <h3 className="text-lg font-semibold mb-3">Instruksi Pengerjaan:</h3>
+                <ul className="list-disc pl-5 space-y-2 text-slate-600 dark:text-slate-300">
+                  <li>Peserta wajib memberikan izin akses kamera selama ujian berlangsung.</li>
+                  <li>Sistem akan mendeteksi jika Anda berpindah tab atau mengecilkan browser (Alt+Tab/Minimize).</li>
+                  <li>Pelanggaran seperti berpindah tab akan tercatat oleh sistem. Jika Anda berpindah tab lebih dari 3 kali, ujian akan terkunci secara otomatis.</li>
+                  <li>Jawaban Anda akan tersimpan secara otomatis setiap kali Anda berpindah soal.</li>
+                  <li>Gunakan tombol "Ragu-ragu" (Flag) jika Anda ingin menandai soal untuk ditinjau kembali nanti.</li>
+                </ul>
               </div>
             </div>
-
-            <div className="prose dark:prose-invert max-w-none text-sm">
-              <h3 className="text-lg font-semibold mb-3">Instruksi Pengerjaan:</h3>
-              <ul className="list-disc pl-5 space-y-2 text-slate-600 dark:text-slate-300">
-                <li>Peserta wajib memberikan izin akses kamera selama ujian berlangsung.</li>
-                <li>Sistem akan mendeteksi jika Anda berpindah tab atau mengecilkan browser (Alt+Tab/Minimize).</li>
-                <li>Pelanggaran seperti berpindah tab akan tercatat oleh sistem. Jika Anda berpindah tab lebih dari 3 kali, ujian akan terkunci secara otomatis.</li>
-                <li>Jawaban Anda akan tersimpan secara otomatis setiap kali Anda berpindah soal.</li>
-                <li>Gunakan tombol "Ragu-ragu" (Flag) jika Anda ingin menandai soal untuk ditinjau kembali nanti.</li>
-              </ul>
+          ) : (
+            <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-10 text-center">
+              <div className="text-slate-500 mb-2">Belum ada ujian yang tersedia saat ini.</div>
+              <div className="text-sm text-slate-400">Silakan hubungi administrator jika Anda merasa ini adalah sebuah kesalahan.</div>
             </div>
-          </div>
+          )}
         </div>
 
         {/* Right Column - Status & Actions */}
@@ -148,8 +177,8 @@ export default function DashboardPage() {
             <hr className="border-slate-200 dark:border-slate-700 mb-6" />
 
             <button 
-              disabled={cameraPermission !== 'granted'}
-              onClick={() => router.push(`/exam/${exam.id}`)}
+              disabled={cameraPermission !== 'granted' || !exam}
+              onClick={() => exam && router.push(`/exam/${exam.id}`)}
               className="w-full py-3 px-4 bg-blue-600 hover:bg-blue-700 disabled:bg-slate-300 dark:disabled:bg-slate-700 disabled:text-slate-500 text-white font-bold rounded-xl transition-all shadow-md disabled:shadow-none flex justify-center items-center gap-2"
             >
               {cameraPermission === 'granted' ? <CheckCircle size={20} /> : <AlertTriangle size={20} />}
@@ -159,6 +188,11 @@ export default function DashboardPage() {
             {cameraPermission !== 'granted' && (
               <p className="text-xs text-center text-slate-500 mt-3">
                 Anda harus memberikan izin kamera sebelum bisa memulai ujian.
+              </p>
+            )}
+            {cameraPermission === 'granted' && !exam && (
+               <p className="text-xs text-center text-slate-500 mt-3">
+                Ujian belum tersedia.
               </p>
             )}
           </div>
