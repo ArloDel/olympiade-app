@@ -27,6 +27,44 @@ export default function ExamTakingInterface() {
   // Proctoring State
   const [warningModal, setWarningModal] = useState<{ show: boolean, warnings: number, isLocked: boolean } | null>(null)
 
+  const fetchQuestions = async () => {
+    try {
+      const res = await fetch(`/api/questions?examId=${examId}`)
+      const data = await res.json()
+      if (data.success) {
+        setQuestions(data.data)
+      } else {
+        console.error(data.error)
+      }
+    } catch (error) {
+      console.error("Failed to fetch questions:", error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const formatTime = (seconds: number) => {
+    const m = Math.floor(seconds / 60)
+    const s = seconds % 60
+    return `${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`
+  }
+
+  const toggleFlag = (qId: string) => {
+    setFlagged(prev => {
+      const newSet = new Set(prev)
+      if (newSet.has(qId)) newSet.delete(qId)
+      else newSet.add(qId)
+      return newSet
+    })
+  }
+
+  const handleSelectOption = (qId: string, optId: string) => {
+    setAnswers(prev => ({
+      ...prev,
+      [qId]: optId
+    }))
+  }
+
   useEffect(() => {
     if (status === "unauthenticated") {
       router.replace("/login")
