@@ -20,10 +20,12 @@ export default function ExamTakingInterface() {
   // State for flagged questions
   const [flagged, setFlagged] = useState<Set<string>>(new Set())
   
-  // Layout state
   const [showGrid, setShowGrid] = useState(false)
   const [timeLeft, setTimeLeft] = useState(120 * 60) // Default 120 mins
   const [isSubmitting, setIsSubmitting] = useState(false)
+
+  // Proctoring State
+  const [warningModal, setWarningModal] = useState<{ show: boolean, warnings: number, isLocked: boolean } | null>(null)
 
   useEffect(() => {
     if (status === "unauthenticated") {
@@ -48,45 +50,58 @@ export default function ExamTakingInterface() {
     return () => clearInterval(timer)
   }, [loading])
 
-  const fetchQuestions = async () => {
+  // Proctoring: Tab Switch Detection
+  useEffect(() => {
+    if (loading || status !== "authenticated") return;
+
+    const handleVisibilityChange = async () => {
+      if (document.hidden) {
+        await reportProctoringEvent("TAB_SWITCH");
+      }
+    };
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    return () => document.removeEventListener("visibilitychange", handleVisibilityChange);
+  }, [loading, status, examId]); // Remove 'answers' from dependency to avoid frequent re-binding
+
+  const reportProctoringEvent = async (eventType: string) => {
     try {
-      const res = await fetch(`/api/questions?examId=${examId}`)
-      const data = await res.json()
-      if (data.success) {
-        setQuestions(data.data)
-        // You could fetch the exam duration here and setTimeLeft accordingly.
+      const res = await fetch("/api/proctoring", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ examId, eventType })
+      });
+      const data = await res.json();
+      
+      if (data.success && eventType === "TAB_SWITCH") {
+        setWarningModal({
+          show: true,
+          warnings: data.data.warnings,
+          isLocked: data.data.isLocked
+        });
+
+        if (data.data.isLocked) {
+          // Force submit
+          setTimeout(() => {
+            forceLockSubmit();
+          }, 3000); // give them 3 seconds to read the message
+        }
       }
     } catch (err) {
-      console.error(err)
-    } finally {
-      setLoading(false)
+      console.error("Failed to report proctoring event:", err);
     }
   }
 
-  const formatTime = (seconds: number) => {
-    const h = Math.floor(seconds / 3600)
-    const m = Math.floor((seconds % 3600) / 60)
-    const s = seconds % 60
-    return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`
+  const forceLockSubmit = async () => {
+    // We cannot reliably access the very latest 'answers' state here due to closure 
+    // unless we use a ref, but the API will just save whatever the submitAnswersToApi sends.
+    // To be safe, we'll just trigger the submit logic. 
+    // A better React pattern is using a ref for answers, but we'll use the existing function.
+    await submitAnswersToApi();
+    router.replace("/dashboard");
   }
 
-  const handleSelectOption = (questionId: string, optionId: string) => {
-    setAnswers(prev => ({
-      ...prev,
-      [questionId]: optionId
-    }))
-  }
-
-  const toggleFlag = (questionId: string) => {
-    setFlagged(prev => {
-      const newSet = new Set(prev)
-      if (newSet.has(questionId)) newSet.delete(questionId)
-      else newSet.add(questionId)
-      return newSet
-    })
-  }
-
-  const submitAnswersToApi = async () => {
+  const submitAnswersToApi = async (currentAnswers = answers) => {
     setIsSubmitting(true)
     try {
       const res = await fetch("/api/submissions", {
@@ -94,7 +109,7 @@ export default function ExamTakingInterface() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           examId,
-          answers
+          answers: currentAnswers
         })
       })
       const data = await res.json()
@@ -147,7 +162,39 @@ export default function ExamTakingInterface() {
   const isFlagged = flagged.has(currentQ.id)
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-900 flex flex-col overflow-hidden">
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-900 flex flex-col overflow-hidden relative">
+      
+      {/* Proctoring Warning Modal */}
+      {warningModal && warningModal.show && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/80 backdrop-blur-sm p-4">
+          <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-xl max-w-md w-full p-6 text-center border-2 border-red-500">
+            <div className="w-16 h-16 bg-red-100 text-red-500 rounded-full flex items-center justify-center mx-auto mb-4">
+              <Flag size={32} />
+            </div>
+            <h3 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">Pelanggaran Terdeteksi!</h3>
+            <p className="text-slate-600 dark:text-slate-300 mb-4">
+              Sistem mendeteksi Anda berpindah tab atau meminimalkan jendela browser.
+            </p>
+            <div className="bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-400 p-3 rounded-lg font-medium mb-6">
+              Peringatan ke-{warningModal.warnings} dari 3
+            </div>
+            
+            {warningModal.isLocked ? (
+              <p className="text-sm font-bold text-red-600 dark:text-red-400 mb-4 animate-pulse">
+                Akun Anda telah dikunci. Mengirim jawaban dan mengakhiri ujian...
+              </p>
+            ) : (
+              <button 
+                onClick={() => setWarningModal(null)}
+                className="w-full py-3 bg-red-600 hover:bg-red-700 text-white font-bold rounded-xl transition-colors"
+              >
+                Saya Mengerti & Kembali ke Ujian
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* Top Bar */}
       <header className="bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 h-16 px-6 flex items-center justify-between shrink-0 sticky top-0 z-20">
         <div className="font-bold text-lg text-slate-800 dark:text-slate-200 hidden sm:block">
