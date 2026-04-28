@@ -2,7 +2,7 @@
 
 import { useSession } from "next-auth/react"
 import { useRouter, useParams } from "next/navigation"
-import { useEffect, useState } from "react"
+import { useEffect, useState, useRef } from "react"
 import { Clock, ChevronLeft, ChevronRight, Flag, CheckCircle, LayoutGrid, X } from "lucide-react"
 
 export default function ExamTakingInterface() {
@@ -23,6 +23,10 @@ export default function ExamTakingInterface() {
   const [showGrid, setShowGrid] = useState(false)
   const [timeLeft, setTimeLeft] = useState(120 * 60) // Default 120 mins
   const [isSubmitting, setIsSubmitting] = useState(false)
+
+  // Camera State
+  const videoRef = useRef<HTMLVideoElement>(null)
+  const streamRef = useRef<MediaStream | null>(null)
 
   // Proctoring State
   const [warningModal, setWarningModal] = useState<{ show: boolean, warnings: number, isLocked: boolean } | null>(null)
@@ -87,6 +91,32 @@ export default function ExamTakingInterface() {
     }, 1000)
     return () => clearInterval(timer)
   }, [loading])
+
+  // Initialize Camera
+  useEffect(() => {
+    if (status !== "authenticated") return;
+
+    const startCamera = async () => {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+        streamRef.current = stream;
+        if (videoRef.current) {
+          videoRef.current.srcObject = stream;
+        }
+      } catch (err) {
+        console.error("Gagal mengakses kamera:", err);
+        alert("Kamera diperlukan untuk ujian ini. Mohon izinkan akses kamera.");
+      }
+    };
+
+    startCamera();
+
+    return () => {
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach(track => track.stop());
+      }
+    };
+  }, [status]);
 
   // Proctoring: Tab Switch Detection
   useEffect(() => {
@@ -202,6 +232,22 @@ export default function ExamTakingInterface() {
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-900 flex flex-col overflow-hidden relative">
       
+      {/* Floating Camera View */}
+      <div className="fixed bottom-4 left-4 lg:bottom-8 lg:left-8 z-40 w-28 h-36 sm:w-36 sm:h-48 bg-slate-900 rounded-xl overflow-hidden shadow-2xl border-2 border-slate-700/50 flex items-center justify-center">
+        <video 
+          ref={videoRef} 
+          autoPlay 
+          playsInline 
+          muted 
+          className="w-full h-full object-cover"
+          style={{ transform: "scaleX(-1)" }}
+        />
+        <div className="absolute top-2 left-2 flex items-center gap-1.5 bg-black/60 px-2 py-1 rounded-md text-[10px] font-bold text-white backdrop-blur-md">
+          <div className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse"></div>
+          REC
+        </div>
+      </div>
+
       {/* Proctoring Warning Modal */}
       {warningModal && warningModal.show && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/80 backdrop-blur-sm p-4">
