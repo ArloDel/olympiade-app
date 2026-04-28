@@ -5,6 +5,11 @@ export async function GET() {
   try {
     const exams = await prisma.exam.findMany({
       orderBy: { createdAt: "desc" },
+      include: {
+        _count: {
+          select: { questions: true }
+        }
+      }
     });
     return NextResponse.json({ success: true, data: exams });
   } catch (error: any) {

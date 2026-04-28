@@ -28,14 +28,10 @@ export default function DashboardPage() {
       const data = await res.json()
       if (data.success && data.data.length > 0) {
         const latestExam = data.data[0]
-        // Fetch questions to get the total count
-        const qRes = await fetch(`/api/questions?examId=${latestExam.id}`)
-        const qData = await qRes.json()
-        const questionCount = qData.success ? qData.data.length : 0
         
         setExam({
           ...latestExam,
-          totalQuestions: questionCount
+          totalQuestions: latestExam._count?.questions || 0
         })
       }
     } catch (err) {
