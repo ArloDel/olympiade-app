@@ -1,17 +1,37 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { getServerSession } from "next-auth/next";
+import { authOptions } from "@/lib/auth";
 
 export async function GET() {
   try {
+    const session = await getServerSession(authOptions);
+    const userId = session?.user?.id;
+
     const exams = await prisma.exam.findMany({
       orderBy: { createdAt: "desc" },
       include: {
         _count: {
           select: { questions: true }
-        }
+        },
+        ...(userId && {
+          sessionLogs: {
+            where: {
+              userId: userId,
+              eventType: "FINISH"
+            },
+            take: 1
+          }
+        })
       }
     });
-    return NextResponse.json({ success: true, data: exams });
+
+    const examsWithStatus = exams.map(exam => ({
+      ...exam,
+      isFinished: exam.sessionLogs && exam.sessionLogs.length > 0
+    }));
+
+    return NextResponse.json({ success: true, data: examsWithStatus });
   } catch (error: any) {
     console.error("Error fetching exams:", error);
     return NextResponse.json(

@@ -13,6 +13,7 @@ export default function DashboardPage() {
   const [checkingCamera, setCheckingCamera] = useState(false)
   const [exam, setExam] = useState<any>(null)
   const [examLoading, setExamLoading] = useState(true)
+  const [result, setResult] = useState<any>(null)
 
   useEffect(() => {
     if (status === "unauthenticated") {
@@ -33,11 +34,27 @@ export default function DashboardPage() {
           ...latestExam,
           totalQuestions: latestExam._count?.questions || 0
         })
+
+        if (latestExam.isFinished) {
+          fetchResult(latestExam.id)
+        }
       }
     } catch (err) {
       console.error("Failed to fetch exams:", err)
     } finally {
       setExamLoading(false)
+    }
+  }
+
+  const fetchResult = async (examId: string) => {
+    try {
+      const res = await fetch(`/api/results?examId=${examId}`)
+      const data = await res.json()
+      if (data.success) {
+        setResult(data.data)
+      }
+    } catch (err) {
+      console.error("Failed to fetch results:", err)
     }
   }
 
@@ -92,6 +109,34 @@ export default function DashboardPage() {
         {/* Left Column - Exam Info */}
         <div className="md:col-span-2 space-y-6">
           {exam ? (
+            exam.isFinished && result ? (
+               <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-8 text-center">
+                 <div className="w-20 h-20 bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400 rounded-full flex items-center justify-center mx-auto mb-4">
+                   <CheckCircle size={40} />
+                 </div>
+                 <h2 className="text-2xl font-bold mb-2">Ujian Selesai!</h2>
+                 <p className="text-slate-500 mb-8">Anda telah menyelesaikan ujian <span className="font-semibold text-slate-700 dark:text-slate-300">{exam.title}</span>. Berikut adalah hasilnya:</p>
+                 
+                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6 text-left">
+                    <div className="bg-slate-50 dark:bg-slate-900 p-4 rounded-lg border border-slate-100 dark:border-slate-800 flex flex-col justify-center items-center">
+                      <div className="text-xs text-slate-500 uppercase font-semibold mb-1 text-center">Skor Akhir</div>
+                      <div className="font-bold text-4xl text-blue-600 dark:text-blue-400">{result.score}</div>
+                    </div>
+                    <div className="bg-slate-50 dark:bg-slate-900 p-4 rounded-lg border border-slate-100 dark:border-slate-800 flex flex-col justify-center items-center">
+                      <div className="text-xs text-slate-500 uppercase font-semibold mb-1 text-center">Benar</div>
+                      <div className="font-bold text-3xl text-green-600 dark:text-green-400">{result.correctAnswers}</div>
+                    </div>
+                    <div className="bg-slate-50 dark:bg-slate-900 p-4 rounded-lg border border-slate-100 dark:border-slate-800 flex flex-col justify-center items-center">
+                      <div className="text-xs text-slate-500 uppercase font-semibold mb-1 text-center">Salah / Kosong</div>
+                      <div className="font-bold text-3xl text-red-500 dark:text-red-400">{result.wrongAnswers}</div>
+                    </div>
+                    <div className="bg-slate-50 dark:bg-slate-900 p-4 rounded-lg border border-slate-100 dark:border-slate-800 flex flex-col justify-center items-center">
+                      <div className="text-xs text-slate-500 uppercase font-semibold mb-1 text-center">Total Soal</div>
+                      <div className="font-bold text-3xl text-slate-700 dark:text-slate-300">{result.totalQuestions}</div>
+                    </div>
+                 </div>
+               </div>
+            ) : (
             <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-6">
               <h2 className="text-2xl font-bold mb-2">{exam.title}</h2>
               <p className="text-slate-600 dark:text-slate-400 mb-6">
@@ -124,6 +169,7 @@ export default function DashboardPage() {
                 </ul>
               </div>
             </div>
+            )
           ) : (
             <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-10 text-center">
               <div className="text-slate-500 mb-2">Belum ada ujian yang tersedia saat ini.</div>
@@ -135,6 +181,18 @@ export default function DashboardPage() {
         {/* Right Column - Status & Actions */}
         <div className="space-y-6">
           <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-6">
+            {exam?.isFinished ? (
+               <div className="text-center py-8">
+                 <h3 className="font-bold text-lg mb-4 text-slate-700 dark:text-slate-200">Status Ujian</h3>
+                 <div className="inline-block px-5 py-2 bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 rounded-full text-sm font-bold mb-4 border border-green-200 dark:border-green-800">
+                   Selesai Dikerjakan
+                 </div>
+                 <p className="text-sm text-slate-500 dark:text-slate-400 px-4">
+                   Anda sudah tidak dapat merubah jawaban atau mengulang ujian ini.
+                 </p>
+               </div>
+            ) : (
+            <>
             <h3 className="font-bold text-lg mb-4">Pengecekan Perangkat</h3>
             
             <div className="space-y-4 mb-6">
@@ -190,6 +248,8 @@ export default function DashboardPage() {
                <p className="text-xs text-center text-slate-500 mt-3">
                 Ujian belum tersedia.
               </p>
+            )}
+            </>
             )}
           </div>
         </div>
