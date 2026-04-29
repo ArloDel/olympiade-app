@@ -3,7 +3,7 @@
 import { useSession, signOut } from "next-auth/react"
 import { useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
-import { LogOut, Camera, CheckCircle, AlertTriangle } from "lucide-react"
+import { LogOut, Camera, Shield, Award, Moon, Sun, Monitor } from "lucide-react"
 
 export default function DashboardPage() {
   const { data: session, status } = useSession()
@@ -14,6 +14,7 @@ export default function DashboardPage() {
   const [exam, setExam] = useState<any>(null)
   const [examLoading, setExamLoading] = useState(true)
   const [result, setResult] = useState<any>(null)
+  const [theme, setTheme] = useState<"dark" | "light">("dark")
 
   useEffect(() => {
     if (status === "unauthenticated") {
@@ -64,7 +65,6 @@ export default function DashboardPage() {
       const stream = await navigator.mediaDevices.getUserMedia({ video: true })
       if (stream) {
         setCameraPermission("granted")
-        // Stop all tracks to not keep the light on
         stream.getTracks().forEach(track => track.stop())
       }
     } catch (err) {
@@ -74,184 +74,182 @@ export default function DashboardPage() {
     }
   }
 
-  if (status === "loading") {
-    return <div className="min-h-screen flex items-center justify-center">Loading...</div>
+  const isDark = theme === "dark"
+
+  if (status === "loading" || examLoading) {
+    return (
+      <div className={`min-h-screen flex items-center justify-center transition-colors ${isDark ? 'bg-[#0a0a0a]' : 'bg-white'}`}>
+        <div className={`w-5 h-5 border-2 rounded-full animate-spin ${isDark ? 'border-zinc-600 border-t-white' : 'border-zinc-300 border-t-black'}`}></div>
+      </div>
+    )
   }
 
   if (!session) return null
 
-  if (examLoading) {
-    return <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-900"><div className="text-slate-500">Memuat data ujian...</div></div>
-  }
-
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-900 pb-12">
-      {/* Header */}
-      <header className="bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 sticky top-0 z-10">
-        <div className="max-w-5xl mx-auto px-4 h-16 flex items-center justify-between">
-          <div className="font-bold text-xl text-blue-600 dark:text-blue-400">Olym-App</div>
-          <div className="flex items-center gap-4">
-            <div className="text-sm">
-              <span className="text-slate-500">Halo,</span> <span className="font-medium">{session.user.name || "Peserta"}</span>
+    <div className={`min-h-screen transition-colors duration-300 flex flex-col font-sans ${isDark ? 'bg-[#0a0a0a] text-zinc-300 selection:bg-white/20' : 'bg-white text-zinc-600 selection:bg-black/10'}`}>
+      
+      {/* Ultra Minimal Header */}
+      <header className={`sticky top-0 z-30 border-b ${isDark ? 'border-zinc-900 bg-[#0a0a0a]/80' : 'border-zinc-100 bg-white/80'} backdrop-blur-md`}>
+        <div className="max-w-4xl mx-auto px-6 h-16 flex items-center justify-between">
+          <div className={`font-semibold text-sm tracking-tight flex items-center gap-2 ${isDark ? 'text-white' : 'text-black'}`}>
+            <Shield size={16} />
+            OlymApp
+          </div>
+          
+          <div className="flex items-center gap-6">
+            <button 
+              onClick={() => setTheme(isDark ? "light" : "dark")}
+              className={`text-xs flex items-center gap-1.5 transition-colors ${isDark ? 'text-zinc-500 hover:text-white' : 'text-zinc-400 hover:text-black'}`}
+            >
+              {isDark ? <Sun size={14} /> : <Moon size={14} />}
+              {isDark ? 'Light' : 'Dark'}
+            </button>
+
+            <div className={`text-xs ${isDark ? 'text-zinc-500' : 'text-zinc-400'}`}>
+              {session.user.name}
             </div>
+            
             <button 
               onClick={() => signOut()}
-              className="p-2 text-slate-500 hover:text-red-500 transition-colors rounded-full hover:bg-slate-100 dark:hover:bg-slate-700"
+              className={`transition-colors ${isDark ? 'text-zinc-600 hover:text-white' : 'text-zinc-300 hover:text-black'}`}
               title="Logout"
             >
-              <LogOut size={20} />
+              <LogOut size={16} />
             </button>
           </div>
         </div>
       </header>
 
-      <main className="max-w-5xl mx-auto px-4 mt-8 grid md:grid-cols-3 gap-6">
-        {/* Left Column - Exam Info */}
-        <div className="md:col-span-2 space-y-6">
+      {/* Main Content - No Cards, Flat Minimalist Layout */}
+      <main className="flex-1 px-6 py-12 md:py-20 flex flex-col items-center">
+        <div className="max-w-2xl w-full">
+          
           {exam ? (
             exam.isFinished && result ? (
-               <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-8 text-center">
-                 <div className="w-20 h-20 bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400 rounded-full flex items-center justify-center mx-auto mb-4">
-                   <CheckCircle size={40} />
-                 </div>
-                 <h2 className="text-2xl font-bold mb-2">Ujian Selesai!</h2>
-                 <p className="text-slate-500 mb-8">Anda telah menyelesaikan ujian <span className="font-semibold text-slate-700 dark:text-slate-300">{exam.title}</span>. Berikut adalah hasilnya:</p>
+               <div className="flex flex-col animate-in fade-in slide-in-from-bottom-4 duration-700">
                  
-                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6 text-left">
-                    <div className="bg-slate-50 dark:bg-slate-900 p-4 rounded-lg border border-slate-100 dark:border-slate-800 flex flex-col justify-center items-center">
-                      <div className="text-xs text-slate-500 uppercase font-semibold mb-1 text-center">Skor Akhir</div>
-                      <div className="font-bold text-4xl text-blue-600 dark:text-blue-400">{result.score}</div>
+                 <div className="mb-12">
+                   <h2 className={`text-2xl font-medium mb-2 ${isDark ? 'text-white' : 'text-black'}`}>Evaluasi Selesai</h2>
+                   <p className={`text-sm ${isDark ? 'text-zinc-500' : 'text-zinc-500'}`}>
+                     Anda telah menyelesaikan modul {exam.title}. Berikut adalah rekapitulasi penilaian.
+                   </p>
+                 </div>
+                 
+                 <div className="flex flex-col gap-10">
+                    <div className="flex flex-col">
+                      <span className={`text-[10px] font-bold uppercase tracking-widest mb-2 ${isDark ? 'text-zinc-600' : 'text-zinc-400'}`}>Skor Akhir</span>
+                      <span className={`text-8xl font-light tracking-tighter ${isDark ? 'text-white' : 'text-black'}`}>
+                        {result.score}
+                      </span>
                     </div>
-                    <div className="bg-slate-50 dark:bg-slate-900 p-4 rounded-lg border border-slate-100 dark:border-slate-800 flex flex-col justify-center items-center">
-                      <div className="text-xs text-slate-500 uppercase font-semibold mb-1 text-center">Benar</div>
-                      <div className="font-bold text-3xl text-green-600 dark:text-green-400">{result.correctAnswers}</div>
-                    </div>
-                    <div className="bg-slate-50 dark:bg-slate-900 p-4 rounded-lg border border-slate-100 dark:border-slate-800 flex flex-col justify-center items-center">
-                      <div className="text-xs text-slate-500 uppercase font-semibold mb-1 text-center">Salah / Kosong</div>
-                      <div className="font-bold text-3xl text-red-500 dark:text-red-400">{result.wrongAnswers}</div>
-                    </div>
-                    <div className="bg-slate-50 dark:bg-slate-900 p-4 rounded-lg border border-slate-100 dark:border-slate-800 flex flex-col justify-center items-center">
-                      <div className="text-xs text-slate-500 uppercase font-semibold mb-1 text-center">Total Soal</div>
-                      <div className="font-bold text-3xl text-slate-700 dark:text-slate-300">{result.totalQuestions}</div>
+
+                    <div className={`grid grid-cols-3 gap-8 py-8 border-t ${isDark ? 'border-zinc-900' : 'border-zinc-100'}`}>
+                      <div className="flex flex-col">
+                        <span className={`text-3xl font-medium ${isDark ? 'text-zinc-300' : 'text-zinc-700'}`}>{result.correctAnswers}</span>
+                        <span className={`text-xs mt-1 ${isDark ? 'text-zinc-500' : 'text-zinc-400'}`}>Benar</span>
+                      </div>
+                      <div className="flex flex-col">
+                        <span className={`text-3xl font-medium ${isDark ? 'text-zinc-300' : 'text-zinc-700'}`}>{result.wrongAnswers}</span>
+                        <span className={`text-xs mt-1 ${isDark ? 'text-zinc-500' : 'text-zinc-400'}`}>Salah</span>
+                      </div>
+                      <div className="flex flex-col">
+                        <span className={`text-3xl font-medium ${isDark ? 'text-zinc-300' : 'text-zinc-700'}`}>{result.unanswered}</span>
+                        <span className={`text-xs mt-1 ${isDark ? 'text-zinc-500' : 'text-zinc-400'}`}>Kosong</span>
+                      </div>
                     </div>
                  </div>
                </div>
             ) : (
-            <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-6">
-              <h2 className="text-2xl font-bold mb-2">{exam.title}</h2>
-              <p className="text-slate-600 dark:text-slate-400 mb-6">
-                Pastikan Anda membaca seluruh instruksi sebelum memulai ujian.
-              </p>
+            <div className="flex flex-col">
+              
+              <div className="mb-12">
+                <div className={`inline-flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest mb-6 ${isDark ? 'text-emerald-500' : 'text-emerald-600'}`}>
+                  <span className={`w-1.5 h-1.5 rounded-full ${isDark ? 'bg-emerald-500' : 'bg-emerald-500'}`}></span>
+                  Sesi Aktif
+                </div>
+                
+                <h1 className={`text-3xl font-medium tracking-tight mb-4 ${isDark ? 'text-white' : 'text-black'}`}>
+                  {exam.title}
+                </h1>
+                <p className={`text-sm leading-relaxed max-w-lg ${isDark ? 'text-zinc-500' : 'text-zinc-500'}`}>
+                  Anda terdaftar pada modul ini. Pastikan Anda membaca tata tertib dan melakukan verifikasi perangkat sebelum memulai.
+                </p>
+              </div>
 
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
-                <div className="bg-slate-50 dark:bg-slate-900 p-4 rounded-lg border border-slate-100 dark:border-slate-800">
-                  <div className="text-xs text-slate-500 uppercase font-semibold tracking-wider mb-1">Durasi</div>
-                  <div className="font-medium text-lg">{exam.duration} Menit</div>
+              {/* Minimal List for Details */}
+              <div className={`flex flex-col gap-4 py-8 border-y ${isDark ? 'border-zinc-900' : 'border-zinc-100'} mb-12`}>
+                <div className="flex justify-between items-center">
+                  <span className={`text-xs ${isDark ? 'text-zinc-500' : 'text-zinc-500'}`}>Durasi Pengerjaan</span>
+                  <span className={`text-sm font-medium ${isDark ? 'text-zinc-300' : 'text-zinc-700'}`}>{exam.duration} Menit</span>
                 </div>
-                <div className="bg-slate-50 dark:bg-slate-900 p-4 rounded-lg border border-slate-100 dark:border-slate-800">
-                  <div className="text-xs text-slate-500 uppercase font-semibold tracking-wider mb-1">Soal</div>
-                  <div className="font-medium text-lg">{exam.totalQuestions} Butir</div>
+                <div className="flex justify-between items-center">
+                  <span className={`text-xs ${isDark ? 'text-zinc-500' : 'text-zinc-500'}`}>Total Soal</span>
+                  <span className={`text-sm font-medium ${isDark ? 'text-zinc-300' : 'text-zinc-700'}`}>{exam.totalQuestions} Butir</span>
                 </div>
-                <div className="col-span-2 bg-slate-50 dark:bg-slate-900 p-4 rounded-lg border border-slate-100 dark:border-slate-800">
-                  <div className="text-xs text-slate-500 uppercase font-semibold tracking-wider mb-1">Jadwal Mulai</div>
-                  <div className="font-medium">{new Date(exam.startTime).toLocaleString()}</div>
+                <div className="flex justify-between items-center">
+                  <span className={`text-xs ${isDark ? 'text-zinc-500' : 'text-zinc-500'}`}>Waktu Mulai</span>
+                  <span className={`text-sm font-medium ${isDark ? 'text-zinc-300' : 'text-zinc-700'}`}>{new Date(exam.startTime).toLocaleString('id-ID', { dateStyle: 'long', timeStyle: 'short' })}</span>
                 </div>
               </div>
 
-              <div className="prose dark:prose-invert max-w-none text-sm">
-                <h3 className="text-lg font-semibold mb-3">Instruksi Pengerjaan:</h3>
-                <ul className="list-disc pl-5 space-y-2 text-slate-600 dark:text-slate-300">
-                  <li>Peserta wajib memberikan izin akses kamera selama ujian berlangsung.</li>
-                  <li>Sistem akan mendeteksi jika Anda berpindah tab atau mengecilkan browser (Alt+Tab/Minimize).</li>
-                  <li>Pelanggaran seperti berpindah tab akan tercatat oleh sistem. Jika Anda berpindah tab lebih dari 3 kali, ujian akan terkunci secara otomatis.</li>
-                  <li>Jawaban Anda akan tersimpan secara otomatis setiap kali Anda berpindah soal.</li>
-                  <li>Gunakan tombol "Ragu-ragu" (Flag) jika Anda ingin menandai soal untuk ditinjau kembali nanti.</li>
-                </ul>
+              {/* Minimal Device Check */}
+              <div className="mb-12 flex flex-col gap-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <Camera size={16} className={isDark ? 'text-zinc-600' : 'text-zinc-400'} />
+                    <span className={`text-xs ${isDark ? 'text-zinc-500' : 'text-zinc-500'}`}>Status Kamera</span>
+                  </div>
+                  <span className={`text-xs font-medium ${cameraPermission === 'granted' ? 'text-emerald-500' : cameraPermission === 'denied' ? 'text-rose-500' : isDark ? 'text-zinc-500' : 'text-zinc-400'}`}>
+                    {cameraPermission === 'granted' && "Terhubung"}
+                    {cameraPermission === 'denied' && "Akses Ditolak"}
+                    {cameraPermission === 'pending' && "Belum Diverifikasi"}
+                  </span>
+                </div>
+                
+                {cameraPermission === 'pending' && (
+                  <button 
+                    onClick={checkCamera}
+                    disabled={checkingCamera}
+                    className={`text-xs font-medium py-2 px-4 rounded self-start transition-colors ${isDark ? 'bg-zinc-900 text-white hover:bg-zinc-800' : 'bg-zinc-100 text-black hover:bg-zinc-200'}`}
+                  >
+                    {checkingCamera ? "Memeriksa..." : "Izinkan Kamera"}
+                  </button>
+                )}
+                
+                {cameraPermission === 'denied' && (
+                  <p className="text-[11px] text-rose-500">Kamera wajib diizinkan di pengaturan browser Anda.</p>
+                )}
               </div>
+
+              {/* Action */}
+              <div className="flex flex-col gap-3">
+                <button 
+                  disabled={cameraPermission !== 'granted' || !exam}
+                  onClick={() => exam && router.push(`/exam/${exam.id}`)}
+                  className={`w-full py-4 text-sm font-medium transition-colors disabled:cursor-not-allowed ${
+                    isDark 
+                    ? 'bg-white text-black hover:bg-zinc-200 disabled:bg-zinc-900 disabled:text-zinc-600' 
+                    : 'bg-black text-white hover:bg-zinc-800 disabled:bg-zinc-100 disabled:text-zinc-400'
+                  }`}
+                >
+                  Mulai Evaluasi
+                </button>
+                {cameraPermission !== 'granted' && (
+                  <p className={`text-[11px] text-center ${isDark ? 'text-zinc-600' : 'text-zinc-400'}`}>
+                    Selesaikan verifikasi sistem sebelum melanjutkan.
+                  </p>
+                )}
+              </div>
+              
             </div>
             )
           ) : (
-            <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-10 text-center">
-              <div className="text-slate-500 mb-2">Belum ada ujian yang tersedia saat ini.</div>
-              <div className="text-sm text-slate-400">Silakan hubungi administrator jika Anda merasa ini adalah sebuah kesalahan.</div>
+            <div className="flex flex-col items-center justify-center py-20 text-center">
+              <Monitor size={24} className={`mb-4 ${isDark ? 'text-zinc-800' : 'text-zinc-200'}`} />
+              <p className={`text-sm ${isDark ? 'text-zinc-500' : 'text-zinc-500'}`}>Tidak ada ujian yang dijadwalkan.</p>
             </div>
           )}
-        </div>
-
-        {/* Right Column - Status & Actions */}
-        <div className="space-y-6">
-          <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-6">
-            {exam?.isFinished ? (
-               <div className="text-center py-8">
-                 <h3 className="font-bold text-lg mb-4 text-slate-700 dark:text-slate-200">Status Ujian</h3>
-                 <div className="inline-block px-5 py-2 bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 rounded-full text-sm font-bold mb-4 border border-green-200 dark:border-green-800">
-                   Selesai Dikerjakan
-                 </div>
-                 <p className="text-sm text-slate-500 dark:text-slate-400 px-4">
-                   Anda sudah tidak dapat merubah jawaban atau mengulang ujian ini.
-                 </p>
-               </div>
-            ) : (
-            <>
-            <h3 className="font-bold text-lg mb-4">Pengecekan Perangkat</h3>
-            
-            <div className="space-y-4 mb-6">
-              <div className="flex items-start gap-3">
-                <div className={`p-2 rounded-full ${cameraPermission === 'granted' ? 'bg-green-100 text-green-600 dark:bg-green-900/30' : cameraPermission === 'denied' ? 'bg-red-100 text-red-600 dark:bg-red-900/30' : 'bg-yellow-100 text-yellow-600 dark:bg-yellow-900/30'}`}>
-                  <Camera size={20} />
-                </div>
-                <div>
-                  <div className="font-medium text-sm">Izin Kamera</div>
-                  <div className="text-xs text-slate-500 mt-0.5">
-                    {cameraPermission === 'granted' && "Kamera terdeteksi dan diizinkan"}
-                    {cameraPermission === 'denied' && "Akses kamera ditolak!"}
-                    {cameraPermission === 'pending' && "Sistem perlu mengakses kamera Anda"}
-                  </div>
-                </div>
-              </div>
-
-              {cameraPermission === 'pending' && (
-                <button 
-                  onClick={checkCamera}
-                  disabled={checkingCamera}
-                  className="w-full py-2 text-sm bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 font-medium rounded-lg transition-colors"
-                >
-                  {checkingCamera ? "Mengecek..." : "Cek Izin Kamera"}
-                </button>
-              )}
-              
-              {cameraPermission === 'denied' && (
-                <div className="text-xs text-red-500 bg-red-50 dark:bg-red-900/20 p-3 rounded border border-red-100 dark:border-red-900/50">
-                  <span className="font-semibold block mb-1">Akses Ditolak</span>
-                  Silakan izinkan akses kamera di pengaturan browser Anda, lalu refresh halaman ini.
-                </div>
-              )}
-            </div>
-
-            <hr className="border-slate-200 dark:border-slate-700 mb-6" />
-
-            <button 
-              disabled={cameraPermission !== 'granted' || !exam}
-              onClick={() => exam && router.push(`/exam/${exam.id}`)}
-              className="w-full py-3 px-4 bg-blue-600 hover:bg-blue-700 disabled:bg-slate-300 dark:disabled:bg-slate-700 disabled:text-slate-500 text-white font-bold rounded-xl transition-all shadow-md disabled:shadow-none flex justify-center items-center gap-2"
-            >
-              {cameraPermission === 'granted' ? <CheckCircle size={20} /> : <AlertTriangle size={20} />}
-              Mulai Ujian Sekarang
-            </button>
-            
-            {cameraPermission !== 'granted' && (
-              <p className="text-xs text-center text-slate-500 mt-3">
-                Anda harus memberikan izin kamera sebelum bisa memulai ujian.
-              </p>
-            )}
-            {cameraPermission === 'granted' && !exam && (
-               <p className="text-xs text-center text-slate-500 mt-3">
-                Ujian belum tersedia.
-              </p>
-            )}
-            </>
-            )}
-          </div>
         </div>
       </main>
     </div>
