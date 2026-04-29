@@ -3,6 +3,7 @@
 import { signIn, getSession } from "next-auth/react"
 import { useState } from "react"
 import { useRouter } from "next/navigation"
+import { Shield, Moon, Sun, ArrowRight } from "lucide-react"
 
 export default function LoginPage() {
   const router = useRouter()
@@ -10,6 +11,7 @@ export default function LoginPage() {
   const [password, setPassword] = useState("")
   const [error, setError] = useState("")
   const [isLoading, setIsLoading] = useState(false)
+  const [theme, setTheme] = useState<"dark" | "light">("dark")
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -36,58 +38,107 @@ export default function LoginPage() {
     }
   }
 
+  const isDark = theme === "dark"
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-slate-100 dark:bg-slate-900 px-4">
-      <div className="w-full max-w-md bg-white dark:bg-slate-800 rounded-xl shadow-xl p-8 border border-slate-200 dark:border-slate-700">
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-slate-900 dark:text-white">Olym-App</h1>
-          <p className="text-slate-500 dark:text-slate-400 mt-2">Platform Olimpiade Daring Terpusat</p>
+    <div className={`min-h-screen flex flex-col font-sans transition-colors duration-300 ${isDark ? 'bg-[#0a0a0a] text-zinc-300 selection:bg-white/20' : 'bg-white text-zinc-600 selection:bg-black/10'}`}>
+      
+      {/* Minimal Header with Toggle */}
+      <header className="px-6 h-20 flex items-center justify-between max-w-7xl mx-auto w-full">
+        <div className={`font-semibold text-sm tracking-tight flex items-center gap-2 ${isDark ? 'text-white' : 'text-black'}`}>
+          <Shield size={16} />
+          OlymApp
+        </div>
+        
+        <button 
+          onClick={() => setTheme(isDark ? "light" : "dark")}
+          className={`text-xs flex items-center gap-1.5 transition-colors ${isDark ? 'text-zinc-500 hover:text-white' : 'text-zinc-400 hover:text-black'}`}
+        >
+          {isDark ? <Sun size={14} /> : <Moon size={14} />}
+          {isDark ? 'Light' : 'Dark'}
+        </button>
+      </header>
+
+      {/* Main Content Centered */}
+      <main className="flex-1 flex flex-col justify-center items-center px-6 w-full max-w-md mx-auto pb-20">
+        
+        <div className="w-full animate-in fade-in slide-in-from-bottom-4 duration-700">
+          <div className="mb-12 text-center md:text-left">
+            <h1 className={`text-4xl font-medium tracking-tight mb-3 ${isDark ? 'text-white' : 'text-black'}`}>
+              Masuk ke sistem
+            </h1>
+            <p className={`text-sm ${isDark ? 'text-zinc-500' : 'text-zinc-500'}`}>
+              Platform evaluasi dan monitoring secara terpusat.
+            </p>
+          </div>
+
+          <form onSubmit={handleSubmit} className="space-y-6">
+            
+            {error && (
+              <div className="flex items-center gap-2 text-xs font-medium text-rose-500 bg-rose-500/10 p-3 rounded">
+                <div className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse"></div>
+                {error}
+              </div>
+            )}
+
+            <div className="space-y-1">
+              <label className={`text-[10px] font-bold uppercase tracking-widest ${isDark ? 'text-zinc-600' : 'text-zinc-400'}`}>
+                NIM / Username
+              </label>
+              <input
+                type="text"
+                required
+                value={identifier}
+                onChange={(e) => setIdentifier(e.target.value)}
+                className={`w-full px-0 py-3 text-sm outline-none transition-colors border-b bg-transparent ${
+                  isDark 
+                    ? 'border-zinc-800 text-white placeholder-zinc-700 focus:border-white' 
+                    : 'border-zinc-200 text-black placeholder-zinc-400 focus:border-black'
+                }`}
+                placeholder="Masukkan identifier..."
+              />
+            </div>
+            
+            <div className="space-y-1">
+              <label className={`text-[10px] font-bold uppercase tracking-widest ${isDark ? 'text-zinc-600' : 'text-zinc-400'}`}>
+                Password
+              </label>
+              <input
+                type="password"
+                required
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className={`w-full px-0 py-3 text-sm outline-none transition-colors border-b bg-transparent ${
+                  isDark 
+                    ? 'border-zinc-800 text-white placeholder-zinc-700 focus:border-white' 
+                    : 'border-zinc-200 text-black placeholder-zinc-400 focus:border-black'
+                }`}
+                placeholder="••••••••"
+              />
+            </div>
+
+            <button
+              type="submit"
+              disabled={isLoading}
+              className={`w-full py-4 mt-8 text-sm font-medium transition-all flex items-center justify-center gap-2 disabled:cursor-not-allowed ${
+                isDark 
+                  ? 'bg-white text-black hover:bg-zinc-200 disabled:bg-zinc-900 disabled:text-zinc-600' 
+                  : 'bg-black text-white hover:bg-zinc-800 disabled:bg-zinc-100 disabled:text-zinc-400'
+              }`}
+            >
+              {isLoading ? "Mengautentikasi..." : (
+                <>Lanjutkan <ArrowRight size={16} /></>
+              )}
+            </button>
+            
+          </form>
+
+          <div className={`mt-10 text-center text-xs ${isDark ? 'text-zinc-600' : 'text-zinc-400'}`}>
+            Mengalami kendala? Silakan hubungi proktor ujian Anda.
+          </div>
         </div>
 
-        {error && (
-          <div className="bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400 p-3 rounded-lg text-sm mb-6 border border-red-200 dark:border-red-800">
-            {error}
-          </div>
-        )}
-
-        <form onSubmit={handleSubmit} className="space-y-5">
-          <div>
-            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-              NIM / Username
-            </label>
-            <input
-              type="text"
-              required
-              value={identifier}
-              onChange={(e) => setIdentifier(e.target.value)}
-              className="w-full px-4 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all text-slate-900 dark:text-white"
-              placeholder="Masukkan NIM atau NISN"
-            />
-          </div>
-          
-          <div>
-            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-              Password
-            </label>
-            <input
-              type="password"
-              required
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-4 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all text-slate-900 dark:text-white"
-              placeholder="••••••••"
-            />
-          </div>
-
-          <button
-            type="submit"
-            disabled={isLoading}
-            className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2.5 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {isLoading ? "Memproses..." : "Masuk ke Sistem"}
-          </button>
-        </form>
-      </div>
+      </main>
     </div>
   )
 }
