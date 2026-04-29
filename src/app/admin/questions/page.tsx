@@ -177,7 +177,7 @@ export default function QuestionsManagement() {
             <nav className="hidden md:flex gap-4">
               <Link href="/admin" className="px-3 py-2 text-slate-400 hover:text-white hover:bg-slate-800 rounded-md text-sm font-medium transition-colors">Monitoring Ujian</Link>
               <Link href="/admin/questions" className="px-3 py-2 bg-slate-800 rounded-md text-sm font-medium">Manajemen Soal</Link>
-              <Link href="#" className="px-3 py-2 text-slate-400 hover:text-white hover:bg-slate-800 rounded-md text-sm font-medium transition-colors">Peserta</Link>
+              <Link href="/admin/results" className="px-3 py-2 text-slate-400 hover:text-white hover:bg-slate-800 rounded-md text-sm font-medium transition-colors">Rekap Nilai</Link>
             </nav>
           </div>
           <div className="flex items-center gap-4">
