@@ -132,12 +132,30 @@ export default function ExamTakingInterface() {
     return () => document.removeEventListener("visibilitychange", handleVisibilityChange);
   }, [loading, status, examId]); // Remove 'answers' from dependency to avoid frequent re-binding
 
+  const captureSnapshot = (): string | null => {
+    if (!videoRef.current) return null;
+    try {
+      const canvas = document.createElement("canvas");
+      canvas.width = videoRef.current.videoWidth || 640;
+      canvas.height = videoRef.current.videoHeight || 480;
+      const ctx = canvas.getContext("2d");
+      if (ctx) {
+        ctx.drawImage(videoRef.current, 0, 0, canvas.width, canvas.height);
+        return canvas.toDataURL("image/jpeg", 0.5);
+      }
+    } catch (err) {
+      console.error("Failed to capture snapshot:", err);
+    }
+    return null;
+  };
+
   const reportProctoringEvent = async (eventType: string) => {
     try {
+      const snapshotUrl = captureSnapshot();
       const res = await fetch("/api/proctoring", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ examId, eventType })
+        body: JSON.stringify({ examId, eventType, snapshotUrl })
       });
       const data = await res.json();
       

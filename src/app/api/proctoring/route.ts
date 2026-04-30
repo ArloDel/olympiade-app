@@ -16,7 +16,7 @@ export async function POST(req: Request) {
     }
 
     const body = await req.json();
-    const { examId, eventType, details } = body;
+    const { examId, eventType, details, snapshotUrl } = body;
 
     if (!examId || !eventType) {
       return NextResponse.json(
@@ -63,6 +63,7 @@ export async function POST(req: Request) {
         userId,
         examId,
         eventType: isNowLocked && !user.isLocked ? "LOCKED" : eventType,
+        snapshotUrl: snapshotUrl || null,
         details: JSON.stringify({ 
           ...details, 
           warningsCount: updatedWarnings 

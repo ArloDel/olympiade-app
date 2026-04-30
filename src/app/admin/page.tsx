@@ -4,7 +4,7 @@ import { useSession, signOut } from "next-auth/react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { useEffect, useState } from "react"
-import { Users, AlertTriangle, CheckCircle, Video, LogOut, Search, Activity, ShieldCheck, ShieldAlert, Lock, Moon, Sun } from "lucide-react"
+import { Users, AlertTriangle, CheckCircle, Video, LogOut, Search, Activity, ShieldCheck, ShieldAlert, Lock, Moon, Sun, Eye, Clock, Image as ImageIcon, X } from "lucide-react"
 
 export default function AdminDashboard() {
   const { data: session, status } = useSession()
@@ -13,6 +13,11 @@ export default function AdminDashboard() {
   const [participants, setParticipants] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [theme, setTheme] = useState<"dark" | "light">("dark")
+
+  // Log viewer state
+  const [selectedLogUser, setSelectedLogUser] = useState<any>(null)
+  const [userLogs, setUserLogs] = useState<any[]>([])
+  const [loadingLogs, setLoadingLogs] = useState(false)
 
   useEffect(() => {
     if (status === "unauthenticated") {
@@ -33,6 +38,35 @@ export default function AdminDashboard() {
       console.error("Failed to fetch participants:", err)
     } finally {
       setLoading(false)
+    }
+  }
+
+  const openLogViewer = async (user: any) => {
+    setSelectedLogUser(user)
+    setLoadingLogs(true)
+    setUserLogs([])
+    try {
+      const res = await fetch(`/api/admin/users/${user.id}/logs`)
+      const data = await res.json()
+      if (data.success) {
+        setUserLogs(data.data)
+      } else {
+        alert("Gagal memuat log: " + data.error)
+      }
+    } catch (err) {
+      console.error(err)
+    } finally {
+      setLoadingLogs(false)
+    }
+  }
+
+  const getEventTypeColor = (type: string, isDark: boolean) => {
+    switch (type) {
+      case 'TAB_SWITCH': return isDark ? 'text-amber-500' : 'text-amber-600'
+      case 'LOCKED': return isDark ? 'text-rose-500' : 'text-rose-600'
+      case 'START': return isDark ? 'text-emerald-500' : 'text-emerald-600'
+      case 'FINISH': return isDark ? 'text-blue-500' : 'text-blue-600'
+      default: return isDark ? 'text-zinc-400' : 'text-zinc-500'
     }
   }
 
@@ -206,7 +240,15 @@ export default function AdminDashboard() {
                   )}
                 </div>
 
-                <div className="hidden md:flex md:col-span-3 justify-end">
+                <div className="hidden md:flex md:col-span-3 justify-end gap-2">
+                  <button 
+                    onClick={() => openLogViewer(p)}
+                    className={`text-xs font-medium px-3 py-2 rounded transition-colors flex items-center gap-1.5 ${
+                      isDark ? "bg-zinc-900 text-zinc-300 hover:text-white hover:bg-zinc-800" : "bg-zinc-100 text-zinc-600 hover:text-black hover:bg-zinc-200"
+                    }`}
+                  >
+                    <Eye size={14} /> Log
+                  </button>
                   <button 
                     onClick={() => toggleLock(p.id, p.isLocked)}
                     className={`text-xs font-medium px-4 py-2 rounded transition-colors ${
@@ -229,6 +271,70 @@ export default function AdminDashboard() {
           </div>
         )}
       </main>
+
+      {/* Log Viewer Modal */}
+      {selectedLogUser && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 md:p-6">
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setSelectedLogUser(null)}></div>
+          <div className={`relative w-full max-w-2xl max-h-[85vh] flex flex-col rounded-xl shadow-2xl animate-in fade-in zoom-in-95 duration-200 ${isDark ? 'bg-[#0a0a0a] border border-zinc-800' : 'bg-white border border-zinc-100'}`}>
+            
+            <div className={`flex items-center justify-between p-6 border-b ${isDark ? 'border-zinc-900' : 'border-zinc-100'}`}>
+              <div>
+                <h2 className={`text-lg font-medium ${isDark ? 'text-white' : 'text-black'}`}>Log Bukti: {selectedLogUser.name}</h2>
+                <p className={`text-xs ${isDark ? 'text-zinc-500' : 'text-zinc-500'}`}>{selectedLogUser.email}</p>
+              </div>
+              <button onClick={() => setSelectedLogUser(null)} className={`transition-colors ${isDark ? 'text-zinc-500 hover:text-white' : 'text-zinc-400 hover:text-black'}`}>
+                <X size={20} />
+              </button>
+            </div>
+
+            <div className="flex-1 overflow-y-auto p-6 space-y-6">
+              {loadingLogs ? (
+                <div className="flex justify-center py-10">
+                  <div className={`w-5 h-5 border-2 rounded-full animate-spin ${isDark ? 'border-zinc-600 border-t-white' : 'border-zinc-300 border-t-black'}`}></div>
+                </div>
+              ) : userLogs.length === 0 ? (
+                <div className={`text-center py-10 text-sm ${isDark ? 'text-zinc-500' : 'text-zinc-400'}`}>
+                  Tidak ada log aktivitas untuk peserta ini.
+                </div>
+              ) : (
+                <div className={`relative ml-3 space-y-8 pb-4 border-l ${isDark ? 'border-zinc-900' : 'border-zinc-100'}`}>
+                  {userLogs.map((log) => (
+                    <div key={log.id} className="relative pl-6">
+                      <div className={`absolute -left-[7px] top-1.5 w-3 h-3 rounded-full border-2 ${isDark ? 'bg-[#0a0a0a] border-zinc-700' : 'bg-white border-zinc-300'}`}></div>
+                      
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className={`text-[10px] font-bold uppercase tracking-widest ${getEventTypeColor(log.eventType, isDark)}`}>
+                          {log.eventType}
+                        </span>
+                        <span className={`text-xs flex items-center gap-1 ${isDark ? 'text-zinc-600' : 'text-zinc-400'}`}>
+                          <Clock size={12} />
+                          {new Date(log.createdAt).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+                        </span>
+                      </div>
+                      
+                      <div className={`text-sm mb-3 ${isDark ? 'text-zinc-300' : 'text-zinc-700'}`}>
+                        {log.details || "Aktivitas dicatat."}
+                      </div>
+                      
+                      {log.snapshotUrl && (
+                        <div className="mt-2">
+                          <img 
+                            src={log.snapshotUrl} 
+                            alt="Snapshot bukti" 
+                            className={`w-full max-w-sm rounded-lg border object-cover ${isDark ? 'border-zinc-800' : 'border-zinc-200'}`}
+                          />
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   )
 }
