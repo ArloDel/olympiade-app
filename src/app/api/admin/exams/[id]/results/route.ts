@@ -36,10 +36,19 @@ export async function GET(
 
     const totalQuestions = exam._count.questions;
 
-    // Fetch all students
+    // Fetch all students including their warnings and session logs for this exam
     const students = await prisma.user.findMany({
       where: { role: "STUDENT" },
-      select: { id: true, name: true, email: true }
+      select: { 
+        id: true, 
+        name: true, 
+        email: true,
+        warnings: true,
+        sessionLogs: {
+          where: { examId: examId },
+          select: { eventType: true, createdAt: true }
+        }
+      }
     });
 
     // Fetch all answers for this exam
@@ -82,10 +91,25 @@ export async function GET(
       const totalWrong = wrongAnswers + unanswered;
       const score = totalQuestions > 0 ? (correctAnswers / totalQuestions) * 100 : 0;
 
+      // Calculate duration
+      let durationStr = "-";
+      const startLog = student.sessionLogs.find(l => l.eventType === "START");
+      const finishLog = student.sessionLogs.find(l => l.eventType === "FINISH");
+      
+      if (startLog && finishLog) {
+        const diffMs = finishLog.createdAt.getTime() - startLog.createdAt.getTime();
+        const diffMins = Math.floor(diffMs / 60000);
+        durationStr = `${diffMins} menit`;
+      } else if (studentAnswers.length > 0) {
+        durationStr = "Selesai (N/A)";
+      }
+
       return {
         id: student.id,
         name: student.name || "Unknown",
         email: student.email || "No Email",
+        duration: durationStr,
+        warnings: student.warnings || 0,
         correctAnswers,
         wrongAnswers: totalWrong,
         unanswered,
