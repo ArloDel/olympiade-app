@@ -41,6 +41,8 @@ export default function ExamTakingInterface() {
       const data = await res.json()
       if (data.success) {
         setQuestions(data.data)
+        // Trigger START log
+        fetch(`/api/exams/${examId}/start`, { method: "POST" }).catch(console.error)
       } else {
         console.error(data.error)
       }
