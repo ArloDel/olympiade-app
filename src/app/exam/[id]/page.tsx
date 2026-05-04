@@ -3,7 +3,7 @@
 import { useSession } from "next-auth/react"
 import { useRouter, useParams } from "next/navigation"
 import { useEffect, useState, useRef } from "react"
-import { Clock, ChevronLeft, ChevronRight, Flag, CheckCircle, LayoutGrid, X } from "lucide-react"
+import { Clock, ChevronLeft, ChevronRight, Flag, LayoutGrid, X, Moon, Sun, Shield } from "lucide-react"
 
 export default function ExamTakingInterface() {
   const { data: session, status } = useSession()
@@ -30,6 +30,10 @@ export default function ExamTakingInterface() {
 
   // Proctoring State
   const [warningModal, setWarningModal] = useState<{ show: boolean, warnings: number, isLocked: boolean } | null>(null)
+
+  // Theme state matches dashboard
+  const [theme, setTheme] = useState<"dark" | "light">("dark")
+  const isDark = theme === "dark"
 
   const fetchQuestions = async () => {
     try {
@@ -231,14 +235,18 @@ export default function ExamTakingInterface() {
   }
 
   if (loading || status === "loading") {
-    return <div className="min-h-screen flex items-center justify-center bg-slate-900 text-white">Memuat soal ujian...</div>
+    return (
+      <div className={`min-h-screen flex items-center justify-center transition-colors ${isDark ? 'bg-[#0a0a0a]' : 'bg-white'}`}>
+        <div className={`w-5 h-5 border-2 rounded-full animate-spin ${isDark ? 'border-zinc-600 border-t-white' : 'border-zinc-300 border-t-black'}`}></div>
+      </div>
+    )
   }
 
   if (questions.length === 0) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-slate-900 text-white gap-4">
-        <div className="text-xl">Tidak ada soal untuk ujian ini.</div>
-        <button onClick={() => router.push("/dashboard")} className="px-4 py-2 bg-blue-600 rounded">Kembali ke Dashboard</button>
+      <div className={`min-h-screen flex flex-col items-center justify-center transition-colors ${isDark ? 'bg-[#0a0a0a] text-zinc-400' : 'bg-white text-zinc-500'} gap-4`}>
+        <div className="text-sm">Tidak ada soal untuk ujian ini.</div>
+        <button onClick={() => router.push("/dashboard")} className={`text-xs font-medium px-4 py-2 rounded transition-colors ${isDark ? 'bg-white text-black hover:bg-zinc-200' : 'bg-black text-white hover:bg-zinc-800'}`}>Kembali ke Dashboard</button>
       </div>
     )
   }
@@ -248,125 +256,144 @@ export default function ExamTakingInterface() {
   const isFlagged = flagged.has(currentQ.id)
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-900 flex flex-col overflow-hidden relative">
+    <div className={`min-h-screen transition-colors duration-300 flex flex-col font-sans overflow-hidden relative ${isDark ? 'bg-[#0a0a0a] text-zinc-300 selection:bg-white/20' : 'bg-white text-zinc-600 selection:bg-black/10'}`}>
       
       {/* Floating Camera View */}
-      <div className="fixed bottom-4 left-4 lg:bottom-8 lg:left-8 z-40 w-28 h-36 sm:w-36 sm:h-48 bg-slate-900 rounded-xl overflow-hidden shadow-2xl border-2 border-slate-700/50 flex items-center justify-center">
+      <div className={`fixed bottom-4 left-4 lg:bottom-8 lg:left-8 z-40 w-28 h-36 sm:w-36 sm:h-48 rounded overflow-hidden shadow-2xl border ${isDark ? 'border-zinc-800' : 'border-zinc-200'} flex items-center justify-center bg-black`}>
         <video 
           ref={videoRef} 
           autoPlay 
           playsInline 
           muted 
-          className="w-full h-full object-cover"
+          className="w-full h-full object-cover opacity-80"
           style={{ transform: "scaleX(-1)" }}
         />
-        <div className="absolute top-2 left-2 flex items-center gap-1.5 bg-black/60 px-2 py-1 rounded-md text-[10px] font-bold text-white backdrop-blur-md">
-          <div className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse"></div>
+        <div className="absolute top-2 left-2 flex items-center gap-1.5 bg-black/60 px-2 py-1 text-[10px] font-bold text-white backdrop-blur-md">
+          <div className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse"></div>
           REC
         </div>
       </div>
 
       {/* Proctoring Warning Modal */}
       {warningModal && warningModal.show && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/80 backdrop-blur-sm p-4">
-          <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-xl max-w-md w-full p-6 text-center border-2 border-red-500">
-            <div className="w-16 h-16 bg-red-100 text-red-500 rounded-full flex items-center justify-center mx-auto mb-4">
-              <Flag size={32} />
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+          <div className={`max-w-md w-full p-8 border ${isDark ? 'bg-[#0a0a0a] border-rose-900/50' : 'bg-white border-rose-200'} text-center shadow-2xl`}>
+            <div className="w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-6 bg-rose-500/10 text-rose-500">
+              <Flag size={24} />
             </div>
-            <h3 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">Pelanggaran Terdeteksi!</h3>
-            <p className="text-slate-600 dark:text-slate-300 mb-4">
+            <h3 className={`text-xl font-medium mb-3 ${isDark ? 'text-white' : 'text-black'}`}>Pelanggaran Terdeteksi!</h3>
+            <p className={`text-sm mb-6 ${isDark ? 'text-zinc-400' : 'text-zinc-600'}`}>
               Sistem mendeteksi Anda berpindah tab atau meminimalkan jendela browser.
             </p>
-            <div className="bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-400 p-3 rounded-lg font-medium mb-6">
+            <div className={`inline-flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest mb-6 ${isDark ? 'text-rose-500' : 'text-rose-600'}`}>
               Peringatan ke-{warningModal.warnings} dari 3
             </div>
             
             {warningModal.isLocked ? (
-              <p className="text-sm font-bold text-red-600 dark:text-red-400 mb-4 animate-pulse">
+              <p className="text-xs font-medium text-rose-500 mb-4 animate-pulse">
                 Akun Anda telah dikunci. Mengirim jawaban dan mengakhiri ujian...
               </p>
             ) : (
               <button 
                 onClick={() => setWarningModal(null)}
-                className="w-full py-3 bg-red-600 hover:bg-red-700 text-white font-bold rounded-xl transition-colors"
+                className={`w-full py-3 text-xs font-medium transition-colors ${isDark ? 'bg-white text-black hover:bg-zinc-200' : 'bg-black text-white hover:bg-zinc-800'}`}
               >
-                Saya Mengerti & Kembali ke Ujian
+                Saya Mengerti
               </button>
             )}
           </div>
         </div>
       )}
 
-      {/* Top Bar */}
-      <header className="bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 h-16 px-6 flex items-center justify-between shrink-0 sticky top-0 z-20">
-        <div className="font-bold text-lg text-slate-800 dark:text-slate-200 hidden sm:block">
-          Ujian Berlangsung
-        </div>
-        
-        {/* Timer */}
-        <div className={`flex items-center gap-2 px-4 py-1.5 rounded-full font-mono font-bold text-lg ${timeLeft < 300 ? 'bg-red-100 text-red-600 dark:bg-red-900/30' : 'bg-slate-100 text-slate-700 dark:bg-slate-700 dark:text-slate-200'}`}>
-          <Clock size={18} className={timeLeft < 300 ? 'animate-pulse' : ''} />
-          {formatTime(timeLeft)}
-        </div>
+      {/* Ultra Minimal Header */}
+      <header className={`sticky top-0 z-30 border-b ${isDark ? 'border-zinc-900 bg-[#0a0a0a]/80' : 'border-zinc-100 bg-white/80'} backdrop-blur-md`}>
+        <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
+          <div className={`font-semibold text-sm tracking-tight flex items-center gap-2 ${isDark ? 'text-white' : 'text-black'} hidden sm:flex`}>
+            <Shield size={16} />
+            Evaluasi Aktif
+          </div>
+          
+          {/* Timer */}
+          <div className={`flex items-center gap-2 font-mono text-sm tracking-widest ${timeLeft < 300 ? 'text-rose-500 animate-pulse' : (isDark ? 'text-zinc-300' : 'text-zinc-700')}`}>
+            <Clock size={14} />
+            {formatTime(timeLeft)}
+          </div>
 
-        <div className="flex items-center gap-3">
-          <button 
-            onClick={() => setShowGrid(!showGrid)}
-            className="p-2 text-slate-500 hover:text-blue-500 dark:hover:text-blue-400 bg-slate-100 dark:bg-slate-700 rounded-lg lg:hidden"
-          >
-            {showGrid ? <X size={20} /> : <LayoutGrid size={20} />}
-          </button>
-          <button 
-            onClick={handleSubmit}
-            disabled={isSubmitting}
-            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white text-sm font-bold rounded-lg transition-colors"
-          >
-            {isSubmitting ? "Menyimpan..." : "Selesai Ujian"}
-          </button>
+          <div className="flex items-center gap-4">
+            <button 
+              onClick={() => setTheme(isDark ? "light" : "dark")}
+              className={`text-xs flex items-center gap-1.5 transition-colors ${isDark ? 'text-zinc-500 hover:text-white' : 'text-zinc-400 hover:text-black'}`}
+            >
+              {isDark ? <Sun size={14} /> : <Moon size={14} />}
+            </button>
+
+            <button 
+              onClick={() => setShowGrid(!showGrid)}
+              className={`lg:hidden text-xs flex items-center transition-colors ${isDark ? 'text-zinc-500 hover:text-white' : 'text-zinc-400 hover:text-black'}`}
+            >
+              {showGrid ? <X size={16} /> : <LayoutGrid size={16} />}
+            </button>
+
+            <button 
+              onClick={handleSubmit}
+              disabled={isSubmitting}
+              className={`text-xs font-medium px-4 py-2 transition-colors disabled:opacity-50 ${isDark ? 'bg-white text-black hover:bg-zinc-200' : 'bg-black text-white hover:bg-zinc-800'}`}
+            >
+              {isSubmitting ? "Menyimpan..." : "Selesai"}
+            </button>
+          </div>
         </div>
       </header>
 
-      <div className="flex-1 flex overflow-hidden">
+      <div className="flex-1 flex max-w-7xl w-full mx-auto relative overflow-hidden">
         {/* Main Content */}
-        <main className="flex-1 overflow-y-auto p-4 sm:p-8">
-          <div className="max-w-3xl mx-auto">
+        <main className="flex-1 overflow-y-auto px-6 py-12">
+          <div className="max-w-2xl mx-auto">
             {/* Question Header */}
-            <div className="flex items-center justify-between mb-6">
-              <div className="text-xl font-bold text-slate-400">Soal {currentIndex + 1}</div>
+            <div className="flex items-center justify-between mb-10">
+              <div className={`text-xs font-bold uppercase tracking-widest ${isDark ? 'text-zinc-600' : 'text-zinc-400'}`}>
+                Soal {currentIndex + 1} <span className="font-normal mx-1 text-zinc-500">dari</span> {questions.length}
+              </div>
               <button 
                 onClick={() => toggleFlag(currentQ.id)}
-                className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-colors border ${isFlagged ? 'bg-orange-100 border-orange-200 text-orange-600 dark:bg-orange-900/30 dark:border-orange-800/50 dark:text-orange-400' : 'bg-white border-slate-200 text-slate-600 dark:bg-slate-800 dark:border-slate-700 dark:text-slate-400'}`}
+                className={`text-xs flex items-center gap-1.5 transition-colors ${isFlagged ? 'text-orange-500' : (isDark ? 'text-zinc-500 hover:text-zinc-300' : 'text-zinc-400 hover:text-zinc-600')}`}
               >
-                <Flag size={16} className={isFlagged ? 'fill-orange-500' : ''} />
-                {isFlagged ? 'Ditandai Ragu' : 'Ragu-ragu'}
+                <Flag size={14} className={isFlagged ? 'fill-orange-500' : ''} />
+                {isFlagged ? 'Ditandai Ragu' : 'Tandai Ragu'}
               </button>
             </div>
 
             {/* Question Card */}
-            <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 p-6 sm:p-8 mb-6 text-lg text-slate-800 dark:text-slate-200 leading-relaxed min-h-[150px]">
+            <div className={`text-lg mb-12 leading-relaxed font-light ${isDark ? 'text-zinc-200' : 'text-zinc-800'}`}>
               {currentQ.text}
             </div>
 
             {/* Options */}
-            <div className="space-y-3">
+            <div className="flex flex-col gap-3">
               {currentQ.options.map((opt: any, idx: number) => {
                 const selected = answers[currentQ.id] === opt.id
                 return (
                   <button
                     key={opt.id}
                     onClick={() => handleSelectOption(currentQ.id, opt.id)}
-                    className={`w-full text-left p-4 rounded-xl border-2 transition-all flex items-start gap-4 ${
+                    className={`w-full text-left p-4 border transition-colors flex items-start gap-4 ${
                       selected 
-                        ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20' 
-                        : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:border-blue-300 dark:hover:border-blue-700'
+                        ? (isDark ? 'border-white bg-white/5' : 'border-black bg-black/5') 
+                        : (isDark ? 'border-zinc-900 hover:border-zinc-700 bg-transparent' : 'border-zinc-100 hover:border-zinc-300 bg-transparent')
                     }`}
                   >
-                    <div className={`shrink-0 w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm ${
-                      selected ? 'bg-blue-500 text-white' : 'bg-slate-100 dark:bg-slate-700 text-slate-500'
+                    <div className={`shrink-0 text-xs font-mono mt-0.5 ${
+                      selected 
+                        ? (isDark ? 'text-white' : 'text-black') 
+                        : (isDark ? 'text-zinc-600' : 'text-zinc-400')
                     }`}>
                       {String.fromCharCode(65 + idx)}
                     </div>
-                    <div className={`mt-1 text-base ${selected ? 'text-blue-900 dark:text-blue-100' : 'text-slate-700 dark:text-slate-300'}`}>
+                    <div className={`text-sm ${
+                      selected 
+                        ? (isDark ? 'text-zinc-200' : 'text-zinc-800') 
+                        : (isDark ? 'text-zinc-400' : 'text-zinc-600')
+                    }`}>
                       {opt.text}
                     </div>
                   </button>
@@ -375,60 +402,68 @@ export default function ExamTakingInterface() {
             </div>
 
             {/* Navigation Bottom */}
-            <div className="flex items-center justify-between mt-10">
+            <div className={`mt-16 pt-8 border-t flex items-center justify-between ${isDark ? 'border-zinc-900' : 'border-zinc-100'}`}>
               <button 
                 onClick={() => setCurrentIndex(prev => Math.max(0, prev - 1))}
                 disabled={currentIndex === 0}
-                className="flex items-center gap-2 px-5 py-3 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 font-medium hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className={`text-xs flex items-center gap-2 transition-colors disabled:opacity-30 disabled:cursor-not-allowed ${isDark ? 'text-zinc-400 hover:text-white' : 'text-zinc-500 hover:text-black'}`}
               >
-                <ChevronLeft size={20} /> Sebelumnya
+                <ChevronLeft size={14} /> Sebelumnya
               </button>
               
               <button 
                 onClick={() => setCurrentIndex(prev => Math.min(questions.length - 1, prev + 1))}
                 disabled={currentIndex === questions.length - 1}
-                className="flex items-center gap-2 px-5 py-3 rounded-xl bg-slate-900 dark:bg-white text-white dark:text-slate-900 font-medium hover:bg-slate-800 dark:hover:bg-slate-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className={`text-xs flex items-center gap-2 transition-colors disabled:opacity-30 disabled:cursor-not-allowed ${isDark ? 'text-zinc-400 hover:text-white' : 'text-zinc-500 hover:text-black'}`}
               >
-                Selanjutnya <ChevronRight size={20} />
+                Selanjutnya <ChevronRight size={14} />
               </button>
             </div>
           </div>
         </main>
 
         {/* Sidebar / Grid Panel */}
-        <aside className={`${showGrid ? 'translate-x-0' : 'translate-x-full lg:translate-x-0'} fixed lg:static inset-y-0 right-0 z-30 w-72 bg-white dark:bg-slate-800 border-l border-slate-200 dark:border-slate-700 transition-transform duration-300 ease-in-out flex flex-col pt-16 lg:pt-0`}>
-          <div className="p-4 border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/50">
-            <h3 className="font-bold text-slate-800 dark:text-slate-200 mb-3">Navigasi Soal</h3>
+        <aside className={`${showGrid ? 'translate-x-0' : 'translate-x-full lg:translate-x-0'} absolute lg:static inset-y-0 right-0 z-30 w-72 ${isDark ? 'bg-[#0a0a0a] border-zinc-900' : 'bg-white border-zinc-100'} border-l transition-transform duration-300 ease-in-out flex flex-col shrink-0`}>
+          <div className={`p-6 border-b ${isDark ? 'border-zinc-900' : 'border-zinc-100'}`}>
+            <h3 className={`text-xs font-bold uppercase tracking-widest mb-4 ${isDark ? 'text-zinc-600' : 'text-zinc-400'}`}>Navigasi Soal</h3>
             
-            <div className="grid grid-cols-2 gap-2 text-xs">
-              <div className="flex items-center gap-2 text-slate-600 dark:text-slate-400">
-                <div className="w-3 h-3 rounded-sm bg-blue-500"></div> Dijawab
+            <div className="grid grid-cols-2 gap-3 text-[10px] tracking-wider uppercase font-medium">
+              <div className={`flex items-center gap-2 ${isDark ? 'text-zinc-500' : 'text-zinc-500'}`}>
+                <div className={`w-2 h-2 ${isDark ? 'bg-zinc-700' : 'bg-zinc-300'}`}></div> Dijawab
               </div>
-              <div className="flex items-center gap-2 text-slate-600 dark:text-slate-400">
-                <div className="w-3 h-3 rounded-sm bg-orange-500"></div> Ragu
+              <div className={`flex items-center gap-2 ${isDark ? 'text-zinc-500' : 'text-zinc-500'}`}>
+                <div className="w-2 h-2 bg-orange-500/50"></div> Ragu
               </div>
-              <div className="flex items-center gap-2 text-slate-600 dark:text-slate-400">
-                <div className="w-3 h-3 rounded-sm border border-slate-300 dark:border-slate-600"></div> Kosong
+              <div className={`flex items-center gap-2 ${isDark ? 'text-zinc-500' : 'text-zinc-500'}`}>
+                <div className={`w-2 h-2 border ${isDark ? 'border-zinc-800' : 'border-zinc-200'}`}></div> Kosong
               </div>
-              <div className="flex items-center gap-2 text-slate-600 dark:text-slate-400">
-                <div className="w-3 h-3 rounded-sm border-2 border-slate-800 dark:border-slate-200"></div> Saat ini
+              <div className={`flex items-center gap-2 ${isDark ? 'text-zinc-500' : 'text-zinc-500'}`}>
+                <div className={`w-2 h-2 border ${isDark ? 'border-white' : 'border-black'}`}></div> Saat ini
               </div>
             </div>
           </div>
           
-          <div className="flex-1 overflow-y-auto p-4">
+          <div className="flex-1 overflow-y-auto p-6">
             <div className="grid grid-cols-5 gap-2">
               {questions.map((q, idx) => {
                 const isCurrent = idx === currentIndex
                 const isAns = !!answers[q.id]
                 const isFlag = flagged.has(q.id)
 
-                let bgClass = "bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400"
-                if (isFlag) bgClass = "bg-orange-500 border-orange-500 text-white"
-                else if (isAns) bgClass = "bg-blue-500 border-blue-500 text-white"
+                let bgClass = isDark ? "text-zinc-500 border-zinc-900 hover:border-zinc-700" : "text-zinc-400 border-zinc-100 hover:border-zinc-300"
+                if (isFlag) {
+                  bgClass = "border-orange-500/30 text-orange-500" + (isDark ? " bg-orange-500/10" : " bg-orange-50")
+                } else if (isAns) {
+                  bgClass = isDark ? "bg-zinc-800 text-zinc-300 border-zinc-700" : "bg-zinc-100 text-zinc-700 border-zinc-200"
+                }
 
                 let borderClass = ""
-                if (isCurrent) borderClass = "ring-2 ring-offset-2 ring-slate-800 dark:ring-slate-200 dark:ring-offset-slate-900"
+                if (isCurrent) {
+                  borderClass = isDark ? "border-white text-white" : "border-black text-black"
+                  // override background and text for current
+                  if (isFlag) bgClass = "bg-orange-500/20 text-orange-500"
+                  if (isAns) bgClass = isDark ? "bg-zinc-800 text-white" : "bg-zinc-200 text-black"
+                }
 
                 return (
                   <button
@@ -437,7 +472,7 @@ export default function ExamTakingInterface() {
                       setCurrentIndex(idx)
                       if (window.innerWidth < 1024) setShowGrid(false)
                     }}
-                    className={`w-10 h-10 rounded flex items-center justify-center text-sm font-bold border transition-all ${bgClass} ${borderClass}`}
+                    className={`w-8 h-8 flex items-center justify-center text-[10px] font-mono border transition-all ${bgClass} ${borderClass}`}
                   >
                     {idx + 1}
                   </button>
@@ -450,7 +485,7 @@ export default function ExamTakingInterface() {
         {/* Mobile backdrop */}
         {showGrid && (
           <div 
-            className="fixed inset-0 bg-slate-900/50 z-20 lg:hidden"
+            className="fixed inset-0 bg-black/50 z-20 lg:hidden backdrop-blur-sm"
             onClick={() => setShowGrid(false)}
           />
         )}
