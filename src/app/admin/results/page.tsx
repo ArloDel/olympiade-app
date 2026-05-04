@@ -4,7 +4,10 @@ import { useSession, signOut } from "next-auth/react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { useEffect, useState } from "react"
-import { Settings, LogOut, Download, Search, ShieldCheck, Moon, Sun } from "lucide-react"
+import { Settings, LogOut, Search, ShieldCheck, Moon, Sun, FileText, FileSpreadsheet } from "lucide-react"
+import jsPDF from "jspdf"
+import "jspdf-autotable"
+import * as XLSX from "xlsx"
 
 export default function ResultsManagement() {
   const { data: session, status } = useSession()
@@ -65,33 +68,56 @@ export default function ResultsManagement() {
     }
   }
 
-  const exportToCSV = () => {
-    if (!resultsData || !resultsData.results) return
-
-    const headers = ["Nama Peserta", "Email", "Benar", "Salah", "Kosong", "Skor Akhir", "Status"]
-    const rows = resultsData.results.map((r: any) => [
-      `"${r.name}"`,
-      `"${r.email}"`,
+  const getTableData = () => {
+    if (!resultsData || !resultsData.results) return []
+    return resultsData.results.map((r: any, index: number) => [
+      index + 1,
+      r.name,
+      r.email,
+      r.duration || "-",
+      r.warnings || 0,
       r.correctAnswers,
       r.wrongAnswers,
       r.unanswered,
       r.score,
-      r.isSubmitted ? "Sudah Mengerjakan" : "Belum Mengerjakan"
+      r.isSubmitted ? "Selesai" : "Belum"
     ])
+  }
 
-    const csvContent = [
-      headers.join(","),
-      ...rows.map((row: any) => row.join(","))
-    ].join("\n")
+  const exportToPDF = () => {
+    if (!resultsData || !resultsData.results) return
+    const doc = new jsPDF()
+    
+    doc.setFontSize(16)
+    doc.text("Laporan Hasil Ujian - OlymApp", 14, 20)
+    
+    doc.setFontSize(12)
+    doc.text(`Modul: ${resultsData.examTitle}`, 14, 28)
+    doc.text(`Tanggal Cetak: ${new Date().toLocaleString('id-ID')}`, 14, 34)
 
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
-    const url = URL.createObjectURL(blob)
-    const link = document.createElement("a")
-    link.setAttribute("href", url)
-    link.setAttribute("download", `Rekap_Nilai_${resultsData.examTitle.replace(/\s+/g, "_")}.csv`)
-    document.body.appendChild(link)
-    link.click()
-    document.body.removeChild(link)
+    const headers = [["No", "Nama", "Email", "Durasi", "Pelanggaran", "B", "S", "K", "Skor", "Status"]]
+    
+    ;(doc as any).autoTable({
+      startY: 40,
+      head: headers,
+      body: getTableData(),
+      styles: { fontSize: 8 },
+      headStyles: { fillColor: [41, 41, 41] },
+    })
+
+    doc.save(`Rapor_${resultsData.examTitle.replace(/\s+/g, "_")}.pdf`)
+  }
+
+  const exportToExcel = () => {
+    if (!resultsData || !resultsData.results) return
+    const headers = ["No", "Nama", "Email", "Durasi", "Pelanggaran", "Benar", "Salah", "Kosong", "Skor", "Status"]
+    const data = [headers, ...getTableData()]
+    
+    const ws = XLSX.utils.aoa_to_sheet(data)
+    const wb = XLSX.utils.book_new()
+    XLSX.utils.book_append_sheet(wb, ws, "Rekap Nilai")
+    
+    XLSX.writeFile(wb, `Rapor_${resultsData.examTitle.replace(/\s+/g, "_")}.xlsx`)
   }
 
   const filteredResults = resultsData?.results?.filter((r: any) => 
@@ -157,17 +183,31 @@ export default function ResultsManagement() {
               ))}
             </select>
 
-            <button 
-              onClick={exportToCSV}
-              disabled={!resultsData || resultsData.results.length === 0}
-              className={`px-4 py-2.5 text-xs font-medium transition-colors whitespace-nowrap rounded disabled:cursor-not-allowed flex items-center gap-2 ${
-                isDark 
-                  ? 'bg-white text-black hover:bg-zinc-200 disabled:bg-zinc-900 disabled:text-zinc-600' 
-                  : 'bg-black text-white hover:bg-zinc-800 disabled:bg-zinc-100 disabled:text-zinc-400'
-              }`}
-            >
-              <Download size={14} /> Export CSV
-            </button>
+            <div className="flex items-center gap-2">
+              <button 
+                onClick={exportToPDF}
+                disabled={!resultsData || resultsData.results.length === 0}
+                className={`px-4 py-2.5 text-xs font-medium transition-colors whitespace-nowrap rounded disabled:cursor-not-allowed flex items-center gap-2 ${
+                  isDark 
+                    ? 'bg-rose-900/20 text-rose-500 hover:bg-rose-900/40 disabled:bg-zinc-900 disabled:text-zinc-600' 
+                    : 'bg-rose-50 text-rose-600 hover:bg-rose-100 disabled:bg-zinc-100 disabled:text-zinc-400'
+                }`}
+              >
+                <FileText size={14} /> Cetak PDF
+              </button>
+              
+              <button 
+                onClick={exportToExcel}
+                disabled={!resultsData || resultsData.results.length === 0}
+                className={`px-4 py-2.5 text-xs font-medium transition-colors whitespace-nowrap rounded disabled:cursor-not-allowed flex items-center gap-2 ${
+                  isDark 
+                    ? 'bg-emerald-900/20 text-emerald-500 hover:bg-emerald-900/40 disabled:bg-zinc-900 disabled:text-zinc-600' 
+                    : 'bg-emerald-50 text-emerald-600 hover:bg-emerald-100 disabled:bg-zinc-100 disabled:text-zinc-400'
+                }`}
+              >
+                <FileSpreadsheet size={14} /> Export Excel
+              </button>
+            </div>
           </div>
         </div>
 
@@ -199,8 +239,10 @@ export default function ResultsManagement() {
               <div className="min-w-[800px]">
                 {/* Header */}
                 <div className={`grid grid-cols-12 gap-4 pb-4 text-[10px] font-bold uppercase tracking-widest border-b ${isDark ? 'text-zinc-600 border-zinc-900' : 'text-zinc-400 border-zinc-100'}`}>
-                  <div className="col-span-3">Nama</div>
-                  <div className="col-span-3">Email</div>
+                  <div className="col-span-2">Nama</div>
+                  <div className="col-span-2">Email</div>
+                  <div className="col-span-1 text-center">Durasi</div>
+                  <div className="col-span-1 text-center" title="Pelanggaran">Pel.</div>
                   <div className="col-span-1 text-center">Benar</div>
                   <div className="col-span-1 text-center">Salah</div>
                   <div className="col-span-1 text-center">Kosong</div>
@@ -220,8 +262,10 @@ export default function ResultsManagement() {
                 ) : (
                   filteredResults.map((r: any) => (
                     <div key={r.id} className={`grid grid-cols-12 gap-4 py-4 items-center border-b transition-colors text-sm ${isDark ? 'border-zinc-900 hover:bg-zinc-900/30 text-zinc-300' : 'border-zinc-50 hover:bg-zinc-50 text-zinc-700'}`}>
-                      <div className={`col-span-3 truncate font-medium ${isDark ? 'text-zinc-200' : 'text-zinc-800'}`}>{r.name}</div>
-                      <div className={`col-span-3 truncate text-xs font-mono ${isDark ? 'text-zinc-600' : 'text-zinc-400'}`}>{r.email}</div>
+                      <div className={`col-span-2 truncate font-medium ${isDark ? 'text-zinc-200' : 'text-zinc-800'}`}>{r.name}</div>
+                      <div className={`col-span-2 truncate text-[10px] font-mono mt-0.5 ${isDark ? 'text-zinc-600' : 'text-zinc-400'}`}>{r.email}</div>
+                      <div className="col-span-1 text-center text-xs">{r.duration || "-"}</div>
+                      <div className={`col-span-1 text-center text-xs ${r.warnings > 0 ? 'text-rose-500 font-bold' : ''}`}>{r.warnings || 0}</div>
                       <div className="col-span-1 text-center font-medium">{r.correctAnswers}</div>
                       <div className="col-span-1 text-center font-medium">{r.wrongAnswers}</div>
                       <div className={`col-span-1 text-center text-xs ${isDark ? 'text-zinc-600' : 'text-zinc-400'}`}>{r.unanswered}</div>
