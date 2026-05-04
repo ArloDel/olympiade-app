@@ -314,7 +314,23 @@ export default function AdminDashboard() {
                       </div>
                       
                       <div className={`text-sm mb-3 ${isDark ? 'text-zinc-300' : 'text-zinc-700'}`}>
-                        {log.details || "Aktivitas dicatat."}
+                        {(() => {
+                          try {
+                            if (!log.details) return "Aktivitas dicatat.";
+                            const parsed = JSON.parse(log.details);
+                            let text = "";
+                            if (log.eventType === 'TAB_SWITCH') {
+                              text = `Peserta terdeteksi berpindah tab atau aplikasi. (Peringatan ke-${parsed.warningsCount || 1})`;
+                            } else if (log.eventType === 'LOCKED') {
+                              text = `Akun otomatis dikunci karena terlalu banyak peringatan (Total: ${parsed.warningsCount || 3}).`;
+                            } else {
+                              text = parsed.message || "Aktivitas mencurigakan dicatat.";
+                            }
+                            return text;
+                          } catch (e) {
+                            return log.details;
+                          }
+                        })()}
                       </div>
                       
                       {log.snapshotUrl && (

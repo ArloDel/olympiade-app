@@ -98,7 +98,7 @@ export default function ExamTakingInterface() {
 
   // Initialize Camera
   useEffect(() => {
-    if (status !== "authenticated") return;
+    if (status !== "authenticated" || loading) return;
 
     const startCamera = async () => {
       try {
@@ -120,7 +120,7 @@ export default function ExamTakingInterface() {
         streamRef.current.getTracks().forEach(track => track.stop());
       }
     };
-  }, [status]);
+  }, [status, loading]);
 
   // Proctoring: Tab Switch Detection
   useEffect(() => {
