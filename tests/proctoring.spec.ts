@@ -61,7 +61,7 @@ test.describe('Exam Proctoring System', () => {
     });
 
     // Mock camera permission (allow camera automatically)
-    await page.context().grantPermissions(['camera']);
+    // await page.context().grantPermissions(['camera']);
 
     // Mock navigator.mediaDevices.getUserMedia so it doesn't fail when there's no real camera
     await page.addInitScript(() => {
