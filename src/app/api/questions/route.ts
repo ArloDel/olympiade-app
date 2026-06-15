@@ -34,14 +34,16 @@ export async function GET(req: Request) {
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const { examId, text, order, options } = body;
+    const { examId, text, order, options, type, correctAnswer } = body;
 
-    if (!examId || !text || order === undefined || !options || !Array.isArray(options)) {
+    if (!examId || !text || order === undefined) {
       return NextResponse.json(
-        { success: false, error: "Missing required fields or invalid format" },
+        { success: false, error: "Missing required fields" },
         { status: 400 }
       );
     }
+
+    const questionType = type || "MULTIPLE_CHOICE";
 
     // Wrap in a transaction or use nested create
     const question = await prisma.question.create({
@@ -49,12 +51,16 @@ export async function POST(req: Request) {
         examId,
         text,
         order,
-        options: {
-          create: options.map((opt: any) => ({
-            text: opt.text,
-            isCorrect: opt.isCorrect,
-          })),
-        },
+        type: questionType,
+        correctAnswer: questionType === "SHORT_ANSWER" ? correctAnswer : null,
+        ...(questionType === "MULTIPLE_CHOICE" && options && Array.isArray(options) ? {
+          options: {
+            create: options.map((opt: any) => ({
+              text: opt.text,
+              isCorrect: opt.isCorrect,
+            })),
+          }
+        } : {})
       },
       include: {
         options: true,

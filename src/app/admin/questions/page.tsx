@@ -18,6 +18,8 @@ export default function QuestionsManagement() {
   // Form states
   const [loading, setLoading] = useState(false)
   const [questionText, setQuestionText] = useState("")
+  const [questionType, setQuestionType] = useState<"MULTIPLE_CHOICE" | "SHORT_ANSWER" | "ESSAY">("MULTIPLE_CHOICE")
+  const [correctAnswer, setCorrectAnswer] = useState("")
   const [options, setOptions] = useState([
     { text: "", isCorrect: true },
     { text: "", isCorrect: false },
@@ -129,7 +131,8 @@ export default function QuestionsManagement() {
   const handleSaveQuestion = async () => {
     if (!selectedExamId) return alert("Pilih ujian terlebih dahulu")
     if (!questionText.trim()) return alert("Teks soal tidak boleh kosong")
-    if (options.some(o => !o.text.trim())) return alert("Semua opsi jawaban harus diisi")
+    if (questionType === "MULTIPLE_CHOICE" && options.some(o => !o.text.trim())) return alert("Semua opsi jawaban harus diisi")
+    if (questionType === "SHORT_ANSWER" && !correctAnswer.trim()) return alert("Kunci jawaban tidak boleh kosong")
     
     setLoading(true)
     try {
@@ -140,12 +143,15 @@ export default function QuestionsManagement() {
           examId: selectedExamId,
           text: questionText,
           order: questions.length + 1,
-          options,
+          type: questionType,
+          correctAnswer: questionType === "SHORT_ANSWER" ? correctAnswer : null,
+          options: questionType === "MULTIPLE_CHOICE" ? options : [],
         }),
       })
       const data = await res.json()
       if (data.success) {
         setQuestionText("")
+        setCorrectAnswer("")
         setOptions([
           { text: "", isCorrect: true },
           { text: "", isCorrect: false },
@@ -235,6 +241,19 @@ export default function QuestionsManagement() {
               <label className={`block text-xs font-bold uppercase tracking-widest mb-4 ${isDark ? 'text-zinc-600' : 'text-zinc-400'}`}>
                 Tulis Pertanyaan Baru
               </label>
+
+              <div className="mb-4">
+                <select 
+                  value={questionType}
+                  onChange={(e) => setQuestionType(e.target.value as any)}
+                  className={`w-full p-3 text-sm outline-none transition-colors border ${isDark ? 'bg-[#0a0a0a] border-zinc-800 text-white focus:border-zinc-500' : 'bg-white border-zinc-200 text-black focus:border-zinc-400'}`}
+                >
+                  <option value="MULTIPLE_CHOICE">Pilihan Ganda</option>
+                  <option value="SHORT_ANSWER">Isian Singkat</option>
+                  <option value="ESSAY">Esai</option>
+                </select>
+              </div>
+
               <textarea 
                 rows={4}
                 value={questionText}
@@ -244,6 +263,7 @@ export default function QuestionsManagement() {
               />
             </div>
 
+            {questionType === "MULTIPLE_CHOICE" && (
             <div>
               <label className={`block text-xs font-bold uppercase tracking-widest mb-4 ${isDark ? 'text-zinc-600' : 'text-zinc-400'}`}>
                 Opsi Jawaban
@@ -271,10 +291,30 @@ export default function QuestionsManagement() {
                 ))}
               </div>
               
-              <div className="flex justify-between items-center mt-6">
+              <div className="flex justify-start items-center mt-6">
                 <button onClick={addOption} className={`text-xs font-medium transition-colors ${isDark ? 'text-zinc-500 hover:text-white' : 'text-zinc-400 hover:text-black'}`}>
                   + Tambah Opsi
                 </button>
+              </div>
+            </div>
+            )}
+
+            {questionType === "SHORT_ANSWER" && (
+              <div>
+                <label className={`block text-xs font-bold uppercase tracking-widest mb-4 ${isDark ? 'text-zinc-600' : 'text-zinc-400'}`}>
+                  Kunci Jawaban Singkat
+                </label>
+                <input 
+                  type="text"
+                  value={correctAnswer}
+                  onChange={(e) => setCorrectAnswer(e.target.value)}
+                  placeholder="Ketik kunci jawaban persis..."
+                  className={`w-full p-4 text-sm outline-none transition-colors border ${isDark ? 'bg-transparent border-zinc-800 text-white placeholder-zinc-700 focus:border-zinc-500' : 'bg-transparent border-zinc-200 text-black placeholder-zinc-300 focus:border-zinc-400'}`}
+                />
+              </div>
+            )}
+
+            <div className="flex justify-end items-center mt-6">
                 <button 
                   onClick={handleSaveQuestion}
                   disabled={loading || !selectedExamId}
@@ -286,7 +326,6 @@ export default function QuestionsManagement() {
                 >
                   {loading ? 'Menyimpan...' : 'Simpan Soal'}
                 </button>
-              </div>
             </div>
           </div>
 
@@ -305,8 +344,13 @@ export default function QuestionsManagement() {
               ) : (
                 questions.map((q, idx) => (
                   <div key={q.id} className={`py-4 border-b ${isDark ? 'border-zinc-900' : 'border-zinc-100'}`}>
-                    <div className={`text-[10px] font-bold mb-2 uppercase tracking-widest ${isDark ? 'text-zinc-600' : 'text-zinc-400'}`}>Soal {idx + 1}</div>
+                    <div className={`text-[10px] font-bold mb-2 uppercase tracking-widest flex justify-between ${isDark ? 'text-zinc-600' : 'text-zinc-400'}`}>
+                      <span>Soal {idx + 1}</span>
+                      <span className="font-normal px-2 py-0.5 rounded bg-black/5 dark:bg-white/5">{q.type === 'SHORT_ANSWER' ? 'Isian Singkat' : q.type === 'ESSAY' ? 'Esai' : 'Pilihan Ganda'}</span>
+                    </div>
                     <div className={`text-sm mb-3 leading-relaxed ${isDark ? 'text-zinc-300' : 'text-zinc-700'}`}>{q.text}</div>
+                    
+                    {q.type === 'MULTIPLE_CHOICE' && (
                     <div className="space-y-1">
                       {q.options.map((opt: any) => (
                         <div key={opt.id} className={`text-xs flex items-center gap-2 ${opt.isCorrect ? (isDark ? 'text-white font-medium' : 'text-black font-medium') : (isDark ? 'text-zinc-600' : 'text-zinc-400')}`}>
@@ -315,6 +359,13 @@ export default function QuestionsManagement() {
                         </div>
                       ))}
                     </div>
+                    )}
+
+                    {q.type === 'SHORT_ANSWER' && (
+                      <div className={`text-xs p-3 rounded border ${isDark ? 'bg-zinc-900 border-zinc-800 text-zinc-300' : 'bg-zinc-50 border-zinc-200 text-zinc-700'}`}>
+                        <span className="font-semibold mr-2 opacity-50">Kunci:</span> {q.correctAnswer}
+                      </div>
+                    )}
                   </div>
                 ))
               )}

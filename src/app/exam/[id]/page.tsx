@@ -15,8 +15,8 @@ export default function ExamTakingInterface() {
   const [questions, setQuestions] = useState<any[]>([])
   const [currentIndex, setCurrentIndex] = useState(0)
   
-  // State for answers mapping questionId -> optionId
-  const [answers, setAnswers] = useState<Record<string, string>>({})
+  // State for answers mapping questionId -> { optionId?: string, textAnswer?: string } | string
+  const [answers, setAnswers] = useState<Record<string, any>>({})
   // State for flagged questions
   const [flagged, setFlagged] = useState<Set<string>>(new Set())
   
@@ -71,8 +71,17 @@ export default function ExamTakingInterface() {
   const handleSelectOption = (qId: string, optId: string) => {
     setAnswers(prev => ({
       ...prev,
-      [qId]: optId
+      [qId]: { optionId: optId }
     }))
+  }
+
+  const checkAnswered = (qId: string) => {
+    const ans = answers[qId]
+    if (!ans) return false
+    if (typeof ans === 'string') return !!ans
+    if (ans.optionId) return true
+    if (ans.textAnswer && ans.textAnswer.trim().length > 0) return true
+    return false
   }
 
   useEffect(() => {
@@ -254,7 +263,7 @@ export default function ExamTakingInterface() {
   }
 
   const currentQ = questions[currentIndex]
-  const isAnswered = !!answers[currentQ.id]
+  const isAnswered = checkAnswered(currentQ.id)
   const isFlagged = flagged.has(currentQ.id)
 
   return (
@@ -370,10 +379,11 @@ export default function ExamTakingInterface() {
               {currentQ.text}
             </div>
 
-            {/* Options */}
+            {/* Options / Answer Input */}
+            {(!currentQ.type || currentQ.type === 'MULTIPLE_CHOICE') && (
             <div className="flex flex-col gap-3">
-              {currentQ.options.map((opt: any, idx: number) => {
-                const selected = answers[currentQ.id] === opt.id
+              {currentQ.options?.map((opt: any, idx: number) => {
+                const selected = answers[currentQ.id]?.optionId === opt.id || answers[currentQ.id] === opt.id
                 return (
                   <button
                     key={opt.id}
@@ -402,6 +412,41 @@ export default function ExamTakingInterface() {
                 )
               })}
             </div>
+            )}
+
+            {currentQ.type === 'SHORT_ANSWER' && (
+              <div className="flex flex-col gap-3">
+                <input 
+                  type="text"
+                  placeholder="Ketik jawaban Anda di sini..."
+                  value={answers[currentQ.id]?.textAnswer || (typeof answers[currentQ.id] === 'string' ? answers[currentQ.id] : "")}
+                  onChange={(e) => {
+                    setAnswers(prev => ({
+                      ...prev,
+                      [currentQ.id]: { textAnswer: e.target.value }
+                    }))
+                  }}
+                  className={`w-full p-4 text-sm outline-none transition-colors border focus:ring-1 ${isDark ? 'bg-[#0a0a0a] border-zinc-800 text-white placeholder-zinc-700 focus:border-white focus:ring-white/20' : 'bg-white border-zinc-200 text-black placeholder-zinc-400 focus:border-black focus:ring-black/10'}`}
+                />
+              </div>
+            )}
+
+            {currentQ.type === 'ESSAY' && (
+              <div className="flex flex-col gap-3">
+                <textarea 
+                  rows={8}
+                  placeholder="Ketik jawaban esai Anda di sini..."
+                  value={answers[currentQ.id]?.textAnswer || (typeof answers[currentQ.id] === 'string' ? answers[currentQ.id] : "")}
+                  onChange={(e) => {
+                    setAnswers(prev => ({
+                      ...prev,
+                      [currentQ.id]: { textAnswer: e.target.value }
+                    }))
+                  }}
+                  className={`w-full p-4 text-sm outline-none resize-y transition-colors border focus:ring-1 ${isDark ? 'bg-[#0a0a0a] border-zinc-800 text-white placeholder-zinc-700 focus:border-white focus:ring-white/20' : 'bg-white border-zinc-200 text-black placeholder-zinc-400 focus:border-black focus:ring-black/10'}`}
+                />
+              </div>
+            )}
 
             {/* Navigation Bottom */}
             <div className={`mt-16 pt-8 border-t flex items-center justify-between ${isDark ? 'border-zinc-900' : 'border-zinc-100'}`}>
@@ -449,7 +494,7 @@ export default function ExamTakingInterface() {
             <div className="grid grid-cols-5 gap-2">
               {questions.map((q, idx) => {
                 const isCurrent = idx === currentIndex
-                const isAns = !!answers[q.id]
+                const isAns = checkAnswered(q.id)
                 const isFlag = flagged.has(q.id)
 
                 let bgClass = isDark ? "text-zinc-500 border-zinc-900 hover:border-zinc-700" : "text-zinc-400 border-zinc-100 hover:border-zinc-300"

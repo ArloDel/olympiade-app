@@ -84,13 +84,21 @@ model Exam {
   updatedAt   DateTime @updatedAt
 }
 
+enum QuestionType {
+  MULTIPLE_CHOICE
+  SHORT_ANSWER
+  ESSAY
+}
+
 model Question {
-  id        String   @id @default(cuid())
-  examId    String
-  text      String   @db.Text // Can contain KaTeX/MathJax string
-  order     Int
+  id            String   @id @default(cuid())
+  examId        String
+  text          String   @db.Text // Can contain KaTeX/MathJax string
+  type          QuestionType @default(MULTIPLE_CHOICE)
+  correctAnswer String?  @db.Text
+  order         Int
   
-  exam      Exam     @relation(fields: [examId], references: [id], onDelete: Cascade)
+  exam          Exam     @relation(fields: [examId], references: [id], onDelete: Cascade)
   options   Option[]
   answers   Answer[]
   
@@ -112,11 +120,12 @@ model Answer {
   id         String   @id @default(cuid())
   userId     String
   questionId String
-  optionId   String
+  optionId   String?
+  textAnswer String?  @db.Text
   
   user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   question   Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
-  option     Option   @relation(fields: [optionId], references: [id], onDelete: Cascade)
+  option     Option?  @relation(fields: [optionId], references: [id], onDelete: Cascade)
   
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt

@@ -26,7 +26,8 @@ export async function POST(req: Request) {
     const userId = session.user.id;
 
     // Use a Prisma transaction to upsert all answers efficiently
-    const upserts = Object.entries(answers).map(([questionId, optionId]) => {
+    const upserts = Object.entries(answers).map(([questionId, answerData]) => {
+      const data = answerData as { optionId?: string, textAnswer?: string };
       return prisma.answer.upsert({
         where: {
           userId_questionId: {
@@ -35,12 +36,14 @@ export async function POST(req: Request) {
           },
         },
         update: {
-          optionId: optionId as string,
+          optionId: data.optionId || null,
+          textAnswer: data.textAnswer || null,
         },
         create: {
           userId: userId,
           questionId: questionId,
-          optionId: optionId as string,
+          optionId: data.optionId || null,
+          textAnswer: data.textAnswer || null,
         },
       });
     });
