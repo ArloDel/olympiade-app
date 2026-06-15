@@ -25,13 +25,11 @@ export async function GET(req: NextRequest) {
 
     const userId = session.user.id;
 
-    // Fetch the total questions count for the exam
+    // Fetch the exam and total questions
     const exam = await prisma.exam.findUnique({
       where: { id: examId },
       include: {
-        _count: {
-          select: { questions: true }
-        }
+        questions: { select: { id: true, points: true, type: true } }
       }
     });
 
@@ -39,7 +37,7 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ success: false, error: "Exam not found" }, { status: 404 });
     }
 
-    const totalQuestions = exam._count.questions;
+    const totalQuestions = exam.questions.length;
 
     // Fetch answers for this user and this exam
     const answers = await prisma.answer.findMany({
@@ -56,20 +54,42 @@ export async function GET(req: NextRequest) {
 
     let correctAnswers = 0;
     let wrongAnswers = 0;
+    let earnedPoints = 0;
+    let totalMaxPoints = 0;
+
+    const questionMap = new Map(exam.questions.map(q => [q.id, q]));
+    
+    exam.questions.forEach(q => {
+      totalMaxPoints += q.points;
+    });
 
     answers.forEach(ans => {
-      if (ans.option.isCorrect) {
-        correctAnswers++;
+      const q = questionMap.get(ans.questionId);
+      if (!q) return;
+
+      if (!q.type || q.type === 'MULTIPLE_CHOICE') {
+        if (ans.option?.isCorrect) {
+          correctAnswers++;
+          earnedPoints += q.points;
+        } else {
+          wrongAnswers++;
+        }
       } else {
-        wrongAnswers++;
+        // SHORT_ANSWER or ESSAY
+        if (ans.isGraded && ans.score !== null) {
+          earnedPoints += ans.score;
+          if (ans.score > 0) correctAnswers++;
+          else wrongAnswers++;
+        } else {
+          wrongAnswers++;
+        }
       }
     });
 
-    // If the user answered fewer questions than total, the unanaswered are also wrong
     const unanswered = totalQuestions - answers.length;
     wrongAnswers += unanswered;
 
-    const score = totalQuestions > 0 ? (correctAnswers / totalQuestions) * 100 : 0;
+    const score = totalMaxPoints > 0 ? (earnedPoints / totalMaxPoints) * 100 : 0;
 
     return NextResponse.json({
       success: true,

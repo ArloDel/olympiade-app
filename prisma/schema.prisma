@@ -96,6 +96,7 @@ model Question {
   text          String   @db.Text // Can contain KaTeX/MathJax string
   type          QuestionType @default(MULTIPLE_CHOICE)
   correctAnswer String?  @db.Text
+  points        Float    @default(1)
   order         Int
   
   exam          Exam     @relation(fields: [examId], references: [id], onDelete: Cascade)
@@ -122,6 +123,8 @@ model Answer {
   questionId String
   optionId   String?
   textAnswer String?  @db.Text
+  score      Float?
+  isGraded   Boolean  @default(false)
   
   user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   question   Question @relation(fields: [questionId], references: [id], onDelete: Cascade)

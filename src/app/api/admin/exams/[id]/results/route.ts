@@ -20,13 +20,11 @@ export async function GET(
       return NextResponse.json({ success: false, error: "Missing examId" }, { status: 400 });
     }
 
-    // Fetch the exam and total questions count
+    // Fetch the exam and total questions
     const exam = await prisma.exam.findUnique({
       where: { id: examId },
       include: {
-        _count: {
-          select: { questions: true }
-        }
+        questions: { select: { id: true, points: true, type: true } }
       }
     });
 
@@ -34,7 +32,7 @@ export async function GET(
       return NextResponse.json({ success: false, error: "Exam not found" }, { status: 404 });
     }
 
-    const totalQuestions = exam._count.questions;
+    const totalQuestions = exam.questions.length;
 
     // Fetch all students including their warnings and session logs for this exam
     const students = await prisma.user.findMany({
@@ -76,12 +74,36 @@ export async function GET(
       
       let correctAnswers = 0;
       let wrongAnswers = 0;
+      let earnedPoints = 0;
+      let totalMaxPoints = 0;
+
+      const questionMap = new Map(exam.questions.map(q => [q.id, q]));
+      
+      exam.questions.forEach(q => {
+        totalMaxPoints += q.points;
+      });
 
       studentAnswers.forEach(ans => {
-        if (ans.option?.isCorrect) {
-          correctAnswers++;
+        const q = questionMap.get(ans.questionId);
+        if (!q) return;
+
+        if (!q.type || q.type === 'MULTIPLE_CHOICE') {
+          if (ans.option?.isCorrect) {
+            correctAnswers++;
+            earnedPoints += q.points;
+          } else {
+            wrongAnswers++;
+          }
         } else {
-          wrongAnswers++;
+          // SHORT_ANSWER or ESSAY
+          if (ans.isGraded && ans.score !== null) {
+            earnedPoints += ans.score;
+            if (ans.score > 0) correctAnswers++;
+            else wrongAnswers++;
+          } else {
+            // Not graded yet counts as 0 points for now
+            wrongAnswers++;
+          }
         }
       });
 
@@ -89,7 +111,7 @@ export async function GET(
       
       // If unanswered > 0, they count as wrong in terms of final score logic, but we track them separately
       const totalWrong = wrongAnswers + unanswered;
-      const score = totalQuestions > 0 ? (correctAnswers / totalQuestions) * 100 : 0;
+      const score = totalMaxPoints > 0 ? (earnedPoints / totalMaxPoints) * 100 : 0;
 
       // Calculate duration
       let durationStr = "-";

@@ -20,6 +20,7 @@ export default function QuestionsManagement() {
   const [questionText, setQuestionText] = useState("")
   const [questionType, setQuestionType] = useState<"MULTIPLE_CHOICE" | "SHORT_ANSWER" | "ESSAY">("MULTIPLE_CHOICE")
   const [correctAnswer, setCorrectAnswer] = useState("")
+  const [points, setPoints] = useState("1")
   const [options, setOptions] = useState([
     { text: "", isCorrect: true },
     { text: "", isCorrect: false },
@@ -144,6 +145,7 @@ export default function QuestionsManagement() {
           text: questionText,
           order: questions.length + 1,
           type: questionType,
+          points: parseFloat(points) || 1,
           correctAnswer: questionType === "SHORT_ANSWER" ? correctAnswer : null,
           options: questionType === "MULTIPLE_CHOICE" ? options : [],
         }),
@@ -152,6 +154,7 @@ export default function QuestionsManagement() {
       if (data.success) {
         setQuestionText("")
         setCorrectAnswer("")
+        setPoints("1")
         setOptions([
           { text: "", isCorrect: true },
           { text: "", isCorrect: false },
@@ -189,6 +192,7 @@ export default function QuestionsManagement() {
               <Link href="/admin" className={`transition-colors ${isDark ? 'text-zinc-500 hover:text-white' : 'text-zinc-500 hover:text-black'}`}>Monitoring</Link>
               <Link href="/admin/exams" className={`transition-colors ${isDark ? 'text-zinc-500 hover:text-white' : 'text-zinc-500 hover:text-black'}`}>Ujian</Link>
               <Link href="/admin/questions" className={`font-medium ${isDark ? 'text-white' : 'text-black'}`}>Soal</Link>
+              <Link href="/admin/grading" className={`transition-colors ${isDark ? 'text-zinc-500 hover:text-white' : 'text-zinc-500 hover:text-black'}`}>Koreksi</Link>
               <Link href="/admin/results" className={`transition-colors ${isDark ? 'text-zinc-500 hover:text-white' : 'text-zinc-500 hover:text-black'}`}>Rekap Nilai</Link>
             </nav>
           </div>
@@ -242,16 +246,30 @@ export default function QuestionsManagement() {
                 Tulis Pertanyaan Baru
               </label>
 
-              <div className="mb-4">
-                <select 
-                  value={questionType}
-                  onChange={(e) => setQuestionType(e.target.value as any)}
-                  className={`w-full p-3 text-sm outline-none transition-colors border ${isDark ? 'bg-[#0a0a0a] border-zinc-800 text-white focus:border-zinc-500' : 'bg-white border-zinc-200 text-black focus:border-zinc-400'}`}
-                >
-                  <option value="MULTIPLE_CHOICE">Pilihan Ganda</option>
-                  <option value="SHORT_ANSWER">Isian Singkat</option>
-                  <option value="ESSAY">Esai</option>
-                </select>
+              <div className="mb-4 flex gap-4">
+                <div className="flex-1">
+                  <select 
+                    value={questionType}
+                    onChange={(e) => setQuestionType(e.target.value as any)}
+                    className={`w-full p-3 text-sm outline-none transition-colors border ${isDark ? 'bg-[#0a0a0a] border-zinc-800 text-white focus:border-zinc-500' : 'bg-white border-zinc-200 text-black focus:border-zinc-400'}`}
+                  >
+                    <option value="MULTIPLE_CHOICE">Pilihan Ganda</option>
+                    <option value="SHORT_ANSWER">Isian Singkat</option>
+                    <option value="ESSAY">Esai</option>
+                  </select>
+                </div>
+                <div className="w-32">
+                  <input 
+                    type="number"
+                    value={points}
+                    onChange={(e) => setPoints(e.target.value)}
+                    placeholder="Poin"
+                    min="0"
+                    step="0.5"
+                    title="Bobot Nilai Maksimal"
+                    className={`w-full p-3 text-sm outline-none transition-colors border ${isDark ? 'bg-[#0a0a0a] border-zinc-800 text-white focus:border-zinc-500' : 'bg-white border-zinc-200 text-black focus:border-zinc-400'}`}
+                  />
+                </div>
               </div>
 
               <textarea 
@@ -346,7 +364,10 @@ export default function QuestionsManagement() {
                   <div key={q.id} className={`py-4 border-b ${isDark ? 'border-zinc-900' : 'border-zinc-100'}`}>
                     <div className={`text-[10px] font-bold mb-2 uppercase tracking-widest flex justify-between ${isDark ? 'text-zinc-600' : 'text-zinc-400'}`}>
                       <span>Soal {idx + 1}</span>
-                      <span className="font-normal px-2 py-0.5 rounded bg-black/5 dark:bg-white/5">{q.type === 'SHORT_ANSWER' ? 'Isian Singkat' : q.type === 'ESSAY' ? 'Esai' : 'Pilihan Ganda'}</span>
+                      <div className="flex gap-2">
+                        <span className="font-normal px-2 py-0.5 rounded bg-black/5 dark:bg-white/5">{q.points || 1} Poin</span>
+                        <span className="font-normal px-2 py-0.5 rounded bg-black/5 dark:bg-white/5">{q.type === 'SHORT_ANSWER' ? 'Isian Singkat' : q.type === 'ESSAY' ? 'Esai' : 'Pilihan Ganda'}</span>
+                      </div>
                     </div>
                     <div className={`text-sm mb-3 leading-relaxed ${isDark ? 'text-zinc-300' : 'text-zinc-700'}`}>{q.text}</div>
                     

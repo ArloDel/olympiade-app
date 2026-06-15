@@ -34,7 +34,7 @@ export async function GET(req: Request) {
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const { examId, text, order, options, type, correctAnswer } = body;
+    const { examId, text, order, options, type, correctAnswer, points } = body;
 
     if (!examId || !text || order === undefined) {
       return NextResponse.json(
@@ -52,6 +52,7 @@ export async function POST(req: Request) {
         text,
         order,
         type: questionType,
+        points: points !== undefined ? parseFloat(points) : 1,
         correctAnswer: questionType === "SHORT_ANSWER" ? correctAnswer : null,
         ...(questionType === "MULTIPLE_CHOICE" && options && Array.isArray(options) ? {
           options: {

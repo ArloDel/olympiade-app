@@ -37,6 +37,16 @@ export default function ExamTakingInterface() {
 
   const fetchQuestions = async () => {
     try {
+      // Check if already finished
+      const examsRes = await fetch('/api/exams');
+      const examsData = await examsRes.json();
+      const thisExam = examsData.data?.find((e: any) => e.id === examId);
+      if (thisExam?.isFinished) {
+        alert("Anda sudah menyelesaikan ujian ini.");
+        router.replace("/dashboard");
+        return;
+      }
+
       const res = await fetch(`/api/questions?examId=${examId}`)
       const data = await res.json()
       if (data.success) {
