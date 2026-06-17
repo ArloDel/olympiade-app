@@ -80,10 +80,15 @@ export default function GradingManagement() {
     setScoreInputs(prev => ({ ...prev, [id]: val }))
   }
 
-  const submitScore = async (answerId: string) => {
+  const submitScore = async (answerId: string, maxPoints: number) => {
     const scoreVal = scoreInputs[answerId]
     if (scoreVal === undefined || scoreVal.trim() === "") {
       return alert("Masukkan nilai terlebih dahulu")
+    }
+
+    const parsedScore = parseFloat(scoreVal);
+    if (parsedScore < 0 || parsedScore > maxPoints) {
+      return alert(`Nilai harus berada di antara 0 hingga bobot maksimal (${maxPoints} poin)`);
     }
 
     setSubmittingId(answerId)
@@ -233,7 +238,7 @@ export default function GradingManagement() {
                     className={`w-24 p-2 text-sm text-center outline-none transition-colors border rounded ${isDark ? 'bg-black border-zinc-700 text-white focus:border-white' : 'bg-white border-zinc-300 text-black focus:border-black'}`}
                   />
                   <button 
-                    onClick={() => submitScore(ans.id)}
+                    onClick={() => submitScore(ans.id, ans.question.points)}
                     disabled={submittingId === ans.id}
                     className={`px-4 py-2 text-xs font-medium transition-colors rounded disabled:opacity-50 ${isDark ? 'bg-white text-black hover:bg-zinc-200' : 'bg-black text-white hover:bg-zinc-800'}`}
                   >

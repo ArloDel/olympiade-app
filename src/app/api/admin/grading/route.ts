@@ -58,10 +58,25 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ success: false, error: "Missing answerId or score" }, { status: 400 });
     }
 
+    const answer = await prisma.answer.findUnique({
+      where: { id: answerId },
+      include: { question: true }
+    });
+
+    if (!answer) {
+      return NextResponse.json({ success: false, error: "Answer not found" }, { status: 404 });
+    }
+
+    const parsedScore = parseFloat(score);
+
+    if (parsedScore < 0 || parsedScore > answer.question.points) {
+      return NextResponse.json({ success: false, error: `Score must be between 0 and ${answer.question.points}` }, { status: 400 });
+    }
+
     const updatedAnswer = await prisma.answer.update({
       where: { id: answerId },
       data: {
-        score: parseFloat(score),
+        score: parsedScore,
         isGraded: true
       }
     });

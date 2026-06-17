@@ -3,7 +3,7 @@
 import { useSession, signOut } from "next-auth/react"
 import { useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
-import { LogOut, Camera, Shield, Award, Moon, Sun, Monitor, AlertTriangle } from "lucide-react"
+import { LogOut, Camera, Shield, Award, Moon, Sun, Monitor, AlertTriangle, Clock } from "lucide-react"
 
 export default function DashboardPage() {
   const { data: session, status } = useSession()
@@ -161,11 +161,15 @@ export default function DashboardPage() {
                 </div>
 
                 {!result.isFullyGraded ? (
-                  <div className={`p-6 border rounded-lg flex flex-col items-center justify-center text-center gap-4 ${isDark ? 'bg-amber-500/10 border-amber-500/20 text-amber-500' : 'bg-amber-50 border-amber-200 text-amber-600'}`}>
-                    <AlertTriangle size={24} />
+                  <div className={`p-8 border border-dashed rounded-xl flex flex-col items-center justify-center text-center gap-5 transition-colors duration-300 ${isDark ? 'border-zinc-800 bg-[#0a0a0a] text-white' : 'border-zinc-300 bg-zinc-50 text-black'}`}>
+                    <div className={`w-12 h-12 rounded-full flex items-center justify-center ${isDark ? 'bg-white text-black' : 'bg-black text-white'}`}>
+                      <Clock size={20} />
+                    </div>
                     <div>
-                      <h3 className="font-medium text-lg">Menunggu Penilaian Guru</h3>
-                      <p className="text-xs opacity-80 mt-1 max-w-sm mx-auto">Ujian ini mengandung soal esai atau isian singkat yang sedang dikoreksi secara manual oleh guru Anda.</p>
+                      <h3 className="font-medium text-lg tracking-tight mb-2">Menunggu Penilaian Guru</h3>
+                      <p className={`text-sm leading-relaxed max-w-sm mx-auto ${isDark ? 'text-zinc-500' : 'text-zinc-500'}`}>
+                        Modul ini mengandung soal esai atau isian singkat yang sedang dikoreksi secara manual.
+                      </p>
                     </div>
                   </div>
                 ) : !showScore ? (
