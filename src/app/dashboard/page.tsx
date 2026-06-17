@@ -15,6 +15,7 @@ export default function DashboardPage() {
   const [examLoading, setExamLoading] = useState(true)
   const [result, setResult] = useState<any>(null)
   const [theme, setTheme] = useState<"dark" | "light">("dark")
+  const [showScore, setShowScore] = useState(false)
 
   useEffect(() => {
     if (status === "unauthenticated") {
@@ -155,33 +156,52 @@ export default function DashboardPage() {
                 <div className="mb-12">
                   <h2 className={`text-2xl font-medium mb-2 ${isDark ? 'text-white' : 'text-black'}`}>Evaluasi Selesai</h2>
                   <p className={`text-sm ${isDark ? 'text-zinc-500' : 'text-zinc-500'}`}>
-                    Anda telah menyelesaikan modul {exam.title}. Berikut adalah rekapitulasi penilaian.
+                    Anda telah menyelesaikan modul {exam.title}.
                   </p>
                 </div>
 
-                <div className="flex flex-col gap-10">
-                  <div className="flex flex-col">
-                    <span className={`text-[10px] font-bold uppercase tracking-widest mb-2 ${isDark ? 'text-zinc-600' : 'text-zinc-400'}`}>Skor Akhir</span>
-                    <span className={`text-8xl font-light tracking-tighter ${isDark ? 'text-white' : 'text-black'}`}>
-                      {result.score}
-                    </span>
+                {!result.isFullyGraded ? (
+                  <div className={`p-6 border rounded-lg flex flex-col items-center justify-center text-center gap-4 ${isDark ? 'bg-amber-500/10 border-amber-500/20 text-amber-500' : 'bg-amber-50 border-amber-200 text-amber-600'}`}>
+                    <AlertTriangle size={24} />
+                    <div>
+                      <h3 className="font-medium text-lg">Menunggu Penilaian Guru</h3>
+                      <p className="text-xs opacity-80 mt-1 max-w-sm mx-auto">Ujian ini mengandung soal esai atau isian singkat yang sedang dikoreksi secara manual oleh guru Anda.</p>
+                    </div>
                   </div>
+                ) : !showScore ? (
+                  <div className="flex justify-center py-10">
+                    <button 
+                      onClick={() => setShowScore(true)}
+                      className={`px-8 py-4 text-sm font-medium transition-transform hover:scale-105 rounded-full shadow-lg ${isDark ? 'bg-white text-black hover:bg-zinc-200' : 'bg-black text-white hover:bg-zinc-800'}`}
+                    >
+                      Lihat Hasil Ujian
+                    </button>
+                  </div>
+                ) : (
+                  <div className="flex flex-col gap-10 animate-in zoom-in-95 duration-500">
+                    <div className="flex flex-col">
+                      <span className={`text-[10px] font-bold uppercase tracking-widest mb-2 ${isDark ? 'text-zinc-600' : 'text-zinc-400'}`}>Skor Akhir</span>
+                      <span className={`text-8xl font-light tracking-tighter ${isDark ? 'text-white' : 'text-black'}`}>
+                        {result.score}
+                      </span>
+                    </div>
 
-                  <div className={`grid grid-cols-3 gap-8 py-8 border-t ${isDark ? 'border-zinc-900' : 'border-zinc-100'}`}>
-                    <div className="flex flex-col">
-                      <span className={`text-3xl font-medium ${isDark ? 'text-zinc-300' : 'text-zinc-700'}`}>{result.correctAnswers}</span>
-                      <span className={`text-xs mt-1 ${isDark ? 'text-zinc-500' : 'text-zinc-400'}`}>Benar</span>
-                    </div>
-                    <div className="flex flex-col">
-                      <span className={`text-3xl font-medium ${isDark ? 'text-zinc-300' : 'text-zinc-700'}`}>{result.wrongAnswers}</span>
-                      <span className={`text-xs mt-1 ${isDark ? 'text-zinc-500' : 'text-zinc-400'}`}>Salah</span>
-                    </div>
-                    <div className="flex flex-col">
-                      <span className={`text-3xl font-medium ${isDark ? 'text-zinc-300' : 'text-zinc-700'}`}>{result.unanswered}</span>
-                      <span className={`text-xs mt-1 ${isDark ? 'text-zinc-500' : 'text-zinc-400'}`}>Kosong</span>
+                    <div className={`grid grid-cols-3 gap-8 py-8 border-t ${isDark ? 'border-zinc-900' : 'border-zinc-100'}`}>
+                      <div className="flex flex-col">
+                        <span className={`text-3xl font-medium ${isDark ? 'text-zinc-300' : 'text-zinc-700'}`}>{result.correctAnswers}</span>
+                        <span className={`text-xs mt-1 ${isDark ? 'text-zinc-500' : 'text-zinc-400'}`}>Benar</span>
+                      </div>
+                      <div className="flex flex-col">
+                        <span className={`text-3xl font-medium ${isDark ? 'text-zinc-300' : 'text-zinc-700'}`}>{result.wrongAnswers}</span>
+                        <span className={`text-xs mt-1 ${isDark ? 'text-zinc-500' : 'text-zinc-400'}`}>Salah</span>
+                      </div>
+                      <div className="flex flex-col">
+                        <span className={`text-3xl font-medium ${isDark ? 'text-zinc-300' : 'text-zinc-700'}`}>{result.unanswered}</span>
+                        <span className={`text-xs mt-1 ${isDark ? 'text-zinc-500' : 'text-zinc-400'}`}>Kosong</span>
+                      </div>
                     </div>
                   </div>
-                </div>
+                )}
               </div>
             ) : (
               <div className="flex flex-col">

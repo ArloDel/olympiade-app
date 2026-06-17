@@ -56,6 +56,7 @@ export async function GET(req: NextRequest) {
     let wrongAnswers = 0;
     let earnedPoints = 0;
     let totalMaxPoints = 0;
+    let isFullyGraded = true;
 
     const questionMap = new Map(exam.questions.map(q => [q.id, q]));
     
@@ -76,6 +77,10 @@ export async function GET(req: NextRequest) {
         }
       } else {
         // SHORT_ANSWER or ESSAY
+        if (!ans.isGraded) {
+          isFullyGraded = false;
+        }
+
         if (ans.isGraded && ans.score !== null) {
           earnedPoints += ans.score;
           if (ans.score > 0) correctAnswers++;
@@ -98,7 +103,8 @@ export async function GET(req: NextRequest) {
         correctAnswers,
         wrongAnswers,
         unanswered,
-        totalQuestions
+        totalQuestions,
+        isFullyGraded
       }
     });
 
