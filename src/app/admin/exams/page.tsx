@@ -118,6 +118,22 @@ export default function ExamsManagement() {
     }
   }
 
+  const handleActivate = async (id: string) => {
+    if (!confirm("Aktifkan ujian ini? Ujian lain akan otomatis dinonaktifkan untuk siswa.")) return;
+    try {
+      const res = await fetch(`/api/exams/${id}/activate`, { method: "PATCH" });
+      const data = await res.json();
+      if (data.success) {
+        fetchExams();
+      } else {
+        alert("Gagal mengaktifkan ujian: " + data.error);
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Terjadi kesalahan sistem");
+    }
+  };
+
   const isDark = theme === "dark"
 
   return (
@@ -184,8 +200,20 @@ export default function ExamsManagement() {
             {exams.map(exam => (
               <div key={exam.id} className={`p-6 border rounded-lg transition-all ${isDark ? 'bg-[#0a0a0a] border-zinc-900 hover:border-zinc-800' : 'bg-white border-zinc-100 hover:border-zinc-200'}`}>
                 <div className="flex justify-between items-start mb-4">
-                  <h3 className={`text-lg font-medium truncate pr-4 ${isDark ? 'text-white' : 'text-black'}`}>{exam.title}</h3>
+                  <div>
+                    <h3 className={`text-lg font-medium truncate pr-4 ${isDark ? 'text-white' : 'text-black'}`}>{exam.title}</h3>
+                    {exam.isActive ? (
+                      <span className="inline-block mt-2 px-2 py-0.5 text-[10px] font-bold tracking-widest uppercase rounded bg-emerald-500/10 text-emerald-500 border border-emerald-500/20">Aktif</span>
+                    ) : (
+                      <span className="inline-block mt-2 px-2 py-0.5 text-[10px] font-bold tracking-widest uppercase rounded bg-zinc-500/10 text-zinc-500 border border-zinc-500/20">Tidak Aktif</span>
+                    )}
+                  </div>
                   <div className="flex gap-2">
+                    {!exam.isActive && (
+                      <button onClick={() => handleActivate(exam.id)} title="Setel Aktif" className={`transition-colors ${isDark ? 'text-zinc-500 hover:text-emerald-500' : 'text-zinc-400 hover:text-emerald-600'}`}>
+                        <ShieldCheck size={16} />
+                      </button>
+                    )}
                     <button onClick={() => handleOpenModal(exam)} className={`transition-colors ${isDark ? 'text-zinc-500 hover:text-white' : 'text-zinc-400 hover:text-black'}`}>
                       <Edit size={16} />
                     </button>

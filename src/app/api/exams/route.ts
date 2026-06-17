@@ -7,8 +7,10 @@ export async function GET() {
   try {
     const session = await getServerSession(authOptions);
     const userId = session?.user?.id;
+    const role = (session?.user as any)?.role || "STUDENT";
 
     const exams = await prisma.exam.findMany({
+      where: role === "STUDENT" ? { isActive: true } : undefined,
       orderBy: { createdAt: "desc" },
       include: {
         _count: {
