@@ -10,33 +10,22 @@ export default function GradingManagement() {
   const { data: session, status } = useSession()
   const router = useRouter()
 
-  const [exams, setExams] = useState<any[]>([])
+  const [exams, setExams] = useState<Record<string, any>[]>([])
   const [selectedExamId, setSelectedExamId] = useState<string>("")
-  const [answers, setAnswers] = useState<any[]>([])
+  const [answers, setAnswers] = useState<Record<string, any>[]>([])
   const [loading, setLoading] = useState(false)
   const [theme, setTheme] = useState<"dark" | "light">("dark")
+
+  type FilterStatus = "UNGRADED" | "GRADED" | "ALL"
+  const [filterStatus, setFilterStatus] = useState<FilterStatus>("UNGRADED")
+  const [currentPage, setCurrentPage] = useState(1)
+  const ITEMS_PER_PAGE = 10
 
   // For grading
   const [scoreInputs, setScoreInputs] = useState<Record<string, string>>({})
   const [submittingId, setSubmittingId] = useState<string | null>(null)
 
-  useEffect(() => {
-    if (status === "unauthenticated") {
-      router.replace("/login")
-    } else if (status === "authenticated") {
-      fetchExams()
-    }
-  }, [status, router])
-
-  useEffect(() => {
-    if (selectedExamId) {
-      fetchAnswersToGrade(selectedExamId)
-    } else {
-      setAnswers([])
-    }
-  }, [selectedExamId])
-
-  const fetchExams = async () => {
+  async function fetchExams() {
     try {
       const res = await fetch("/api/exams")
       const data = await res.json()
@@ -51,7 +40,7 @@ export default function GradingManagement() {
     }
   }
 
-  const fetchAnswersToGrade = async (examId: string) => {
+  async function fetchAnswersToGrade(examId: string) {
     setLoading(true)
     try {
       const res = await fetch(`/api/admin/grading?examId=${examId}`)
@@ -60,7 +49,7 @@ export default function GradingManagement() {
         setAnswers(data.data)
         // Initialize inputs with existing scores
         const initialInputs: Record<string, string> = {}
-        data.data.forEach((ans: any) => {
+        data.data.forEach((ans: Record<string, any>) => {
           if (ans.score !== null) {
             initialInputs[ans.id] = ans.score.toString()
           }
@@ -75,6 +64,25 @@ export default function GradingManagement() {
       setLoading(false)
     }
   }
+
+  useEffect(() => {
+    if (status === "unauthenticated") {
+      router.replace("/login")
+    } else if (status === "authenticated") {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      fetchExams()
+    }
+  }, [status, router])
+
+  useEffect(() => {
+    if (selectedExamId) {
+      setCurrentPage(1)
+      setFilterStatus("UNGRADED")
+      fetchAnswersToGrade(selectedExamId)
+    } else {
+      setAnswers([])
+    }
+  }, [selectedExamId])
 
   const handleScoreChange = (id: string, val: string) => {
     setScoreInputs(prev => ({ ...prev, [id]: val }))
@@ -111,6 +119,32 @@ export default function GradingManagement() {
     } finally {
       setSubmittingId(null)
     }
+  }
+
+  // Filter & Pagination Logic
+  const filteredAnswers = answers.filter(ans => {
+    if (filterStatus === "UNGRADED") return !ans.isGraded
+    if (filterStatus === "GRADED") return ans.isGraded
+    return true
+  })
+
+  const totalPages = Math.max(1, Math.ceil(filteredAnswers.length / ITEMS_PER_PAGE))
+  
+  useEffect(() => {
+    if (currentPage > totalPages && totalPages > 0) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setCurrentPage(totalPages)
+    }
+  }, [totalPages, currentPage])
+
+  const paginatedAnswers = filteredAnswers.slice(
+    (currentPage - 1) * ITEMS_PER_PAGE,
+    currentPage * ITEMS_PER_PAGE
+  )
+
+  const handleFilterChange = (status: FilterStatus) => {
+    setFilterStatus(status)
+    setCurrentPage(1)
   }
 
   const isDark = theme === "dark"
@@ -180,11 +214,39 @@ export default function GradingManagement() {
           </div>
         ) : answers.length === 0 ? (
           <div className={`py-20 text-center text-sm border-2 border-dashed rounded-xl ${isDark ? 'border-zinc-900 text-zinc-600' : 'border-zinc-100 text-zinc-400'}`}>
-            Tidak ada jawaban esai/isian yang perlu dikoreksi.
+            Belum ada jawaban esai/isian yang masuk untuk modul ini.
           </div>
         ) : (
-          <div className="space-y-6">
-            {answers.map((ans, idx) => (
+          <>
+            {/* Filter Tabs */}
+            <div className={`flex items-center gap-4 mb-8 border-b overflow-x-auto ${isDark ? 'border-zinc-800' : 'border-zinc-200'}`}>
+              <button 
+                onClick={() => handleFilterChange("UNGRADED")}
+                className={`px-4 py-3 text-sm font-medium whitespace-nowrap border-b-2 transition-colors ${filterStatus === "UNGRADED" ? (isDark ? 'border-white text-white' : 'border-black text-black') : 'border-transparent text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300'}`}
+              >
+                Belum Dinilai ({answers.filter(a => !a.isGraded).length})
+              </button>
+              <button 
+                onClick={() => handleFilterChange("GRADED")}
+                className={`px-4 py-3 text-sm font-medium whitespace-nowrap border-b-2 transition-colors ${filterStatus === "GRADED" ? (isDark ? 'border-white text-white' : 'border-black text-black') : 'border-transparent text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300'}`}
+              >
+                Sudah Dinilai ({answers.filter(a => a.isGraded).length})
+              </button>
+              <button 
+                onClick={() => handleFilterChange("ALL")}
+                className={`px-4 py-3 text-sm font-medium whitespace-nowrap border-b-2 transition-colors ${filterStatus === "ALL" ? (isDark ? 'border-white text-white' : 'border-black text-black') : 'border-transparent text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300'}`}
+              >
+                Semua ({answers.length})
+              </button>
+            </div>
+
+            {paginatedAnswers.length === 0 ? (
+              <div className={`py-20 text-center text-sm border-2 border-dashed rounded-xl ${isDark ? 'border-zinc-900 text-zinc-500' : 'border-zinc-100 text-zinc-500'}`}>
+                {filterStatus === 'UNGRADED' ? 'Hore! Semua jawaban di modul ini sudah Anda nilai. 🎉' : 'Tidak ada data di kategori ini.'}
+              </div>
+            ) : (
+              <div className="space-y-6">
+                {paginatedAnswers.map((ans, idx) => (
               <div key={ans.id} className={`p-6 border rounded-xl transition-colors ${isDark ? 'bg-[#0f0f0f] border-zinc-800' : 'bg-zinc-50 border-zinc-200'}`}>
                 
                 <div className="flex justify-between items-start mb-6">
@@ -248,7 +310,33 @@ export default function GradingManagement() {
                 
               </div>
             ))}
+            
+            {/* Pagination Controls */}
+            {totalPages > 1 && (
+              <div className={`flex items-center justify-between pt-6 mt-8 border-t ${isDark ? 'border-zinc-800' : 'border-zinc-200'}`}>
+                <button
+                  onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                  disabled={currentPage === 1}
+                  className={`px-4 py-2 text-sm font-medium rounded transition-colors disabled:opacity-30 ${isDark ? 'bg-zinc-900 text-white hover:bg-zinc-800' : 'bg-zinc-100 text-black hover:bg-zinc-200'}`}
+                >
+                  Sebelumnya
+                </button>
+                <span className={`text-sm font-medium ${isDark ? 'text-zinc-500' : 'text-zinc-400'}`}>
+                  Halaman {currentPage} dari {totalPages}
+                </span>
+                <button
+                  onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                  disabled={currentPage === totalPages}
+                  className={`px-4 py-2 text-sm font-medium rounded transition-colors disabled:opacity-30 ${isDark ? 'bg-zinc-900 text-white hover:bg-zinc-800' : 'bg-zinc-100 text-black hover:bg-zinc-200'}`}
+                >
+                  Selanjutnya
+                </button>
+              </div>
+            )}
+            
           </div>
+            )}
+          </>
         )}
       </main>
     </div>
