@@ -46,6 +46,10 @@ export default function ExamTakingInterface() {
         router.replace("/dashboard");
         return;
       }
+      
+      if (thisExam?.duration) {
+        setTimeLeft(thisExam.duration * 60);
+      }
 
       const res = await fetch(`/api/questions?examId=${examId}`)
       const data = await res.json()
