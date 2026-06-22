@@ -3,8 +3,9 @@
 import { useSession, signOut } from "next-auth/react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
-import { useEffect, useState } from "react"
-import { Settings, LogOut, Plus, Trash2, CheckCircle, ShieldCheck, Moon, Sun } from "lucide-react"
+import { useEffect, useState, useRef } from "react"
+import { Settings, LogOut, Plus, Trash2, CheckCircle, ShieldCheck, Moon, Sun, Download, Upload } from "lucide-react"
+import * as XLSX from "xlsx"
 
 export default function QuestionsManagement() {
   const { data: session, status } = useSession()
@@ -173,6 +174,115 @@ export default function QuestionsManagement() {
     }
   }
 
+  const fileInputRef = useRef<HTMLInputElement>(null)
+
+  const handleDownloadTemplate = () => {
+    const headers = ["TIPE (PG/IS/ES)", "SOAL", "POIN", "OPSI A", "OPSI B", "OPSI C", "OPSI D", "OPSI E", "KUNCI"];
+    const examples = [
+      ["PG", "Siapakah penemu bola lampu pijar?", 1, "Nikola Tesla", "Thomas Alva Edison", "Albert Einstein", "Isaac Newton", "", "B"],
+      ["IS", "Apa singkatan dari World Health Organization?", 1, "", "", "", "", "", "WHO"],
+      ["ES", "Jelaskan dampak pemanasan global!", 5, "", "", "", "", "", ""]
+    ];
+    
+    const ws = XLSX.utils.aoa_to_sheet([headers, ...examples]);
+    
+    ws["!cols"] = [
+      { wch: 15 }, { wch: 40 }, { wch: 8 }, 
+      { wch: 20 }, { wch: 20 }, { wch: 20 }, { wch: 20 }, { wch: 20 }, 
+      { wch: 10 }
+    ];
+
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Template Soal");
+    XLSX.writeFile(wb, "Template_Soal_OlymApp.xlsx");
+  };
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !selectedExamId) return;
+
+    setLoading(true);
+    const reader = new FileReader();
+    reader.onload = async (evt) => {
+      try {
+        const bstr = evt.target?.result;
+        const wb = XLSX.read(bstr, { type: "binary" });
+        const wsname = wb.SheetNames[0];
+        const ws = wb.Sheets[wsname];
+        const data = XLSX.utils.sheet_to_json(ws, { header: 1 }) as any[][];
+
+        const rows = data.slice(1).filter(r => r.length > 0 && r[1]);
+
+        if (rows.length === 0) {
+          alert("File Excel kosong atau format tidak sesuai.");
+          return;
+        }
+
+        let currentOrder = questions.length + 1;
+        const bulkQuestions = rows.map((row) => {
+          const tipeRaw = String(row[0] || "PG").toUpperCase().trim();
+          let type: "MULTIPLE_CHOICE" | "SHORT_ANSWER" | "ESSAY" = "MULTIPLE_CHOICE";
+          if (tipeRaw === "IS") type = "SHORT_ANSWER";
+          if (tipeRaw === "ES") type = "ESSAY";
+
+          const text = String(row[1] || "");
+          const points = parseFloat(String(row[2])) || 1;
+          
+          let options = [];
+          let correctAnswer = null;
+
+          if (type === "MULTIPLE_CHOICE") {
+            const kunciRaw = String(row[8] || "A").toUpperCase().trim();
+            const optionValues = [row[3], row[4], row[5], row[6], row[7]].filter(Boolean);
+            
+            const correctIndex = kunciRaw.charCodeAt(0) - 65; 
+            
+            options = optionValues.map((optText, i) => ({
+              text: String(optText),
+              isCorrect: i === correctIndex
+            }));
+            
+            if (options.length === 0) {
+              options = [{ text: "Benar", isCorrect: true }, { text: "Salah", isCorrect: false }];
+            }
+          } else if (type === "SHORT_ANSWER") {
+            correctAnswer = String(row[8] || "");
+          }
+
+          return {
+            text,
+            type,
+            points,
+            order: currentOrder++,
+            options,
+            correctAnswer
+          };
+        });
+
+        const res = await fetch("/api/questions/bulk", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ examId: selectedExamId, questions: bulkQuestions })
+        });
+        
+        const resData = await res.json();
+        if (resData.success) {
+          alert(`Berhasil mengimpor ${bulkQuestions.length} soal!`);
+          fetchQuestions(selectedExamId);
+        } else {
+          alert("Gagal mengimpor: " + resData.error);
+        }
+      } catch (err) {
+        console.error(err);
+        alert("Gagal memproses file Excel.");
+      } finally {
+        setLoading(false);
+        if (fileInputRef.current) fileInputRef.current.value = "";
+      }
+    };
+    reader.readAsBinaryString(file);
+  };
+
   const isDark = theme === "dark"
 
   return (
@@ -234,6 +344,35 @@ export default function QuestionsManagement() {
             <button onClick={handleCreateExam} className={`px-4 py-2.5 text-xs font-medium transition-colors whitespace-nowrap rounded ${isDark ? 'bg-zinc-900 hover:bg-zinc-800 text-white' : 'bg-zinc-100 hover:bg-zinc-200 text-black'}`}>
               + Ujian Baru
             </button>
+          </div>
+        </div>
+
+        <div className={`flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-8 p-6 rounded-xl border border-dashed transition-colors ${isDark ? 'border-emerald-500/20 bg-emerald-500/5' : 'border-emerald-500/30 bg-emerald-50'}`}>
+          <div>
+            <h2 className={`text-sm font-bold tracking-tight mb-1 ${isDark ? 'text-emerald-400' : 'text-emerald-600'}`}>Impor Massal (Excel)</h2>
+            <p className={`text-xs ${isDark ? 'text-emerald-500/80' : 'text-emerald-600/80'}`}>Masukkan ratusan soal sekaligus tanpa mengetik satu per satu.</p>
+          </div>
+          <div className="flex items-center gap-3">
+            <button 
+              onClick={handleDownloadTemplate}
+              className={`px-4 py-2.5 text-xs font-medium flex items-center gap-2 rounded transition-colors ${isDark ? 'bg-zinc-900 text-zinc-300 hover:text-white hover:bg-zinc-800' : 'bg-white text-zinc-600 hover:text-black hover:bg-zinc-50 border border-zinc-200'}`}
+            >
+              <Download size={14} /> Template
+            </button>
+            <button 
+              onClick={() => fileInputRef.current?.click()}
+              disabled={loading || !selectedExamId}
+              className={`px-4 py-2.5 text-xs font-medium flex items-center gap-2 rounded transition-colors disabled:opacity-50 ${isDark ? 'bg-emerald-600 text-white hover:bg-emerald-500' : 'bg-emerald-500 text-white hover:bg-emerald-600'}`}
+            >
+              <Upload size={14} /> {loading ? "Memproses..." : "Upload .xlsx"}
+            </button>
+            <input 
+              type="file" 
+              accept=".xlsx, .xls, .csv" 
+              className="hidden" 
+              ref={fileInputRef}
+              onChange={handleFileUpload}
+            />
           </div>
         </div>
 
