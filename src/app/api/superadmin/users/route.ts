@@ -19,7 +19,6 @@ export async function GET(req: NextRequest) {
         name: true,
         email: true,
         isLocked: true,
-        createdAt: true, // Wait, there is no createdAt in User? Let's check schema. User doesn't have createdAt.
       },
       orderBy: {
         name: "asc"
