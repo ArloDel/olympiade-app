@@ -4,7 +4,7 @@ import { useSession, signOut } from "next-auth/react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { useEffect, useState } from "react"
-import { LogOut, ShieldCheck, Moon, Sun, CheckCircle } from "lucide-react"
+import { LogOut, ShieldCheck, Moon, Sun, CheckCircle, ShieldAlert } from "lucide-react"
 
 export default function GradingManagement() {
   const { data: session, status } = useSession()
@@ -168,11 +168,6 @@ export default function GradingManagement() {
               <Link href="/admin/questions" className={`transition-colors ${isDark ? 'text-zinc-500 hover:text-white' : 'text-zinc-500 hover:text-black'}`}>Soal</Link>
               <Link href="/admin/grading" className={`font-medium ${isDark ? 'text-white' : 'text-black'}`}>Koreksi</Link>
               <Link href="/admin/results" className={`transition-colors ${isDark ? 'text-zinc-500 hover:text-white' : 'text-zinc-500 hover:text-black'}`}>Rekap Nilai</Link>
-              {(session?.user as any)?.role === "SUPERADMIN" && (
-                <Link href="/superadmin" className={`transition-colors font-medium flex items-center gap-1.5 ${isDark ? 'text-amber-500 hover:text-amber-400' : 'text-amber-600 hover:text-amber-700'}`}>
-                  Superadmin
-                </Link>
-              )}
             </nav>
           </div>
           <div className="flex items-center gap-6">
@@ -344,6 +339,14 @@ export default function GradingManagement() {
           </>
         )}
       </main>
+
+      {/* Floating Superadmin Button */}
+      {(session?.user as any)?.role === "SUPERADMIN" && (
+        <Link href="/superadmin" className={`fixed bottom-6 right-6 px-4 py-3 rounded-full shadow-lg shadow-amber-500/20 font-medium flex items-center gap-2 transition-transform hover:scale-105 z-50 ${isDark ? 'bg-amber-500 text-black' : 'bg-amber-600 text-white'}`}>
+          <ShieldAlert size={18} />
+          Superadmin Panel
+        </Link>
+      )}
     </div>
   )
 }
