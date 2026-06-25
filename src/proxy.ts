@@ -47,6 +47,16 @@ export default withAuth(
       }
     }
 
+    if (isDashboardPage) {
+      // Cegah ADMIN dan SUPERADMIN masuk ke halaman murid
+      if (token?.role === "SUPERADMIN") {
+        return NextResponse.redirect(new URL("/superadmin", req.url))
+      }
+      if (token?.role === "ADMIN") {
+        return NextResponse.redirect(new URL("/admin", req.url))
+      }
+    }
+
     return null // Lanjutkan permintaan (request) seperti biasa
   },
   {
