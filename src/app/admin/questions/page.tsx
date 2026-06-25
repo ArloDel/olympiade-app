@@ -304,6 +304,11 @@ export default function QuestionsManagement() {
               <Link href="/admin/questions" className={`font-medium ${isDark ? 'text-white' : 'text-black'}`}>Soal</Link>
               <Link href="/admin/grading" className={`transition-colors ${isDark ? 'text-zinc-500 hover:text-white' : 'text-zinc-500 hover:text-black'}`}>Koreksi</Link>
               <Link href="/admin/results" className={`transition-colors ${isDark ? 'text-zinc-500 hover:text-white' : 'text-zinc-500 hover:text-black'}`}>Rekap Nilai</Link>
+              {(session?.user as any)?.role === "SUPERADMIN" && (
+                <Link href="/superadmin" className={`transition-colors font-medium flex items-center gap-1.5 ${isDark ? 'text-amber-500 hover:text-amber-400' : 'text-amber-600 hover:text-amber-700'}`}>
+                  Superadmin
+                </Link>
+              )}
             </nav>
           </div>
           <div className="flex items-center gap-6">
