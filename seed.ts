@@ -2,6 +2,16 @@ import "dotenv/config"
 import { prisma } from "./src/lib/prisma"
 
 async function main() {
+  const superadmin = await prisma.user.upsert({
+    where: { email: "superadmin@olym.app" },
+    update: {},
+    create: {
+      email: "superadmin@olym.app",
+      name: "Super Administrator",
+      role: "SUPERADMIN",
+    },
+  })
+
   const admin = await prisma.user.upsert({
     where: { email: "admin@olym.app" },
     update: {},
@@ -22,7 +32,7 @@ async function main() {
     },
   })
 
-  console.log("Database seeded:", { admin, student })
+  console.log("Database seeded:", { superadmin, admin, student })
 }
 
 main()

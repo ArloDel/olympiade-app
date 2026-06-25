@@ -49,6 +49,7 @@ model VerificationToken {
 enum Role {
   STUDENT
   ADMIN
+  SUPERADMIN
 }
 
 model User {
