@@ -62,6 +62,15 @@ export async function POST(req: NextRequest) {
       }
     });
 
+    await prisma.auditLog.create({
+      data: {
+        userId: (session.user as any).id,
+        action: "CREATE_ADMIN",
+        targetId: newAdmin.id,
+        details: JSON.stringify({ name: newAdmin.name, email: newAdmin.email })
+      }
+    });
+
     return NextResponse.json({ success: true, data: newAdmin });
   } catch (error: any) {
     console.error("Error creating admin:", error);

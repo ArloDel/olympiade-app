@@ -32,6 +32,15 @@ export async function DELETE(
       where: { id }
     });
 
+    await prisma.auditLog.create({
+      data: {
+        userId: (session.user as any).id,
+        action: "DELETE_ADMIN",
+        targetId: id,
+        details: JSON.stringify({ name: user.name, email: user.email })
+      }
+    });
+
     return NextResponse.json({ success: true, message: "Admin deleted" });
   } catch (error: any) {
     console.error("Error deleting admin:", error);

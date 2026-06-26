@@ -66,6 +66,7 @@ model User {
   sessions      Session[]
   answers       Answer[]
   sessionLogs   SessionLog[]
+  auditLogs     AuditLog[]
 }
 
 // Olym-App Models
@@ -150,4 +151,15 @@ model SessionLog {
   exam        Exam     @relation(fields: [examId], references: [id], onDelete: Cascade)
   
   createdAt   DateTime @default(now())
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  userId    String
+  action    String   
+  targetId  String?  
+  details   String?  @db.Text
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }

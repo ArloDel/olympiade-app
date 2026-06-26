@@ -143,6 +143,7 @@ export default function SuperadminDashboard() {
             </div>
             <nav className="hidden md:flex gap-6 text-sm">
               <Link href="/superadmin" className={`font-medium ${isDark ? 'text-white' : 'text-black'}`}>Kelola Admin</Link>
+              <Link href="/superadmin/logs" className={`transition-colors ${isDark ? 'text-zinc-500 hover:text-white' : 'text-zinc-500 hover:text-black'}`}>Log Aktivitas</Link>
               <Link href="/admin" className={`transition-colors ${isDark ? 'text-zinc-500 hover:text-white' : 'text-zinc-500 hover:text-black'}`}>Panel Admin Reguler</Link>
             </nav>
           </div>

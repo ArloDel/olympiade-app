@@ -38,6 +38,15 @@ export async function POST(
       data: { isLocked }
     });
 
+    await prisma.auditLog.create({
+      data: {
+        userId: (session.user as any).id,
+        action: isLocked ? "LOCK_ADMIN" : "UNLOCK_ADMIN",
+        targetId: id,
+        details: JSON.stringify({ name: updatedUser.name, email: updatedUser.email })
+      }
+    });
+
     return NextResponse.json({ success: true, data: updatedUser });
   } catch (error: any) {
     console.error("Error locking admin:", error);
