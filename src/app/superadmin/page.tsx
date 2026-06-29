@@ -58,6 +58,16 @@ export default function SuperadminDashboard() {
     return action.replace(/_/g, ' ')
   }
 
+  const formatDetails = (details: string) => {
+    if (!details) return ""
+    try {
+      const parsed = JSON.parse(details)
+      return Object.entries(parsed).map(([k, v]) => `${k}: ${v}`).join(', ')
+    } catch {
+      return details
+    }
+  }
+
   if (status === "loading" || loading) {
      return (
        <div className={`min-h-screen flex items-center justify-center ${isDark ? 'bg-[#0a0a0a]' : 'bg-white'}`}>
@@ -210,7 +220,7 @@ export default function SuperadminDashboard() {
                         {formatAction(log.action)}
                       </div>
                       <div className={`text-xs ${isDark ? 'text-zinc-500' : 'text-zinc-500'} line-clamp-1`}>
-                        Target: {log.details || log.targetId || '-'}
+                        Target: {log.details ? formatDetails(log.details) : (log.targetId || '-')}
                       </div>
                     </div>
                   </div>
