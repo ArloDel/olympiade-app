@@ -145,6 +145,7 @@ export default function SuperadminAdminsPage() {
               <Link href="/superadmin" className={`transition-colors ${isDark ? 'text-zinc-500 hover:text-white' : 'text-zinc-500 hover:text-black'}`}>Dashboard</Link>
               <Link href="/superadmin/admins" className={`font-medium ${isDark ? 'text-white' : 'text-black'}`}>Kelola Admin</Link>
               <Link href="/superadmin/logs" className={`transition-colors ${isDark ? 'text-zinc-500 hover:text-white' : 'text-zinc-500 hover:text-black'}`}>Log Aktivitas</Link>
+              <Link href="/superadmin/settings" className={`transition-colors ${isDark ? 'text-zinc-500 hover:text-white' : 'text-zinc-500 hover:text-black'}`}>Pengaturan Global</Link>
               <Link href="/admin" className={`transition-colors ${isDark ? 'text-zinc-500 hover:text-white' : 'text-zinc-500 hover:text-black'}`}>Panel Admin Reguler</Link>
             </nav>
           </div>

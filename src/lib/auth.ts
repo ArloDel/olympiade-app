@@ -42,6 +42,16 @@ export const authOptions: NextAuthOptions = {
           throw new Error("Account is locked due to suspicious activity. Please contact admin.")
         }
 
+        // Check maintenance mode for students
+        if (user.role === "STUDENT") {
+          const maintenanceSetting = await prisma.systemSetting.findUnique({
+            where: { key: "maintenanceMode" }
+          })
+          if (maintenanceSetting?.value === "true") {
+            throw new Error("Sistem sedang dalam pemeliharaan (Maintenance). Silakan coba lagi nanti.")
+          }
+        }
+
         return user as any
       }
     })
