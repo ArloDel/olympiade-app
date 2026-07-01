@@ -3,7 +3,7 @@
 import { useSession } from "next-auth/react"
 import { useRouter, useParams } from "next/navigation"
 import { useEffect, useState, useRef } from "react"
-import { Clock, ChevronLeft, ChevronRight, Flag, LayoutGrid, X, Moon, Sun, Shield } from "lucide-react"
+import { Clock, ChevronLeft, ChevronRight, Flag, LayoutGrid, X, Moon, Sun, Shield, WifiOff } from "lucide-react"
 
 export default function ExamTakingInterface() {
   const { data: session, status } = useSession()
@@ -17,12 +17,17 @@ export default function ExamTakingInterface() {
   
   // State for answers mapping questionId -> { optionId?: string, textAnswer?: string } | string
   const [answers, setAnswers] = useState<Record<string, any>>({})
+  const answersRef = useRef(answers) // Keep latest for closures
   // State for flagged questions
   const [flagged, setFlagged] = useState<Set<string>>(new Set())
   
   const [showGrid, setShowGrid] = useState(false)
   const [timeLeft, setTimeLeft] = useState(120 * 60) // Default 120 mins
   const [isSubmitting, setIsSubmitting] = useState(false)
+
+  // Connection Resilience State
+  const [isOffline, setIsOffline] = useState(false)
+  const [waitingForOnlineSubmit, setWaitingForOnlineSubmit] = useState(false)
 
   // Camera State
   const videoRef = useRef<HTMLVideoElement>(null)
@@ -55,6 +60,23 @@ export default function ExamTakingInterface() {
       const data = await res.json()
       if (data.success) {
         setQuestions(data.data)
+        // Load from local storage
+        if (session?.user?.id) {
+          const cacheKey = `olym_answers_${examId}_${session.user.id}`
+          const cached = localStorage.getItem(cacheKey)
+          if (cached) {
+            try {
+              const parsed = JSON.parse(cached)
+              if (parsed.answers) {
+                setAnswers(parsed.answers)
+                answersRef.current = parsed.answers
+              }
+              if (parsed.flagged) setFlagged(new Set(parsed.flagged))
+            } catch(e) {
+              console.error("Failed to parse cached answers")
+            }
+          }
+        }
         // Trigger START log
         fetch(`/api/exams/${examId}/start`, { method: "POST" }).catch(console.error)
       } else {
@@ -105,6 +127,57 @@ export default function ExamTakingInterface() {
       fetchQuestions()
     }
   }, [status, router, examId])
+
+  // Connection Resilience & Offline Handlers
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    setIsOffline(!navigator.onLine)
+
+    const handleOnline = () => {
+      setIsOffline(false)
+      // Immediately sync if we have answers and just came back online
+      if (Object.keys(answersRef.current).length > 0) {
+        fetch("/api/submissions", {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ examId, answers: answersRef.current })
+        }).catch(console.error)
+      }
+    }
+    const handleOffline = () => setIsOffline(true)
+
+    window.addEventListener('online', handleOnline)
+    window.addEventListener('offline', handleOffline)
+    return () => {
+      window.removeEventListener('online', handleOnline)
+      window.removeEventListener('offline', handleOffline)
+    }
+  }, [examId])
+
+  // Save to LocalStorage and Auto-Sync on answers change
+  useEffect(() => {
+    answersRef.current = answers
+    if (status !== "authenticated" || !session?.user?.id) return
+
+    // 1. Save to LocalStorage immediately
+    const cacheKey = `olym_answers_${examId}_${session.user.id}`
+    localStorage.setItem(cacheKey, JSON.stringify({
+      answers,
+      flagged: Array.from(flagged)
+    }))
+
+    // 2. Debounced API Sync (save progress without finishing)
+    const timeoutId = setTimeout(() => {
+      if (!navigator.onLine || Object.keys(answers).length === 0) return
+      fetch("/api/submissions", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ examId, answers })
+      }).catch(console.error)
+    }, 5000)
+
+    return () => clearTimeout(timeoutId)
+  }, [answers, flagged, examId, session?.user?.id, status])
 
   useEffect(() => {
     if (loading) return
@@ -242,22 +315,38 @@ export default function ExamTakingInterface() {
   }
 
   const handleAutoSubmit = async () => {
+    if (!navigator.onLine) {
+      setWaitingForOnlineSubmit(true)
+      return
+    }
     alert("Waktu habis! Ujian otomatis disubmit.")
-    await submitAnswersToApi()
+    await submitAnswersToApi(answersRef.current)
     router.replace("/dashboard")
   }
 
   const handleSubmit = async () => {
-    const answeredCount = Object.keys(answers).length
+    if (!navigator.onLine) {
+      alert("Anda sedang offline. Mohon tunggu koneksi internet pulih untuk mengumpulkan ujian.")
+      return
+    }
+    const answeredCount = Object.keys(answersRef.current).length
     const confirmed = confirm(`Anda telah menjawab ${answeredCount} dari ${questions.length} soal. Apakah Anda yakin ingin mengakhiri ujian?`)
     if (confirmed) {
-      const success = await submitAnswersToApi()
+      const success = await submitAnswersToApi(answersRef.current)
       if (success) {
         alert("Ujian berhasil disubmit! Jawaban Anda telah tersimpan.")
         router.replace("/dashboard")
       }
     }
   }
+
+  useEffect(() => {
+    if (waitingForOnlineSubmit && !isOffline) {
+      submitAnswersToApi(answersRef.current).then(() => {
+        router.replace("/dashboard")
+      })
+    }
+  }, [isOffline, waitingForOnlineSubmit, router])
 
   if (loading || status === "loading") {
     return (
@@ -330,6 +419,21 @@ export default function ExamTakingInterface() {
         </div>
       )}
 
+      {/* Offline Waiting Modal */}
+      {waitingForOnlineSubmit && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/80 backdrop-blur-md p-4">
+          <div className={`max-w-md w-full p-8 border ${isDark ? 'bg-[#0a0a0a] border-zinc-800' : 'bg-white border-zinc-200'} text-center shadow-2xl`}>
+            <div className="w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-6 bg-yellow-500/10 text-yellow-500 animate-pulse">
+              <WifiOff size={24} />
+            </div>
+            <h3 className={`text-xl font-medium mb-3 ${isDark ? 'text-white' : 'text-black'}`}>Menunggu Koneksi...</h3>
+            <p className={`text-sm mb-6 ${isDark ? 'text-zinc-400' : 'text-zinc-600'}`}>
+              Waktu ujian telah habis, namun Anda sedang offline. Mohon jangan tutup halaman ini. Ujian akan otomatis dikumpulkan saat koneksi internet pulih.
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* Ultra Minimal Header */}
       <header className={`sticky top-0 z-30 border-b ${isDark ? 'border-zinc-900 bg-[#0a0a0a]/80' : 'border-zinc-100 bg-white/80'} backdrop-blur-md`}>
         <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
@@ -345,6 +449,12 @@ export default function ExamTakingInterface() {
           </div>
 
           <div className="flex items-center gap-4">
+            {isOffline && (
+              <div className="flex items-center gap-1.5 text-[10px] font-bold text-yellow-500 bg-yellow-500/10 px-2 py-1 rounded">
+                <WifiOff size={12} />
+                OFFLINE
+              </div>
+            )}
             <button 
               onClick={() => setTheme(isDark ? "light" : "dark")}
               className={`text-xs flex items-center gap-1.5 transition-colors ${isDark ? 'text-zinc-500 hover:text-white' : 'text-zinc-400 hover:text-black'}`}
