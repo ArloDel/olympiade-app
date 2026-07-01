@@ -46,7 +46,7 @@ export async function GET() {
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const { title, description, startTime, endTime, duration } = body;
+    const { title, description, startTime, endTime, duration, randomizeQuestions, randomizeOptions } = body;
 
     if (!title || !startTime || !endTime || !duration) {
       return NextResponse.json(
@@ -62,6 +62,8 @@ export async function POST(req: Request) {
         startTime: new Date(startTime),
         endTime: new Date(endTime),
         duration: parseInt(duration, 10),
+        randomizeQuestions: Boolean(randomizeQuestions),
+        randomizeOptions: Boolean(randomizeOptions),
       },
     });
 

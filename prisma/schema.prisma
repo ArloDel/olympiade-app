@@ -78,9 +78,11 @@ model Exam {
   startTime   DateTime
   endTime     DateTime
   duration    Int      // in minutes
-  isActive    Boolean  @default(false)
+  isActive           Boolean  @default(false)
+  randomizeQuestions Boolean  @default(false)
+  randomizeOptions   Boolean  @default(false)
   
-  questions   Question[]
+  questions          Question[]
   sessionLogs SessionLog[]
   
   createdAt   DateTime @default(now())

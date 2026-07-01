@@ -228,7 +228,7 @@ export default function QuestionsManagement() {
           const text = String(row[1] || "");
           const points = parseFloat(String(row[2])) || 1;
           
-          let options = [];
+          let options: {text: string, isCorrect: boolean}[] = [];
           let correctAnswer = null;
 
           if (type === "MULTIPLE_CHOICE") {

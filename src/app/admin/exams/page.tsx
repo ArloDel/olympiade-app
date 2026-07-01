@@ -23,6 +23,8 @@ export default function ExamsManagement() {
     startTime: "",
     endTime: "",
     duration: 120,
+    randomizeQuestions: false,
+    randomizeOptions: false,
   })
 
   useEffect(() => {
@@ -57,6 +59,8 @@ export default function ExamsManagement() {
         startTime: new Date(exam.startTime).toISOString().slice(0, 16),
         endTime: new Date(exam.endTime).toISOString().slice(0, 16),
         duration: exam.duration,
+        randomizeQuestions: exam.randomizeQuestions || false,
+        randomizeOptions: exam.randomizeOptions || false,
       })
     } else {
       setEditingId(null)
@@ -68,6 +72,8 @@ export default function ExamsManagement() {
         startTime: now.toISOString().slice(0, 16),
         endTime: tomorrow.toISOString().slice(0, 16),
         duration: 120,
+        randomizeQuestions: false,
+        randomizeOptions: false,
       })
     }
     setIsModalOpen(true)
@@ -316,6 +322,29 @@ export default function ExamsManagement() {
                   onChange={e => setFormData({...formData, duration: parseInt(e.target.value) || 0})}
                   className={`w-full px-0 py-2.5 text-sm outline-none transition-colors border-b bg-transparent ${isDark ? 'border-zinc-800 text-white focus:border-white' : 'border-zinc-200 text-black focus:border-black'}`}
                 />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4 pt-2">
+                <div className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    id="randomizeQuestions"
+                    checked={formData.randomizeQuestions}
+                    onChange={e => setFormData({...formData, randomizeQuestions: e.target.checked})}
+                    className="w-4 h-4 rounded border-zinc-300 text-black focus:ring-black accent-black"
+                  />
+                  <label htmlFor="randomizeQuestions" className={`text-xs ${isDark ? 'text-zinc-300' : 'text-zinc-600'}`}>Acak Urutan Soal</label>
+                </div>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    id="randomizeOptions"
+                    checked={formData.randomizeOptions}
+                    onChange={e => setFormData({...formData, randomizeOptions: e.target.checked})}
+                    className="w-4 h-4 rounded border-zinc-300 text-black focus:ring-black accent-black"
+                  />
+                  <label htmlFor="randomizeOptions" className={`text-xs ${isDark ? 'text-zinc-300' : 'text-zinc-600'}`}>Acak Urutan Opsi</label>
+                </div>
               </div>
 
               <div className="flex justify-end gap-3 pt-6">

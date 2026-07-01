@@ -13,7 +13,7 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
     const resolvedParams = await params;
     const { id } = resolvedParams;
     const body = await req.json();
-    const { title, description, startTime, endTime, duration } = body;
+    const { title, description, startTime, endTime, duration, randomizeQuestions, randomizeOptions } = body;
 
     const updatedExam = await prisma.exam.update({
       where: { id },
@@ -23,6 +23,8 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
         startTime: startTime ? new Date(startTime) : undefined,
         endTime: endTime ? new Date(endTime) : undefined,
         duration: duration ? parseInt(duration, 10) : undefined,
+        randomizeQuestions: randomizeQuestions !== undefined ? Boolean(randomizeQuestions) : undefined,
+        randomizeOptions: randomizeOptions !== undefined ? Boolean(randomizeOptions) : undefined,
       },
     });
 
