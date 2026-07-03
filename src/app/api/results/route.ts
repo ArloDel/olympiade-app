@@ -29,7 +29,11 @@ export async function GET(req: NextRequest) {
     const exam = await prisma.exam.findUnique({
       where: { id: examId },
       include: {
-        questions: { select: { id: true, points: true, type: true } }
+        examQuestions: { 
+          include: {
+            question: { select: { id: true, points: true, type: true } }
+          }
+        }
       }
     });
 
@@ -37,15 +41,14 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ success: false, error: "Exam not found" }, { status: 404 });
     }
 
-    const totalQuestions = exam.questions.length;
+    const examQuestionsList = exam.examQuestions.map(eq => eq.question);
+    const totalQuestions = examQuestionsList.length;
 
     // Fetch answers for this user and this exam
     const answers = await prisma.answer.findMany({
       where: {
         userId: userId,
-        question: {
-          examId: examId
-        }
+        examId: examId
       },
       include: {
         option: true
@@ -58,9 +61,9 @@ export async function GET(req: NextRequest) {
     let totalMaxPoints = 0;
     let isFullyGraded = true;
 
-    const questionMap = new Map(exam.questions.map(q => [q.id, q]));
+    const questionMap = new Map(examQuestionsList.map(q => [q.id, q]));
     
-    exam.questions.forEach(q => {
+    examQuestionsList.forEach(q => {
       totalMaxPoints += q.points;
     });
 

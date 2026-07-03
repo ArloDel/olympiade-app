@@ -82,7 +82,8 @@ model Exam {
   randomizeQuestions Boolean  @default(false)
   randomizeOptions   Boolean  @default(false)
   
-  questions          Question[]
+  examQuestions      ExamQuestion[]
+  answers            Answer[]
   sessionLogs SessionLog[]
   
   createdAt   DateTime @default(now())
@@ -95,16 +96,60 @@ enum QuestionType {
   ESSAY
 }
 
+model ExamQuestion {
+  id         String   @id @default(cuid())
+  examId     String
+  questionId String
+  order      Int
+  
+  exam       Exam     @relation(fields: [examId], references: [id], onDelete: Cascade)
+  question   Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+
+  @@unique([examId, questionId])
+  @@unique([examId, order])
+}
+
+model Subject {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  topics    Topic[]
+  questions Question[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Topic {
+  id        String   @id @default(cuid())
+  subjectId String
+  name      String
+  subject   Subject  @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+  questions Question[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  @@unique([subjectId, name])
+}
+
+enum Difficulty {
+  EASY
+  MEDIUM
+  HARD
+}
+
 model Question {
   id            String   @id @default(cuid())
-  examId        String
   text          String   @db.Text // Can contain KaTeX/MathJax string
   type          QuestionType @default(MULTIPLE_CHOICE)
   correctAnswer String?  @db.Text
   points        Float    @default(1)
-  order         Int
+  difficulty    Difficulty @default(MEDIUM)
   
-  exam          Exam     @relation(fields: [examId], references: [id], onDelete: Cascade)
+  subjectId     String?
+  topicId       String?
+  subject       Subject? @relation(fields: [subjectId], references: [id], onDelete: SetNull)
+  topic         Topic?   @relation(fields: [topicId], references: [id], onDelete: SetNull)
+  
+  examQuestions ExamQuestion[]
   options   Option[]
   answers   Answer[]
   
@@ -125,6 +170,7 @@ model Option {
 model Answer {
   id         String   @id @default(cuid())
   userId     String
+  examId     String
   questionId String
   optionId   String?
   textAnswer String?  @db.Text
@@ -132,13 +178,14 @@ model Answer {
   isGraded   Boolean  @default(false)
   
   user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  exam       Exam     @relation(fields: [examId], references: [id], onDelete: Cascade)
   question   Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
   option     Option?  @relation(fields: [optionId], references: [id], onDelete: Cascade)
   
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 
-  @@unique([userId, questionId]) // One answer per user per question
+  @@unique([userId, examId, questionId]) // One answer per user per exam per question
 }
 
 model SessionLog {

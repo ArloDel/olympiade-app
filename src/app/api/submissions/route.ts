@@ -30,8 +30,9 @@ export async function POST(req: Request) {
       const data = answerData as { optionId?: string, textAnswer?: string };
       return prisma.answer.upsert({
         where: {
-          userId_questionId: {
+          userId_examId_questionId: {
             userId: userId,
+            examId: examId,
             questionId: questionId,
           },
         },
@@ -41,6 +42,7 @@ export async function POST(req: Request) {
         },
         create: {
           userId: userId,
+          examId: examId,
           questionId: questionId,
           optionId: data.optionId || null,
           textAnswer: data.textAnswer || null,
@@ -96,8 +98,9 @@ export async function PATCH(req: Request) {
       const data = answerData as { optionId?: string, textAnswer?: string };
       return prisma.answer.upsert({
         where: {
-          userId_questionId: {
+          userId_examId_questionId: {
             userId: userId,
+            examId: examId,
             questionId: questionId,
           },
         },
@@ -107,6 +110,7 @@ export async function PATCH(req: Request) {
         },
         create: {
           userId: userId,
+          examId: examId,
           questionId: questionId,
           optionId: data.optionId || null,
           textAnswer: data.textAnswer || null,

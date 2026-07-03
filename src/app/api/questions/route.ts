@@ -41,50 +41,65 @@ export async function GET(req: Request) {
     const { searchParams } = new URL(req.url);
     const examId = searchParams.get("examId");
 
-    if (!examId) {
-      return NextResponse.json(
-        { success: false, error: "examId is required" },
-        { status: 400 }
-      );
-    }
-
     const session = await getServerSession(authOptions);
     const userId = session?.user?.id;
     const role = (session?.user as any)?.role || "STUDENT";
 
-    const exam = await prisma.exam.findUnique({
-      where: { id: examId },
-      select: { randomizeQuestions: true, randomizeOptions: true }
-    });
+    let questions = [];
 
-    let questions = await prisma.question.findMany({
-      where: { examId },
-      include: {
-        options: true,
-      },
-      orderBy: { order: "asc" },
-    });
+    if (examId) {
+      const exam = await prisma.exam.findUnique({
+        where: { id: examId },
+        select: { randomizeQuestions: true, randomizeOptions: true }
+      });
 
-    if (role === "STUDENT" && userId && exam) {
-      if (exam.randomizeQuestions) {
-        const seed = cyrb53(userId + examId);
-        const prng = mulberry32(seed);
-        questions = shuffle(questions, prng);
-      }
-      
-      if (exam.randomizeOptions) {
-        questions = questions.map((q) => {
-          if (q.options && q.options.length > 0) {
-            const seed = cyrb53(userId + q.id);
-            const prng = mulberry32(seed);
-            return {
-              ...q,
-              options: shuffle(q.options, prng)
-            };
+      let examQuestions = await prisma.examQuestion.findMany({
+        where: { examId },
+        include: {
+          question: {
+            include: {
+              options: true,
+            }
           }
-          return q;
-        });
+        },
+        orderBy: { order: "asc" },
+      });
+
+      questions = examQuestions.map(eq => ({
+        ...eq.question,
+        order: eq.order
+      }));
+
+      if (role === "STUDENT" && userId && exam) {
+        if (exam.randomizeQuestions) {
+          const seed = cyrb53(userId + examId);
+          const prng = mulberry32(seed);
+          questions = shuffle(questions, prng);
+        }
+        
+        if (exam.randomizeOptions) {
+          questions = questions.map((q) => {
+            if (q.options && q.options.length > 0) {
+              const seed = cyrb53(userId + q.id);
+              const prng = mulberry32(seed);
+              return {
+                ...q,
+                options: shuffle(q.options, prng)
+              };
+            }
+            return q;
+          });
+        }
       }
+    } else {
+      // If no examId, fetch all questions from the bank (for Admin)
+      if (role !== "ADMIN" && role !== "SUPERADMIN") {
+         return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
+      }
+      questions = await prisma.question.findMany({
+        include: { options: true },
+        orderBy: { createdAt: "desc" }
+      });
     }
 
     return NextResponse.json({ success: true, data: questions });
@@ -100,11 +115,11 @@ export async function GET(req: Request) {
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const { examId, text, order, options, type, correctAnswer, points } = body;
+    const { examId, text, order, options, type, correctAnswer, points, difficulty, subjectId, topicId } = body;
 
-    if (!examId || !text || order === undefined) {
+    if (!text) {
       return NextResponse.json(
-        { success: false, error: "Missing required fields" },
+        { success: false, error: "Missing required text field" },
         { status: 400 }
       );
     }
@@ -114,12 +129,21 @@ export async function POST(req: Request) {
     // Wrap in a transaction or use nested create
     const question = await prisma.question.create({
       data: {
-        examId,
         text,
-        order,
         type: questionType,
         points: points !== undefined ? parseFloat(points) : 1,
         correctAnswer: questionType === "SHORT_ANSWER" ? correctAnswer : null,
+        difficulty: difficulty || "MEDIUM",
+        subjectId: subjectId || null,
+        topicId: topicId || null,
+        ...(examId && order !== undefined ? {
+          examQuestions: {
+            create: {
+              examId,
+              order
+            }
+          }
+        } : {}),
         ...(questionType === "MULTIPLE_CHOICE" && options && Array.isArray(options) ? {
           options: {
             create: options.map((opt: any) => ({
@@ -131,6 +155,7 @@ export async function POST(req: Request) {
       },
       include: {
         options: true,
+        examQuestions: true,
       },
     });
 

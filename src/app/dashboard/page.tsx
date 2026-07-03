@@ -34,7 +34,7 @@ export default function DashboardPage() {
 
         setExam({
           ...latestExam,
-          totalQuestions: latestExam._count?.questions || 0
+          totalQuestions: latestExam._count?.examQuestions || 0
         })
 
         if (latestExam.isFinished) {

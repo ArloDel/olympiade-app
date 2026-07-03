@@ -244,7 +244,7 @@ export default function ExamsManagement() {
                   </div>
                   <div className="flex items-center gap-2">
                     <BookOpen size={14} className={isDark ? "text-zinc-600" : "text-zinc-400"} />
-                    {exam._count?.questions || 0} Soal
+                    {exam._count?.examQuestions || 0} Soal
                   </div>
                 </div>
               </div>

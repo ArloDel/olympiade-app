@@ -13,9 +13,8 @@ export async function GET(req: NextRequest) {
     const answers = await prisma.answer.findMany({
       include: {
         user: { select: { name: true, email: true } },
-        question: {
-          include: { exam: { select: { title: true } } }
-        },
+        exam: { select: { title: true } },
+        question: true,
         option: { select: { text: true, isCorrect: true } }
       }
     });
@@ -38,7 +37,7 @@ export async function GET(req: NextRequest) {
       return [
         a.user.name || "-",
         a.user.email || "-",
-        a.question.exam.title || "-",
+        a.exam?.title || "-",
         a.question.id,
         a.question.type,
         a.option ? a.option.text.replace(/"/g, '""') : "-",

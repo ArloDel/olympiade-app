@@ -19,8 +19,8 @@ export async function GET(req: NextRequest) {
     // Ambil jawaban yang butuh dinilai manual (selain pilihan ganda)
     const answersToGrade = await prisma.answer.findMany({
       where: {
+        examId: examId,
         question: {
-          examId: examId,
           type: { in: ['SHORT_ANSWER', 'ESSAY'] }
         }
       },

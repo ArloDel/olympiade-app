@@ -16,6 +16,12 @@ export default function QuestionsManagement() {
   const [questions, setQuestions] = useState<any[]>([])
   const [theme, setTheme] = useState<"dark" | "light">("dark")
 
+  // Bank Soal Modal states
+  const [showBankModal, setShowBankModal] = useState(false)
+  const [bankQuestions, setBankQuestions] = useState<any[]>([])
+  const [selectedBankQuestions, setSelectedBankQuestions] = useState<Set<string>>(new Set())
+  const [isLinking, setIsLinking] = useState(false)
+
   // Form states
   const [loading, setLoading] = useState(false)
   const [questionText, setQuestionText] = useState("")
@@ -69,6 +75,59 @@ export default function QuestionsManagement() {
       }
     } catch (err) {
       console.error(err)
+    }
+  }
+
+  const openBankModal = async () => {
+    if (!selectedExamId) return alert("Pilih ujian terlebih dahulu")
+    
+    try {
+      const res = await fetch(`/api/questions`)
+      const data = await res.json()
+      if (data.success) {
+        // Filter out questions already in this exam
+        const existingIds = new Set(questions.map(q => q.id))
+        const available = data.data.filter((q: any) => !existingIds.has(q.id))
+        setBankQuestions(available)
+        setSelectedBankQuestions(new Set())
+        setShowBankModal(true)
+      }
+    } catch (err) {
+      console.error(err)
+    }
+  }
+
+  const toggleBankQuestion = (id: string) => {
+    const newSet = new Set(selectedBankQuestions)
+    if (newSet.has(id)) newSet.delete(id)
+    else newSet.add(id)
+    setSelectedBankQuestions(newSet)
+  }
+
+  const handleLinkQuestions = async () => {
+    if (selectedBankQuestions.size === 0) return
+    setIsLinking(true)
+    
+    try {
+      const res = await fetch("/api/questions/link", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          examId: selectedExamId,
+          questionIds: Array.from(selectedBankQuestions)
+        })
+      })
+      const data = await res.json()
+      if (data.success) {
+        setShowBankModal(false)
+        fetchQuestions(selectedExamId)
+      } else {
+        alert("Gagal menambahkan soal: " + data.error)
+      }
+    } catch (err) {
+      console.error(err)
+    } finally {
+      setIsLinking(false)
     }
   }
 
@@ -373,6 +432,13 @@ export default function QuestionsManagement() {
               ref={fileInputRef}
               onChange={handleFileUpload}
             />
+            <button 
+              onClick={openBankModal}
+              disabled={!selectedExamId}
+              className={`px-4 py-2.5 text-xs font-medium flex items-center gap-2 rounded transition-colors disabled:opacity-50 ${isDark ? 'bg-amber-600 text-white hover:bg-amber-500' : 'bg-amber-500 text-white hover:bg-amber-600'}`}
+            >
+              <ShieldCheck size={14} /> Pilih dari Bank
+            </button>
           </div>
         </div>
 
@@ -541,6 +607,69 @@ export default function QuestionsManagement() {
           <ShieldAlert size={18} />
           Superadmin Panel
         </Link>
+      )}
+
+      {/* Bank Soal Modal */}
+      {showBankModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+          <div className={`w-full max-w-3xl max-h-[85vh] flex flex-col rounded-xl overflow-hidden shadow-2xl ${isDark ? 'bg-[#111] border border-zinc-800' : 'bg-white border border-zinc-200'}`}>
+            <div className={`px-6 py-4 border-b flex justify-between items-center ${isDark ? 'border-zinc-800' : 'border-zinc-100'}`}>
+              <h3 className={`font-semibold ${isDark ? 'text-white' : 'text-black'}`}>Pilih dari Bank Soal</h3>
+              <button onClick={() => setShowBankModal(false)} className={`text-sm ${isDark ? 'text-zinc-500 hover:text-white' : 'text-zinc-400 hover:text-black'}`}>Tutup</button>
+            </div>
+            
+            <div className="flex-1 overflow-y-auto p-6 space-y-4">
+              {bankQuestions.length === 0 ? (
+                <div className={`text-center py-10 ${isDark ? 'text-zinc-500' : 'text-zinc-400'}`}>
+                  Tidak ada soal tersedia di bank yang belum ditambahkan ke ujian ini.
+                </div>
+              ) : (
+                bankQuestions.map(q => (
+                  <div 
+                    key={q.id} 
+                    onClick={() => toggleBankQuestion(q.id)}
+                    className={`p-4 rounded-lg border cursor-pointer transition-colors flex gap-4 ${
+                      selectedBankQuestions.has(q.id) 
+                        ? (isDark ? 'bg-amber-500/10 border-amber-500/30' : 'bg-amber-50 border-amber-200')
+                        : (isDark ? 'border-zinc-800 hover:border-zinc-700' : 'border-zinc-200 hover:border-zinc-300')
+                    }`}
+                  >
+                    <div className={`mt-1 w-5 h-5 rounded-full border flex items-center justify-center flex-shrink-0 ${
+                      selectedBankQuestions.has(q.id)
+                        ? 'border-amber-500 bg-amber-500 text-white'
+                        : isDark ? 'border-zinc-700' : 'border-zinc-300'
+                    }`}>
+                      {selectedBankQuestions.has(q.id) && <CheckCircle size={12} />}
+                    </div>
+                    <div>
+                      <div className="flex gap-2 mb-2">
+                        <span className={`text-[10px] uppercase font-bold px-2 py-0.5 rounded ${isDark ? 'bg-zinc-800 text-zinc-400' : 'bg-zinc-100 text-zinc-600'}`}>{q.type}</span>
+                        <span className={`text-[10px] uppercase font-bold px-2 py-0.5 rounded ${isDark ? 'bg-zinc-800 text-zinc-400' : 'bg-zinc-100 text-zinc-600'}`}>{q.points} Poin</span>
+                        <span className={`text-[10px] uppercase font-bold px-2 py-0.5 rounded ${q.difficulty === 'HARD' ? 'bg-rose-500/10 text-rose-500' : q.difficulty === 'MEDIUM' ? 'bg-amber-500/10 text-amber-500' : 'bg-emerald-500/10 text-emerald-500'}`}>
+                          {q.difficulty || "MEDIUM"}
+                        </span>
+                      </div>
+                      <p className={`text-sm ${isDark ? 'text-zinc-300' : 'text-zinc-700'}`}>{q.text}</p>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+
+            <div className={`px-6 py-4 border-t flex justify-between items-center ${isDark ? 'border-zinc-800 bg-[#0a0a0a]' : 'border-zinc-100 bg-zinc-50'}`}>
+              <div className={`text-sm font-medium ${isDark ? 'text-zinc-400' : 'text-zinc-600'}`}>
+                {selectedBankQuestions.size} soal dipilih
+              </div>
+              <button 
+                onClick={handleLinkQuestions}
+                disabled={selectedBankQuestions.size === 0 || isLinking}
+                className={`px-6 py-2.5 text-sm font-medium rounded transition-colors disabled:opacity-50 ${isDark ? 'bg-white text-black hover:bg-zinc-200' : 'bg-black text-white hover:bg-zinc-800'}`}
+              >
+                {isLinking ? "Menambahkan..." : "Tambahkan ke Ujian"}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   )

@@ -26,7 +26,7 @@ export async function POST(req: NextRequest) {
     await prisma.answer.deleteMany({
       where: {
         userId,
-        question: { examId }
+        examId
       }
     });
 

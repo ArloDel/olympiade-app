@@ -13,7 +13,6 @@ export async function POST(req: Request) {
       );
     }
 
-    // Wrap in a transaction to ensure all questions and options are created together safely
     const result = await prisma.$transaction(async (tx) => {
       const createdQuestions = [];
 
@@ -22,12 +21,17 @@ export async function POST(req: Request) {
         
         const question = await tx.question.create({
           data: {
-            examId,
             text: q.text,
-            order: q.order,
             type: questionType,
             points: q.points !== undefined ? parseFloat(q.points) : 1,
             correctAnswer: questionType === "SHORT_ANSWER" ? q.correctAnswer : null,
+            difficulty: "MEDIUM",
+            examQuestions: {
+              create: {
+                examId,
+                order: q.order
+              }
+            },
             ...(questionType === "MULTIPLE_CHOICE" && q.options && Array.isArray(q.options) ? {
               options: {
                 create: q.options.map((opt: any) => ({
