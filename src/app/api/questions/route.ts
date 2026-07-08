@@ -2,6 +2,12 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
+import crypto from "crypto";
+
+function computeSEBHash(url: string, examKey: string) {
+  const data = url + examKey;
+  return crypto.createHash("sha256").update(data).digest("hex");
+}
 
 // PRNG and Shuffle utilities
 function cyrb53(str: string, seed = 0) {
@@ -50,8 +56,28 @@ export async function GET(req: Request) {
     if (examId) {
       const exam = await prisma.exam.findUnique({
         where: { id: examId },
-        select: { randomizeQuestions: true, randomizeOptions: true }
+        select: { randomizeQuestions: true, randomizeOptions: true, requireSeb: true, sebExamKey: true }
       });
+
+      if (role === "STUDENT" && exam?.requireSeb) {
+        const userAgent = req.headers.get("user-agent") || "";
+        if (!userAgent.includes("SafeExamBrowser")) {
+          return NextResponse.json({ success: false, error: "SEB_REQUIRED" }, { status: 403 });
+        }
+
+        if (exam.sebExamKey && exam.sebExamKey.trim() !== "") {
+          const requestHash = req.headers.get("x-safeexambrowser-requesthash");
+          if (!requestHash) {
+            return NextResponse.json({ success: false, error: "SEB_CONFIG_INVALID" }, { status: 403 });
+          }
+          
+          // Compute hash. req.url is the absolute URL requested.
+          const computedHash = computeSEBHash(req.url, exam.sebExamKey.trim());
+          if (computedHash !== requestHash) {
+            return NextResponse.json({ success: false, error: "SEB_CONFIG_INVALID" }, { status: 403 });
+          }
+        }
+      }
 
       let examQuestions = await prisma.examQuestion.findMany({
         where: { examId },

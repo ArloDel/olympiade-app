@@ -3,7 +3,7 @@
 import { useSession } from "next-auth/react"
 import { useRouter, useParams } from "next/navigation"
 import { useEffect, useState, useRef } from "react"
-import { Clock, ChevronLeft, ChevronRight, Flag, LayoutGrid, X, Moon, Sun, Shield, WifiOff } from "lucide-react"
+import { Clock, ChevronLeft, ChevronRight, Flag, LayoutGrid, X, Moon, Sun, Shield, ShieldOff, WifiOff } from "lucide-react"
 
 export default function ExamTakingInterface() {
   const { data: session, status } = useSession()
@@ -14,6 +14,7 @@ export default function ExamTakingInterface() {
   const [loading, setLoading] = useState(true)
   const [questions, setQuestions] = useState<any[]>([])
   const [currentIndex, setCurrentIndex] = useState(0)
+  const [sebError, setSebError] = useState<string | null>(null)
   
   // State for answers mapping questionId -> { optionId?: string, textAnswer?: string } | string
   const [answers, setAnswers] = useState<Record<string, any>>({})
@@ -80,7 +81,11 @@ export default function ExamTakingInterface() {
         // Trigger START log
         fetch(`/api/exams/${examId}/start`, { method: "POST" }).catch(console.error)
       } else {
-        console.error(data.error)
+        if (data.error === "SEB_REQUIRED" || data.error === "SEB_CONFIG_INVALID") {
+          setSebError(data.error)
+        } else {
+          console.error(data.error)
+        }
       }
     } catch (error) {
       console.error("Failed to fetch questions:", error)
@@ -352,6 +357,27 @@ export default function ExamTakingInterface() {
     return (
       <div className={`min-h-screen flex items-center justify-center transition-colors ${isDark ? 'bg-[#0a0a0a]' : 'bg-white'}`}>
         <div className={`w-5 h-5 border-2 rounded-full animate-spin ${isDark ? 'border-zinc-600 border-t-white' : 'border-zinc-300 border-t-black'}`}></div>
+      </div>
+    )
+  }
+
+  if (sebError) {
+    return (
+      <div className={`min-h-screen flex flex-col items-center justify-center p-6 text-center transition-colors ${isDark ? 'bg-rose-950 text-rose-200' : 'bg-rose-50 text-rose-900'} gap-6`}>
+        <div className="w-16 h-16 rounded-full flex items-center justify-center bg-rose-500/20 text-rose-500 mb-2 shadow-lg shadow-rose-500/20">
+          <ShieldOff size={32} />
+        </div>
+        <div>
+          <h1 className="text-2xl font-bold mb-3 tracking-tight">Akses Ditolak</h1>
+          <p className="max-w-md mx-auto text-sm leading-relaxed opacity-90">
+            {sebError === "SEB_REQUIRED" 
+              ? "Ujian ini hanya dapat diakses melalui aplikasi Safe Exam Browser (SEB). Harap buka link ujian ini menggunakan SEB."
+              : "Konfigurasi SEB Anda tidak valid atau kadaluarsa. Silakan gunakan file konfigurasi (.seb) resmi yang diberikan oleh pengawas."}
+          </p>
+        </div>
+        <button onClick={() => router.push("/dashboard")} className="mt-4 text-xs font-medium px-6 py-3 rounded-full transition-all bg-rose-600 text-white hover:bg-rose-700 hover:shadow-xl hover:shadow-rose-600/30">
+          Kembali ke Dashboard
+        </button>
       </div>
     )
   }

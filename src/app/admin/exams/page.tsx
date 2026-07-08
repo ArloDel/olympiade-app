@@ -25,6 +25,8 @@ export default function ExamsManagement() {
     duration: 120,
     randomizeQuestions: false,
     randomizeOptions: false,
+    requireSeb: false,
+    sebExamKey: "",
   })
 
   useEffect(() => {
@@ -61,6 +63,8 @@ export default function ExamsManagement() {
         duration: exam.duration,
         randomizeQuestions: exam.randomizeQuestions || false,
         randomizeOptions: exam.randomizeOptions || false,
+        requireSeb: exam.requireSeb || false,
+        sebExamKey: exam.sebExamKey || "",
       })
     } else {
       setEditingId(null)
@@ -74,6 +78,8 @@ export default function ExamsManagement() {
         duration: 120,
         randomizeQuestions: false,
         randomizeOptions: false,
+        requireSeb: false,
+        sebExamKey: "",
       })
     }
     setIsModalOpen(true)
@@ -345,6 +351,39 @@ export default function ExamsManagement() {
                   />
                   <label htmlFor="randomizeOptions" className={`text-xs ${isDark ? 'text-zinc-300' : 'text-zinc-600'}`}>Acak Urutan Opsi</label>
                 </div>
+              </div>
+
+              <div className="pt-4 mt-4 border-t border-zinc-200 dark:border-zinc-800">
+                <div className="flex items-center gap-2 mb-3">
+                  <input
+                    type="checkbox"
+                    id="requireSeb"
+                    checked={formData.requireSeb}
+                    onChange={e => setFormData({...formData, requireSeb: e.target.checked})}
+                    className="w-4 h-4 rounded border-zinc-300 text-black focus:ring-black accent-black"
+                  />
+                  <label htmlFor="requireSeb" className={`text-xs font-medium ${isDark ? 'text-zinc-200' : 'text-zinc-800'}`}>
+                    Wajib menggunakan Safe Exam Browser
+                  </label>
+                </div>
+                
+                {formData.requireSeb && (
+                  <div className="space-y-1 pl-6">
+                    <label className={`text-[10px] font-bold uppercase tracking-widest ${isDark ? 'text-zinc-500' : 'text-zinc-500'}`}>
+                      Browser Exam Key (Opsional)
+                    </label>
+                    <input 
+                      type="text" 
+                      value={formData.sebExamKey}
+                      onChange={e => setFormData({...formData, sebExamKey: e.target.value})}
+                      className={`w-full px-0 py-2.5 text-sm outline-none transition-colors border-b bg-transparent ${isDark ? 'border-zinc-800 text-white placeholder-zinc-700 focus:border-white' : 'border-zinc-200 text-black placeholder-zinc-400 focus:border-black'}`}
+                      placeholder="Kosongkan untuk mode dasar (Hanya User-Agent)"
+                    />
+                    <p className={`text-[10px] mt-1 ${isDark ? 'text-zinc-500' : 'text-zinc-500'}`}>
+                      Isi dengan Kunci Ujian (BEK) dari aplikasi SEB Config Tool untuk keamanan ketat.
+                    </p>
+                  </div>
+                )}
               </div>
 
               <div className="flex justify-end gap-3 pt-6">

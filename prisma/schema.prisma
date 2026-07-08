@@ -81,6 +81,8 @@ model Exam {
   isActive           Boolean  @default(false)
   randomizeQuestions Boolean  @default(false)
   randomizeOptions   Boolean  @default(false)
+  requireSeb         Boolean  @default(false)
+  sebExamKey         String?
   
   examQuestions      ExamQuestion[]
   answers            Answer[]
