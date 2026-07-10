@@ -390,146 +390,186 @@ export default function ExamsManagement() {
 
       {/* Modal / Slide Over for Editing */}
       {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setIsModalOpen(false)}></div>
-          <div className={`relative w-full max-w-lg p-8 rounded-xl shadow-2xl animate-in fade-in zoom-in-95 duration-200 ${isDark ? 'bg-[#0a0a0a] border border-zinc-800' : 'bg-white border border-zinc-100'}`}>
-            <h2 className={`text-xl font-medium mb-6 ${isDark ? 'text-white' : 'text-black'}`}>
-              {editingId ? "Edit Konfigurasi Ujian" : "Buat Ujian Baru"}
-            </h2>
+        <div className="fixed inset-0 z-50 flex justify-end">
+          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm transition-opacity" onClick={() => setIsModalOpen(false)}></div>
+          <div className={`relative w-full max-w-md h-full flex flex-col shadow-2xl animate-in slide-in-from-right duration-300 ${isDark ? 'bg-[#0a0a0a] border-l border-zinc-800' : 'bg-white border-l border-zinc-200'}`}>
+            
+            {/* Header */}
+            <div className={`flex items-center justify-between p-6 border-b ${isDark ? 'border-zinc-800' : 'border-zinc-100'}`}>
+              <h2 className={`text-lg font-medium tracking-tight ${isDark ? 'text-white' : 'text-black'}`}>
+                {editingId ? "Edit Konfigurasi Ujian" : "Buat Ujian Baru"}
+              </h2>
+              <button onClick={() => setIsModalOpen(false)} className={`p-2 rounded-full transition-colors ${isDark ? 'hover:bg-zinc-800 text-zinc-400' : 'hover:bg-zinc-100 text-zinc-500'}`}>
+                <LogOut size={16} className="rotate-180" />
+              </button>
+            </div>
 
-            <form onSubmit={handleSave} className="space-y-5">
-              <div className="space-y-1">
-                <label className={`text-[10px] font-bold uppercase tracking-widest ${isDark ? 'text-zinc-600' : 'text-zinc-400'}`}>Nama Ujian</label>
-                <input 
-                  type="text" 
-                  required
-                  value={formData.title}
-                  onChange={e => setFormData({...formData, title: e.target.value})}
-                  className={`w-full px-0 py-2.5 text-sm outline-none transition-colors border-b bg-transparent ${isDark ? 'border-zinc-800 text-white placeholder-zinc-700 focus:border-white' : 'border-zinc-200 text-black placeholder-zinc-400 focus:border-black'}`}
-                  placeholder="Misal: Olimpiade Matematika 2026"
-                />
-              </div>
-
-              <div className="space-y-1">
-                <label className={`text-[10px] font-bold uppercase tracking-widest ${isDark ? 'text-zinc-600' : 'text-zinc-400'}`}>Deskripsi</label>
-                <textarea 
-                  value={formData.description}
-                  onChange={e => setFormData({...formData, description: e.target.value})}
-                  className={`w-full px-0 py-2.5 text-sm outline-none transition-colors border-b bg-transparent resize-y ${isDark ? 'border-zinc-800 text-white placeholder-zinc-700 focus:border-white' : 'border-zinc-200 text-black placeholder-zinc-400 focus:border-black'}`}
-                  placeholder="Deskripsi singkat mengenai ujian ini"
-                  rows={2}
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-1">
-                  <label className={`text-[10px] font-bold uppercase tracking-widest ${isDark ? 'text-zinc-600' : 'text-zinc-400'}`}>Waktu Mulai</label>
-                  <input 
-                    type="datetime-local" 
-                    required
-                    value={formData.startTime}
-                    onChange={e => setFormData({...formData, startTime: e.target.value})}
-                    className={`w-full px-0 py-2.5 text-sm outline-none transition-colors border-b bg-transparent ${isDark ? 'border-zinc-800 text-white focus:border-white' : 'border-zinc-200 text-black focus:border-black'} [color-scheme:dark]`}
-                    style={{ colorScheme: isDark ? 'dark' : 'light' }}
-                  />
-                </div>
-                <div className="space-y-1">
-                  <label className={`text-[10px] font-bold uppercase tracking-widest ${isDark ? 'text-zinc-600' : 'text-zinc-400'}`}>Waktu Selesai</label>
-                  <input 
-                    type="datetime-local" 
-                    required
-                    value={formData.endTime}
-                    onChange={e => setFormData({...formData, endTime: e.target.value})}
-                    className={`w-full px-0 py-2.5 text-sm outline-none transition-colors border-b bg-transparent ${isDark ? 'border-zinc-800 text-white focus:border-white' : 'border-zinc-200 text-black focus:border-black'} [color-scheme:dark]`}
-                    style={{ colorScheme: isDark ? 'dark' : 'light' }}
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-1">
-                <label className={`text-[10px] font-bold uppercase tracking-widest ${isDark ? 'text-zinc-600' : 'text-zinc-400'}`}>Durasi (Menit)</label>
-                <input 
-                  type="number" 
-                  min="1"
-                  required
-                  value={formData.duration}
-                  onChange={e => setFormData({...formData, duration: parseInt(e.target.value) || 0})}
-                  className={`w-full px-0 py-2.5 text-sm outline-none transition-colors border-b bg-transparent ${isDark ? 'border-zinc-800 text-white focus:border-white' : 'border-zinc-200 text-black focus:border-black'}`}
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-4 pt-2">
-                <div className="flex items-center gap-2">
-                  <input
-                    type="checkbox"
-                    id="randomizeQuestions"
-                    checked={formData.randomizeQuestions}
-                    onChange={e => setFormData({...formData, randomizeQuestions: e.target.checked})}
-                    className="w-4 h-4 rounded border-zinc-300 text-black focus:ring-black accent-black"
-                  />
-                  <label htmlFor="randomizeQuestions" className={`text-xs ${isDark ? 'text-zinc-300' : 'text-zinc-600'}`}>Acak Urutan Soal</label>
-                </div>
-                <div className="flex items-center gap-2">
-                  <input
-                    type="checkbox"
-                    id="randomizeOptions"
-                    checked={formData.randomizeOptions}
-                    onChange={e => setFormData({...formData, randomizeOptions: e.target.checked})}
-                    className="w-4 h-4 rounded border-zinc-300 text-black focus:ring-black accent-black"
-                  />
-                  <label htmlFor="randomizeOptions" className={`text-xs ${isDark ? 'text-zinc-300' : 'text-zinc-600'}`}>Acak Urutan Opsi</label>
-                </div>
-              </div>
-
-              <div className="pt-4 mt-4 border-t border-zinc-200 dark:border-zinc-800">
-                <div className="flex items-center gap-2 mb-3">
-                  <input
-                    type="checkbox"
-                    id="requireSeb"
-                    checked={formData.requireSeb}
-                    onChange={e => setFormData({...formData, requireSeb: e.target.checked})}
-                    className="w-4 h-4 rounded border-zinc-300 text-black focus:ring-black accent-black"
-                  />
-                  <label htmlFor="requireSeb" className={`text-xs font-medium ${isDark ? 'text-zinc-200' : 'text-zinc-800'}`}>
-                    Wajib menggunakan Safe Exam Browser
-                  </label>
-                </div>
+            {/* Scrollable Form Body */}
+            <div className="flex-1 overflow-y-auto p-6 scrollbar-thin scrollbar-thumb-zinc-700 scrollbar-track-transparent">
+              <form id="examForm" onSubmit={handleSave} className="space-y-6">
                 
-                {formData.requireSeb && (
-                  <div className="space-y-1 pl-6">
-                    <label className={`text-[10px] font-bold uppercase tracking-widest ${isDark ? 'text-zinc-500' : 'text-zinc-500'}`}>
-                      Browser Exam Key (Opsional)
-                    </label>
+                {/* Informasi Dasar */}
+                <div className="space-y-4">
+                  <h3 className={`text-xs font-bold uppercase tracking-widest ${isDark ? 'text-zinc-500' : 'text-zinc-400'}`}>Informasi Dasar</h3>
+                  
+                  <div className="space-y-2">
+                    <label className={`text-xs font-medium ${isDark ? 'text-zinc-300' : 'text-zinc-600'}`}>Nama Ujian</label>
                     <input 
                       type="text" 
-                      value={formData.sebExamKey}
-                      onChange={e => setFormData({...formData, sebExamKey: e.target.value})}
-                      className={`w-full px-0 py-2.5 text-sm outline-none transition-colors border-b bg-transparent ${isDark ? 'border-zinc-800 text-white placeholder-zinc-700 focus:border-white' : 'border-zinc-200 text-black placeholder-zinc-400 focus:border-black'}`}
-                      placeholder="Kosongkan untuk mode dasar (Hanya User-Agent)"
+                      required
+                      value={formData.title}
+                      onChange={e => setFormData({...formData, title: e.target.value})}
+                      className={`w-full px-4 py-2.5 text-sm rounded-lg outline-none transition-all border ${isDark ? 'bg-zinc-900 border-zinc-800 text-white placeholder-zinc-600 focus:border-zinc-500 focus:ring-1 focus:ring-zinc-500' : 'bg-zinc-50 border-zinc-200 text-black placeholder-zinc-400 focus:border-zinc-400 focus:ring-1 focus:ring-zinc-400'}`}
+                      placeholder="Misal: Olimpiade Matematika 2026"
                     />
-                    <p className={`text-[10px] mt-1 ${isDark ? 'text-zinc-500' : 'text-zinc-500'}`}>
-                      Isi dengan Kunci Ujian (BEK) dari aplikasi SEB Config Tool untuk keamanan ketat.
-                    </p>
                   </div>
-                )}
-              </div>
 
-              <div className="flex justify-end gap-3 pt-6">
-                <button 
-                  type="button" 
-                  onClick={() => setIsModalOpen(false)}
-                  className={`px-6 py-2.5 text-xs font-medium rounded transition-colors ${isDark ? 'text-zinc-400 hover:text-white' : 'text-zinc-500 hover:text-black'}`}
-                >
-                  Batal
-                </button>
-                <button 
-                  type="submit" 
-                  className={`px-6 py-2.5 text-xs font-medium rounded transition-colors ${isDark ? 'bg-white text-black hover:bg-zinc-200' : 'bg-black text-white hover:bg-zinc-800'}`}
-                >
-                  Simpan Konfigurasi
-                </button>
-              </div>
-            </form>
+                  <div className="space-y-2">
+                    <label className={`text-xs font-medium ${isDark ? 'text-zinc-300' : 'text-zinc-600'}`}>Deskripsi</label>
+                    <textarea 
+                      value={formData.description}
+                      onChange={e => setFormData({...formData, description: e.target.value})}
+                      className={`w-full px-4 py-2.5 text-sm rounded-lg outline-none transition-all border resize-y min-h-[80px] ${isDark ? 'bg-zinc-900 border-zinc-800 text-white placeholder-zinc-600 focus:border-zinc-500 focus:ring-1 focus:ring-zinc-500' : 'bg-zinc-50 border-zinc-200 text-black placeholder-zinc-400 focus:border-zinc-400 focus:ring-1 focus:ring-zinc-400'}`}
+                      placeholder="Deskripsi singkat mengenai ujian ini"
+                    />
+                  </div>
+                </div>
+
+                <div className={`h-px w-full ${isDark ? 'bg-zinc-800/50' : 'bg-zinc-200/50'}`}></div>
+
+                {/* Pengaturan Waktu */}
+                <div className="space-y-4">
+                  <h3 className={`text-xs font-bold uppercase tracking-widest ${isDark ? 'text-zinc-500' : 'text-zinc-400'}`}>Pengaturan Waktu</h3>
+                  
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <label className={`text-xs font-medium ${isDark ? 'text-zinc-300' : 'text-zinc-600'}`}>Waktu Mulai</label>
+                      <input 
+                        type="datetime-local" 
+                        required
+                        value={formData.startTime}
+                        onChange={e => setFormData({...formData, startTime: e.target.value})}
+                        className={`w-full px-3 py-2 text-sm rounded-lg outline-none transition-all border ${isDark ? 'bg-zinc-900 border-zinc-800 text-white focus:border-zinc-500 [color-scheme:dark]' : 'bg-zinc-50 border-zinc-200 text-black focus:border-zinc-400 [color-scheme:light]'}`}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <label className={`text-xs font-medium ${isDark ? 'text-zinc-300' : 'text-zinc-600'}`}>Waktu Selesai</label>
+                      <input 
+                        type="datetime-local" 
+                        required
+                        value={formData.endTime}
+                        onChange={e => setFormData({...formData, endTime: e.target.value})}
+                        className={`w-full px-3 py-2 text-sm rounded-lg outline-none transition-all border ${isDark ? 'bg-zinc-900 border-zinc-800 text-white focus:border-zinc-500 [color-scheme:dark]' : 'bg-zinc-50 border-zinc-200 text-black focus:border-zinc-400 [color-scheme:light]'}`}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className={`text-xs font-medium ${isDark ? 'text-zinc-300' : 'text-zinc-600'}`}>Durasi Pengerjaan (Menit)</label>
+                    <input 
+                      type="number" 
+                      min="1"
+                      required
+                      value={formData.duration}
+                      onChange={e => setFormData({...formData, duration: parseInt(e.target.value) || 0})}
+                      className={`w-full px-4 py-2.5 text-sm rounded-lg outline-none transition-all border ${isDark ? 'bg-zinc-900 border-zinc-800 text-white focus:border-zinc-500' : 'bg-zinc-50 border-zinc-200 text-black focus:border-zinc-400'}`}
+                    />
+                  </div>
+                </div>
+
+                <div className={`h-px w-full ${isDark ? 'bg-zinc-800/50' : 'bg-zinc-200/50'}`}></div>
+
+                {/* Keamanan & Acak */}
+                <div className="space-y-4">
+                  <h3 className={`text-xs font-bold uppercase tracking-widest ${isDark ? 'text-zinc-500' : 'text-zinc-400'}`}>Keamanan & Tampilan</h3>
+                  
+                  <div className={`p-4 rounded-lg border space-y-4 ${isDark ? 'bg-zinc-900/50 border-zinc-800/80' : 'bg-zinc-50/50 border-zinc-200/80'}`}>
+                    <label className="flex items-start gap-3 cursor-pointer group">
+                      <div className="mt-0.5">
+                        <input
+                          type="checkbox"
+                          checked={formData.randomizeQuestions}
+                          onChange={e => setFormData({...formData, randomizeQuestions: e.target.checked})}
+                          className="w-4 h-4 rounded border-zinc-300 text-black focus:ring-black accent-black cursor-pointer"
+                        />
+                      </div>
+                      <div>
+                        <p className={`text-sm font-medium ${isDark ? 'text-zinc-200 group-hover:text-white' : 'text-zinc-800 group-hover:text-black'} transition-colors`}>Acak Urutan Soal</p>
+                        <p className={`text-xs mt-0.5 ${isDark ? 'text-zinc-500' : 'text-zinc-500'}`}>Setiap murid akan mendapat urutan soal yang berbeda.</p>
+                      </div>
+                    </label>
+
+                    <label className="flex items-start gap-3 cursor-pointer group">
+                      <div className="mt-0.5">
+                        <input
+                          type="checkbox"
+                          checked={formData.randomizeOptions}
+                          onChange={e => setFormData({...formData, randomizeOptions: e.target.checked})}
+                          className="w-4 h-4 rounded border-zinc-300 text-black focus:ring-black accent-black cursor-pointer"
+                        />
+                      </div>
+                      <div>
+                        <p className={`text-sm font-medium ${isDark ? 'text-zinc-200 group-hover:text-white' : 'text-zinc-800 group-hover:text-black'} transition-colors`}>Acak Urutan Opsi Jawaban</p>
+                        <p className={`text-xs mt-0.5 ${isDark ? 'text-zinc-500' : 'text-zinc-500'}`}>Opsi A,B,C,D akan diacak untuk meminimalisir contek-menyontek.</p>
+                      </div>
+                    </label>
+                  </div>
+
+                  {/* SEB Configuration Card */}
+                  <div className={`p-4 rounded-lg border ${isDark ? 'bg-rose-950/10 border-rose-900/30' : 'bg-rose-50/50 border-rose-100'}`}>
+                    <label className="flex items-start gap-3 cursor-pointer group mb-3">
+                      <div className="mt-0.5">
+                        <input
+                          type="checkbox"
+                          checked={formData.requireSeb}
+                          onChange={e => setFormData({...formData, requireSeb: e.target.checked})}
+                          className="w-4 h-4 rounded border-zinc-300 text-rose-600 focus:ring-rose-600 accent-rose-600 cursor-pointer"
+                        />
+                      </div>
+                      <div>
+                        <p className={`text-sm font-medium ${isDark ? 'text-zinc-200 group-hover:text-white' : 'text-zinc-800 group-hover:text-black'} transition-colors`}>Wajib Safe Exam Browser (SEB)</p>
+                        <p className={`text-xs mt-0.5 ${isDark ? 'text-zinc-500' : 'text-zinc-500'}`}>Kunci ujian agar hanya bisa dibuka lewat SEB.</p>
+                      </div>
+                    </label>
+                    
+                    {formData.requireSeb && (
+                      <div className={`mt-4 p-3 rounded border ${isDark ? 'bg-black/50 border-zinc-800' : 'bg-white border-zinc-200'}`}>
+                        <label className={`text-xs font-medium mb-1.5 block ${isDark ? 'text-zinc-400' : 'text-zinc-600'}`}>
+                          Browser Exam Key (Opsional)
+                        </label>
+                        <input 
+                          type="text" 
+                          value={formData.sebExamKey}
+                          onChange={e => setFormData({...formData, sebExamKey: e.target.value})}
+                          className={`w-full px-3 py-2 text-sm rounded outline-none transition-all border ${isDark ? 'bg-zinc-900 border-zinc-800 text-white placeholder-zinc-700 focus:border-zinc-500' : 'bg-zinc-50 border-zinc-200 text-black placeholder-zinc-400 focus:border-zinc-400'}`}
+                          placeholder="Kosongkan untuk mode dasar"
+                        />
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+              </form>
+            </div>
+
+            {/* Footer / Actions */}
+            <div className={`p-6 border-t flex justify-end gap-3 ${isDark ? 'border-zinc-800 bg-[#0a0a0a]' : 'border-zinc-100 bg-white'}`}>
+              <button 
+                type="button" 
+                onClick={() => setIsModalOpen(false)}
+                className={`px-5 py-2.5 text-sm font-medium rounded-lg transition-colors ${isDark ? 'text-zinc-400 hover:text-white hover:bg-zinc-900' : 'text-zinc-500 hover:text-black hover:bg-zinc-100'}`}
+              >
+                Batal
+              </button>
+              <button 
+                type="submit" 
+                form="examForm"
+                className={`px-6 py-2.5 text-sm font-medium rounded-lg transition-all shadow-sm flex items-center gap-2 ${isDark ? 'bg-white text-black hover:bg-zinc-200 hover:scale-[1.02]' : 'bg-black text-white hover:bg-zinc-800 hover:scale-[1.02]'}`}
+              >
+                Simpan Konfigurasi
+              </button>
+            </div>
+
           </div>
         </div>
       )}
