@@ -4,7 +4,8 @@ import { useSession, signOut } from "next-auth/react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { useEffect, useState } from "react"
-import { ShieldCheck, Moon, Sun, LogOut, Plus, Edit, Trash2, Calendar, Clock, BookOpen, ShieldAlert } from "lucide-react"
+import { ShieldCheck, Moon, Sun, LogOut, Plus, Edit, Trash2, Calendar, Clock, BookOpen, ShieldAlert, GripVertical } from "lucide-react"
+import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd"
 
 export default function ExamsManagement() {
   const { data: session, status } = useSession()
@@ -13,6 +14,7 @@ export default function ExamsManagement() {
   const [exams, setExams] = useState<any[]>([])
   const [theme, setTheme] = useState<"dark" | "light">("dark")
   const [loading, setLoading] = useState(true)
+  const [isMounted, setIsMounted] = useState(false)
 
   // Form states
   const [isModalOpen, setIsModalOpen] = useState(false)
@@ -28,6 +30,10 @@ export default function ExamsManagement() {
     requireSeb: false,
     sebExamKey: "",
   })
+
+  useEffect(() => {
+    setIsMounted(true)
+  }, [])
 
   useEffect(() => {
     if (status === "unauthenticated") {
@@ -146,7 +152,96 @@ export default function ExamsManagement() {
     }
   };
 
+  const handleDeactivate = async (id: string) => {
+    try {
+      const res = await fetch(`/api/exams/${id}/deactivate`, { method: "PATCH" });
+      const data = await res.json();
+      if (data.success) {
+        fetchExams();
+      } else {
+        alert("Gagal menonaktifkan ujian: " + data.error);
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Terjadi kesalahan sistem");
+    }
+  };
+
+  const onDragEnd = (result: any) => {
+    const { source, destination, draggableId } = result;
+    if (!destination) return;
+    if (source.droppableId === destination.droppableId) return;
+
+    if (destination.droppableId === "ACTIVE") {
+      const ex = exams.find(e => e.id === draggableId);
+      if (ex && !ex.isActive) {
+        handleActivate(draggableId);
+      }
+    } else if (destination.droppableId === "DRAFT") {
+      const ex = exams.find(e => e.id === draggableId);
+      if (ex && ex.isActive) {
+        handleDeactivate(draggableId);
+      }
+    } else if (destination.droppableId === "FINISHED") {
+      alert("Tidak bisa memindahkan manual ke status Selesai. Status ini otomatis berubah ketika waktu habis.");
+    }
+  };
+
   const isDark = theme === "dark"
+  const now = new Date()
+
+  // Categorize exams
+  const draftExams = exams.filter(ex => !ex.isActive && new Date(ex.endTime) > now)
+  const activeExams = exams.filter(ex => ex.isActive)
+  const finishedExams = exams.filter(ex => !ex.isActive && new Date(ex.endTime) <= now)
+
+  const renderExamCard = (exam: any, provided: any, snapshot: any) => (
+    <div
+      ref={provided.innerRef}
+      {...provided.draggableProps}
+      className={`p-5 mb-4 border rounded-xl shadow-sm flex flex-col gap-3 group
+        ${isDark ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200'}
+        ${snapshot.isDragging ? (isDark ? 'shadow-white/10 rotate-2' : 'shadow-black/10 rotate-2') : ''}
+        transition-all`}
+    >
+      <div className="flex justify-between items-start">
+        <div className="flex gap-3">
+          <div 
+            {...provided.dragHandleProps}
+            className={`mt-1 cursor-grab active:cursor-grabbing ${isDark ? 'text-zinc-600 hover:text-zinc-400' : 'text-zinc-400 hover:text-zinc-600'}`}
+          >
+            <GripVertical size={16} />
+          </div>
+          <div>
+            <h3 className={`font-semibold line-clamp-1 ${isDark ? 'text-white' : 'text-black'}`}>{exam.title}</h3>
+            <p className={`text-xs mt-1 line-clamp-2 ${isDark ? 'text-zinc-500' : 'text-zinc-500'}`}>{exam.description || "Tidak ada deskripsi"}</p>
+          </div>
+        </div>
+        <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+          <button onClick={() => handleOpenModal(exam)} className={`transition-colors ${isDark ? 'text-zinc-500 hover:text-white' : 'text-zinc-400 hover:text-black'}`}>
+            <Edit size={14} />
+          </button>
+          <button onClick={() => handleDelete(exam.id)} className={`transition-colors ${isDark ? 'text-zinc-500 hover:text-rose-500' : 'text-zinc-400 hover:text-rose-600'}`}>
+            <Trash2 size={14} />
+          </button>
+        </div>
+      </div>
+      
+      <div className={`mt-2 flex flex-wrap gap-x-4 gap-y-2 text-[10px] uppercase font-bold tracking-widest ${isDark ? 'text-zinc-500' : 'text-zinc-400'}`}>
+        <div className="flex items-center gap-1.5">
+          <BookOpen size={12} /> {exam._count?.examQuestions || 0} Soal
+        </div>
+        <div className="flex items-center gap-1.5">
+          <Clock size={12} /> {exam.duration} Min
+        </div>
+        <div className="flex items-center gap-1.5 w-full">
+          <Calendar size={12} /> 
+          {new Date(exam.startTime).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })} 
+          - {new Date(exam.endTime).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })}
+        </div>
+      </div>
+    </div>
+  )
 
   return (
     <div className={`min-h-screen flex flex-col font-sans transition-colors duration-300 ${isDark ? 'bg-[#0a0a0a] text-zinc-300 selection:bg-white/20' : 'bg-white text-zinc-600 selection:bg-black/10'}`}>
@@ -189,74 +284,107 @@ export default function ExamsManagement() {
         
         <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 mb-12">
           <div>
-            <h1 className={`text-3xl font-medium tracking-tight mb-2 ${isDark ? 'text-white' : 'text-black'}`}>Konfigurasi Ujian</h1>
-            <p className={`text-sm ${isDark ? 'text-zinc-500' : 'text-zinc-500'}`}>Kelola jadwal, durasi, dan informasi ujian Anda.</p>
+            <h1 className={`text-3xl font-medium tracking-tight mb-2 ${isDark ? 'text-white' : 'text-black'}`}>Manajemen Ujian</h1>
+            <p className={`text-sm ${isDark ? 'text-zinc-500' : 'text-zinc-500'}`}>Tarik (drag) kartu ke kolom yang sesuai untuk mengubah status ujian.</p>
           </div>
           
-          <button onClick={() => handleOpenModal()} className={`px-4 py-2.5 text-xs font-medium transition-colors whitespace-nowrap rounded flex items-center gap-2 ${isDark ? 'bg-zinc-900 hover:bg-zinc-800 text-white' : 'bg-zinc-100 hover:bg-zinc-200 text-black'}`}>
-            <Plus size={14} /> Buat Ujian Baru
+          <button onClick={() => handleOpenModal()} className={`px-5 py-3 text-sm font-medium transition-colors rounded-lg shadow-sm flex items-center gap-2 ${isDark ? 'bg-white hover:bg-zinc-200 text-black' : 'bg-black hover:bg-zinc-800 text-white'}`}>
+            <Plus size={16} /> Buat Ujian Baru
           </button>
         </div>
 
-        {/* Exams List */}
+        {/* Kanban Board */}
         {loading ? (
           <div className="flex justify-center py-20">
             <div className={`w-5 h-5 border-2 rounded-full animate-spin ${isDark ? 'border-zinc-600 border-t-white' : 'border-zinc-300 border-t-black'}`}></div>
           </div>
-        ) : exams.length === 0 ? (
-          <div className={`py-20 text-center text-sm ${isDark ? 'text-zinc-600' : 'text-zinc-400'}`}>
-            Belum ada ujian yang dibuat.
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {exams.map(exam => (
-              <div key={exam.id} className={`p-6 border rounded-lg transition-all ${isDark ? 'bg-[#0a0a0a] border-zinc-900 hover:border-zinc-800' : 'bg-white border-zinc-100 hover:border-zinc-200'}`}>
-                <div className="flex justify-between items-start mb-4">
-                  <div>
-                    <h3 className={`text-lg font-medium truncate pr-4 ${isDark ? 'text-white' : 'text-black'}`}>{exam.title}</h3>
-                    {exam.isActive ? (
-                      <span className="inline-block mt-2 px-2 py-0.5 text-[10px] font-bold tracking-widest uppercase rounded bg-emerald-500/10 text-emerald-500 border border-emerald-500/20">Aktif</span>
-                    ) : (
-                      <span className="inline-block mt-2 px-2 py-0.5 text-[10px] font-bold tracking-widest uppercase rounded bg-zinc-500/10 text-zinc-500 border border-zinc-500/20">Tidak Aktif</span>
-                    )}
-                  </div>
-                  <div className="flex gap-2">
-                    {!exam.isActive && (
-                      <button onClick={() => handleActivate(exam.id)} title="Setel Aktif" className={`transition-colors ${isDark ? 'text-zinc-500 hover:text-emerald-500' : 'text-zinc-400 hover:text-emerald-600'}`}>
-                        <ShieldCheck size={16} />
-                      </button>
-                    )}
-                    <button onClick={() => handleOpenModal(exam)} className={`transition-colors ${isDark ? 'text-zinc-500 hover:text-white' : 'text-zinc-400 hover:text-black'}`}>
-                      <Edit size={16} />
-                    </button>
-                    <button onClick={() => handleDelete(exam.id)} className={`transition-colors ${isDark ? 'text-zinc-500 hover:text-rose-500' : 'text-zinc-400 hover:text-rose-600'}`}>
-                      <Trash2 size={16} />
-                    </button>
-                  </div>
+        ) : isMounted ? (
+          <DragDropContext onDragEnd={onDragEnd}>
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              
+              {/* Kolom DRAFT */}
+              <div className={`flex flex-col rounded-2xl border p-4 ${isDark ? 'bg-[#111] border-zinc-800/50' : 'bg-zinc-50 border-zinc-200/50'}`}>
+                <div className="flex items-center justify-between mb-4 px-2">
+                  <h2 className={`font-semibold text-sm ${isDark ? 'text-white' : 'text-black'}`}>
+                    Belum Aktif <span className={`ml-2 text-xs font-normal px-2 py-0.5 rounded-full ${isDark ? 'bg-zinc-800 text-zinc-400' : 'bg-zinc-200 text-zinc-600'}`}>{draftExams.length}</span>
+                  </h2>
                 </div>
-                
-                <p className={`text-sm mb-6 line-clamp-2 ${isDark ? 'text-zinc-500' : 'text-zinc-500'}`}>
-                  {exam.description || "Tidak ada deskripsi"}
-                </p>
-
-                <div className={`space-y-3 text-xs ${isDark ? 'text-zinc-400' : 'text-zinc-500'}`}>
-                  <div className="flex items-center gap-2">
-                    <Calendar size={14} className={isDark ? "text-zinc-600" : "text-zinc-400"} />
-                    {new Date(exam.startTime).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Clock size={14} className={isDark ? "text-zinc-600" : "text-zinc-400"} />
-                    {exam.duration} Menit
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <BookOpen size={14} className={isDark ? "text-zinc-600" : "text-zinc-400"} />
-                    {exam._count?.examQuestions || 0} Soal
-                  </div>
-                </div>
+                <Droppable droppableId="DRAFT">
+                  {(provided, snapshot) => (
+                    <div 
+                      ref={provided.innerRef} 
+                      {...provided.droppableProps}
+                      className={`flex-1 min-h-[300px] rounded-xl transition-colors ${snapshot.isDraggingOver ? (isDark ? 'bg-zinc-800/30' : 'bg-zinc-200/50') : ''}`}
+                    >
+                      {draftExams.map((exam, index) => (
+                        <Draggable key={exam.id} draggableId={exam.id} index={index}>
+                          {(provided, snapshot) => renderExamCard(exam, provided, snapshot)}
+                        </Draggable>
+                      ))}
+                      {provided.placeholder}
+                    </div>
+                  )}
+                </Droppable>
               </div>
-            ))}
-          </div>
-        )}
+
+              {/* Kolom ACTIVE */}
+              <div className={`flex flex-col rounded-2xl border p-4 ${isDark ? 'bg-emerald-950/20 border-emerald-900/50' : 'bg-emerald-50 border-emerald-100'}`}>
+                <div className="flex items-center justify-between mb-4 px-2">
+                  <h2 className={`font-semibold text-sm ${isDark ? 'text-emerald-400' : 'text-emerald-600'}`}>
+                    Sedang Berjalan <span className={`ml-2 text-xs font-normal px-2 py-0.5 rounded-full ${isDark ? 'bg-emerald-900/50 text-emerald-300' : 'bg-emerald-200/50 text-emerald-700'}`}>{activeExams.length}</span>
+                  </h2>
+                </div>
+                <Droppable droppableId="ACTIVE">
+                  {(provided, snapshot) => (
+                    <div 
+                      ref={provided.innerRef} 
+                      {...provided.droppableProps}
+                      className={`flex-1 min-h-[300px] rounded-xl transition-colors ${snapshot.isDraggingOver ? (isDark ? 'bg-emerald-900/20' : 'bg-emerald-200/40') : ''}`}
+                    >
+                      {activeExams.map((exam, index) => (
+                        <Draggable key={exam.id} draggableId={exam.id} index={index}>
+                          {(provided, snapshot) => renderExamCard(exam, provided, snapshot)}
+                        </Draggable>
+                      ))}
+                      {provided.placeholder}
+                      {activeExams.length === 0 && !snapshot.isDraggingOver && (
+                         <div className={`h-32 border-2 border-dashed rounded-xl flex items-center justify-center text-xs font-medium ${isDark ? 'border-emerald-900/30 text-emerald-500/50' : 'border-emerald-200 text-emerald-600/50'}`}>
+                           Tarik ke sini untuk mengaktifkan ujian
+                         </div>
+                      )}
+                    </div>
+                  )}
+                </Droppable>
+              </div>
+
+              {/* Kolom FINISHED */}
+              <div className={`flex flex-col rounded-2xl border p-4 opacity-75 ${isDark ? 'bg-[#111] border-zinc-800/50' : 'bg-zinc-50 border-zinc-200/50'}`}>
+                <div className="flex items-center justify-between mb-4 px-2">
+                  <h2 className={`font-semibold text-sm ${isDark ? 'text-zinc-500' : 'text-zinc-400'}`}>
+                    Selesai <span className={`ml-2 text-xs font-normal px-2 py-0.5 rounded-full ${isDark ? 'bg-zinc-800 text-zinc-500' : 'bg-zinc-200 text-zinc-400'}`}>{finishedExams.length}</span>
+                  </h2>
+                </div>
+                <Droppable droppableId="FINISHED" isDropDisabled={true}>
+                  {(provided) => (
+                    <div 
+                      ref={provided.innerRef} 
+                      {...provided.droppableProps}
+                      className="flex-1 min-h-[300px] rounded-xl"
+                    >
+                      {finishedExams.map((exam, index) => (
+                        <Draggable key={exam.id} draggableId={exam.id} index={index} isDragDisabled={true}>
+                          {(provided, snapshot) => renderExamCard(exam, provided, snapshot)}
+                        </Draggable>
+                      ))}
+                      {provided.placeholder}
+                    </div>
+                  )}
+                </Droppable>
+              </div>
+
+            </div>
+          </DragDropContext>
+        ) : null}
 
       </main>
 
