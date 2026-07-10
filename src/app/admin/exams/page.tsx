@@ -4,7 +4,7 @@ import { useSession, signOut } from "next-auth/react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { useEffect, useState } from "react"
-import { ShieldCheck, Moon, Sun, LogOut, Plus, Edit, Trash2, Calendar, Clock, BookOpen, ShieldAlert, GripVertical } from "lucide-react"
+import { ShieldCheck, Moon, Sun, LogOut, Plus, Edit, Trash2, Calendar, Clock, BookOpen, ShieldAlert, GripVertical, AlertTriangle } from "lucide-react"
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd"
 import { useTheme } from "@/hooks/useTheme";
 
@@ -20,6 +20,7 @@ export default function ExamsManagement() {
   // Form states
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
+  const [confirmFinishId, setConfirmFinishId] = useState<string | null>(null)
   const [formData, setFormData] = useState({
     title: "",
     description: "",
@@ -168,6 +169,24 @@ export default function ExamsManagement() {
     }
   };
 
+  const executeFinish = async () => {
+    if (!confirmFinishId) return;
+    const id = confirmFinishId;
+    setConfirmFinishId(null);
+    try {
+      const res = await fetch(`/api/exams/${id}/finish`, { method: "PATCH" });
+      const data = await res.json();
+      if (data.success) {
+        fetchExams();
+      } else {
+        alert("Gagal mengakhiri ujian: " + data.error);
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Terjadi kesalahan sistem");
+    }
+  };
+
   const onDragEnd = (result: any) => {
     const { source, destination, draggableId } = result;
     if (!destination) return;
@@ -184,7 +203,10 @@ export default function ExamsManagement() {
         handleDeactivate(draggableId);
       }
     } else if (destination.droppableId === "FINISHED") {
-      alert("Tidak bisa memindahkan manual ke status Selesai. Status ini otomatis berubah ketika waktu habis.");
+      const ex = exams.find(e => e.id === draggableId);
+      if (ex) {
+        setConfirmFinishId(draggableId);
+      }
     }
   };
 
@@ -365,12 +387,12 @@ export default function ExamsManagement() {
                     Selesai <span className={`ml-2 text-xs font-normal px-2 py-0.5 rounded-full ${isDark ? 'bg-zinc-800 text-zinc-500' : 'bg-zinc-200 text-zinc-400'}`}>{finishedExams.length}</span>
                   </h2>
                 </div>
-                <Droppable droppableId="FINISHED" isDropDisabled={true}>
-                  {(provided) => (
+                <Droppable droppableId="FINISHED">
+                  {(provided, snapshot) => (
                     <div 
                       ref={provided.innerRef} 
                       {...provided.droppableProps}
-                      className="flex-1 min-h-[300px] rounded-xl"
+                      className={`flex-1 min-h-[300px] rounded-xl transition-colors ${snapshot.isDraggingOver ? (isDark ? 'bg-zinc-800/30' : 'bg-zinc-200/50') : ''}`}
                     >
                       {finishedExams.map((exam, index) => (
                         <Draggable key={exam.id} draggableId={exam.id} index={index} isDragDisabled={true}>
@@ -378,6 +400,11 @@ export default function ExamsManagement() {
                         </Draggable>
                       ))}
                       {provided.placeholder}
+                      {finishedExams.length === 0 && !snapshot.isDraggingOver && (
+                         <div className={`h-32 border-2 border-dashed rounded-xl flex items-center justify-center text-xs font-medium text-center px-4 ${isDark ? 'border-zinc-800/30 text-zinc-500/50' : 'border-zinc-200 text-zinc-600/50'}`}>
+                           Tarik ke sini untuk mengakhiri ujian
+                         </div>
+                      )}
                     </div>
                   )}
                 </Droppable>
@@ -388,6 +415,40 @@ export default function ExamsManagement() {
         ) : null}
 
       </main>
+
+      {/* Confirmation Modal */}
+      {confirmFinishId && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm transition-opacity" onClick={() => setConfirmFinishId(null)}></div>
+          <div className={`relative w-full max-w-sm p-6 rounded-xl shadow-2xl animate-in fade-in zoom-in-95 duration-200 ${isDark ? 'bg-zinc-900 border border-zinc-800' : 'bg-white border border-zinc-200'}`}>
+            <div className="flex flex-col items-center text-center gap-4">
+              <div className="w-12 h-12 rounded-full bg-rose-500/10 flex items-center justify-center text-rose-500">
+                <AlertTriangle size={24} />
+              </div>
+              <div>
+                <h3 className={`text-lg font-medium mb-2 ${isDark ? 'text-white' : 'text-black'}`}>Akhiri Ujian?</h3>
+                <p className={`text-sm leading-relaxed ${isDark ? 'text-zinc-400' : 'text-zinc-600'}`}>
+                  Apakah Anda yakin ingin mengakhiri ujian ini sekarang? Waktu Selesai akan diubah ke detik ini, dan peserta yang sedang mengerjakan akan otomatis terhenti.
+                </p>
+              </div>
+              <div className="flex gap-3 w-full mt-2">
+                <button 
+                  onClick={() => setConfirmFinishId(null)}
+                  className={`flex-1 px-4 py-2 text-sm font-medium rounded-lg transition-colors ${isDark ? 'bg-zinc-800 text-white hover:bg-zinc-700' : 'bg-zinc-100 text-black hover:bg-zinc-200'}`}
+                >
+                  Batal
+                </button>
+                <button 
+                  onClick={executeFinish}
+                  className="flex-1 px-4 py-2 text-sm font-medium rounded-lg bg-rose-600 text-white hover:bg-rose-700 transition-colors shadow-sm"
+                >
+                  Ya, Akhiri
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Modal / Slide Over for Editing */}
       {isModalOpen && (
