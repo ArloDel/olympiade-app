@@ -8,6 +8,7 @@ import { ShieldCheck, Moon, Sun, LogOut, Plus, Edit, Trash2, Calendar, Clock, Bo
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd"
 import { useTheme } from "@/hooks/useTheme";
 import anime from "animejs";
+import ConfirmModal from "@/components/ConfirmModal";
 
 export default function ExamsManagement() {
   const { data: session, status } = useSession()
@@ -21,7 +22,24 @@ export default function ExamsManagement() {
   // Form states
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
-  const [confirmFinishId, setConfirmFinishId] = useState<string | null>(null)
+  
+  const [confirmConfig, setConfirmConfig] = useState<{
+    isOpen: boolean;
+    id: string;
+    action: "activate" | "deactivate" | "finish" | "delete" | "";
+    title: string;
+    description: string;
+    type: "danger" | "warning" | "info" | "success";
+    confirmText: string;
+  }>({
+    isOpen: false,
+    id: "",
+    action: "",
+    title: "",
+    description: "",
+    type: "warning",
+    confirmText: "Ya"
+  });
   const [formData, setFormData] = useState({
     title: "",
     description: "",
@@ -123,64 +141,46 @@ export default function ExamsManagement() {
     }
   }
 
-  const handleDelete = async (id: string) => {
-    if (!confirm("Apakah Anda yakin ingin menghapus ujian ini? Semua soal dan jawaban yang terkait akan ikut terhapus.")) return
-
-    try {
-      const res = await fetch(`/api/exams/${id}`, { method: "DELETE" })
-      const data = await res.json()
-      if (data.success) {
-        fetchExams()
-      } else {
-        alert("Gagal menghapus ujian")
-      }
-    } catch (err) {
-      console.error(err)
-    }
-  }
-
-  const handleActivate = async (id: string) => {
-    if (!confirm("Aktifkan ujian ini? Ujian lain akan otomatis dinonaktifkan untuk siswa.")) return;
-    try {
-      const res = await fetch(`/api/exams/${id}/activate`, { method: "PATCH" });
-      const data = await res.json();
-      if (data.success) {
-        fetchExams();
-      } else {
-        alert("Gagal mengaktifkan ujian: " + data.error);
-      }
-    } catch (err) {
-      console.error(err);
-      alert("Terjadi kesalahan sistem");
+  const openConfirm = (action: "activate" | "deactivate" | "finish" | "delete", id: string) => {
+    switch (action) {
+      case "activate":
+        setConfirmConfig({ isOpen: true, id, action, title: "Aktifkan Ujian?", description: "Ujian lain akan otomatis dinonaktifkan untuk siswa. Apakah Anda yakin?", type: "info", confirmText: "Ya, Aktifkan" });
+        break;
+      case "deactivate":
+        setConfirmConfig({ isOpen: true, id, action, title: "Nonaktifkan Ujian?", description: "Peserta tidak akan bisa mengakses ujian ini lagi sampai diaktifkan kembali.", type: "warning", confirmText: "Ya, Nonaktifkan" });
+        break;
+      case "finish":
+        setConfirmConfig({ isOpen: true, id, action, title: "Akhiri Ujian?", description: "Apakah Anda yakin ingin mengakhiri ujian ini sekarang? Waktu Selesai akan diubah ke detik ini, dan peserta yang sedang mengerjakan akan otomatis terhenti.", type: "danger", confirmText: "Ya, Akhiri" });
+        break;
+      case "delete":
+        setConfirmConfig({ isOpen: true, id, action, title: "Hapus Ujian?", description: "Apakah Anda yakin ingin menghapus ujian ini? Semua soal dan jawaban yang terkait akan ikut terhapus secara permanen.", type: "danger", confirmText: "Ya, Hapus" });
+        break;
     }
   };
 
-  const handleDeactivate = async (id: string) => {
+  const executeConfirmAction = async () => {
+    const { id, action } = confirmConfig;
+    if (!id || !action) return;
+    
     try {
-      const res = await fetch(`/api/exams/${id}/deactivate`, { method: "PATCH" });
-      const data = await res.json();
-      if (data.success) {
-        fetchExams();
-      } else {
-        alert("Gagal menonaktifkan ujian: " + data.error);
+      let res;
+      if (action === "delete") {
+        res = await fetch(`/api/exams/${id}`, { method: "DELETE" });
+      } else if (action === "activate") {
+        res = await fetch(`/api/exams/${id}/activate`, { method: "PATCH" });
+      } else if (action === "deactivate") {
+        res = await fetch(`/api/exams/${id}/deactivate`, { method: "PATCH" });
+      } else if (action === "finish") {
+        res = await fetch(`/api/exams/${id}/finish`, { method: "PATCH" });
       }
-    } catch (err) {
-      console.error(err);
-      alert("Terjadi kesalahan sistem");
-    }
-  };
 
-  const executeFinish = async () => {
-    if (!confirmFinishId) return;
-    const id = confirmFinishId;
-    setConfirmFinishId(null);
-    try {
-      const res = await fetch(`/api/exams/${id}/finish`, { method: "PATCH" });
-      const data = await res.json();
-      if (data.success) {
-        fetchExams();
-      } else {
-        alert("Gagal mengakhiri ujian: " + data.error);
+      if (res) {
+        const data = await res.json();
+        if (data.success) {
+          fetchExams();
+        } else {
+          alert(`Gagal memproses aksi: ${data.error || "Kesalahan tidak diketahui"}`);
+        }
       }
     } catch (err) {
       console.error(err);
@@ -195,19 +195,13 @@ export default function ExamsManagement() {
 
     if (destination.droppableId === "ACTIVE") {
       const ex = exams.find(e => e.id === draggableId);
-      if (ex && !ex.isActive) {
-        handleActivate(draggableId);
-      }
+      if (ex && !ex.isActive) openConfirm("activate", draggableId);
     } else if (destination.droppableId === "DRAFT") {
       const ex = exams.find(e => e.id === draggableId);
-      if (ex && ex.isActive) {
-        handleDeactivate(draggableId);
-      }
+      if (ex && ex.isActive) openConfirm("deactivate", draggableId);
     } else if (destination.droppableId === "FINISHED") {
       const ex = exams.find(e => e.id === draggableId);
-      if (ex) {
-        setConfirmFinishId(draggableId);
-      }
+      if (ex) openConfirm("finish", draggableId);
     }
   };
 
@@ -265,7 +259,7 @@ export default function ExamsManagement() {
             <button onClick={() => handleOpenModal(exam)} className={`transition-colors ${isDark ? 'text-zinc-500 hover:text-white' : 'text-zinc-400 hover:text-black'}`}>
               <Edit size={14} />
             </button>
-            <button onClick={() => handleDelete(exam.id)} className={`transition-colors ${isDark ? 'text-zinc-500 hover:text-rose-500' : 'text-zinc-400 hover:text-rose-600'}`}>
+            <button onClick={() => openConfirm("delete", exam.id)} className={`transition-colors ${isDark ? 'text-zinc-500 hover:text-rose-500' : 'text-zinc-400 hover:text-rose-600'}`}>
               <Trash2 size={14} />
             </button>
           </div>
@@ -439,38 +433,12 @@ export default function ExamsManagement() {
       </main>
 
       {/* Confirmation Modal */}
-      {confirmFinishId && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm transition-opacity" onClick={() => setConfirmFinishId(null)}></div>
-          <div className={`relative w-full max-w-sm p-6 rounded-xl shadow-2xl animate-in fade-in zoom-in-95 duration-200 ${isDark ? 'bg-zinc-900 border border-zinc-800' : 'bg-white border border-zinc-200'}`}>
-            <div className="flex flex-col items-center text-center gap-4">
-              <div className="w-12 h-12 rounded-full bg-rose-500/10 flex items-center justify-center text-rose-500">
-                <AlertTriangle size={24} />
-              </div>
-              <div>
-                <h3 className={`text-lg font-medium mb-2 ${isDark ? 'text-white' : 'text-black'}`}>Akhiri Ujian?</h3>
-                <p className={`text-sm leading-relaxed ${isDark ? 'text-zinc-400' : 'text-zinc-600'}`}>
-                  Apakah Anda yakin ingin mengakhiri ujian ini sekarang? Waktu Selesai akan diubah ke detik ini, dan peserta yang sedang mengerjakan akan otomatis terhenti.
-                </p>
-              </div>
-              <div className="flex gap-3 w-full mt-2">
-                <button 
-                  onClick={() => setConfirmFinishId(null)}
-                  className={`flex-1 px-4 py-2 text-sm font-medium rounded-lg transition-colors ${isDark ? 'bg-zinc-800 text-white hover:bg-zinc-700' : 'bg-zinc-100 text-black hover:bg-zinc-200'}`}
-                >
-                  Batal
-                </button>
-                <button 
-                  onClick={executeFinish}
-                  className="flex-1 px-4 py-2 text-sm font-medium rounded-lg bg-rose-600 text-white hover:bg-rose-700 transition-colors shadow-sm"
-                >
-                  Ya, Akhiri
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+      <ConfirmModal 
+        {...confirmConfig}
+        isDark={isDark}
+        onClose={() => setConfirmConfig(prev => ({...prev, isOpen: false}))}
+        onConfirm={executeConfirmAction}
+      />
 
       {/* Modal / Slide Over for Editing */}
       {isModalOpen && (
