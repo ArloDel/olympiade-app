@@ -21,7 +21,22 @@ export default function ExamsManagement() {
 
   // Form states
   const [isModalOpen, setIsModalOpen] = useState(false)
+  const [isModalVisible, setIsModalVisible] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
+  
+  const openModal = () => {
+    setIsModalOpen(true)
+    setTimeout(() => {
+      setIsModalVisible(true)
+    }, 10)
+  }
+
+  const closeModal = () => {
+    setIsModalVisible(false)
+    setTimeout(() => {
+      setIsModalOpen(false)
+    }, 300)
+  }
   
   const [confirmConfig, setConfirmConfig] = useState<{
     isOpen: boolean;
@@ -109,7 +124,7 @@ export default function ExamsManagement() {
         sebExamKey: "",
       })
     }
-    setIsModalOpen(true)
+    openModal()
   }
 
   const handleSave = async (e: React.FormEvent) => {
@@ -130,7 +145,7 @@ export default function ExamsManagement() {
 
       const data = await res.json()
       if (data.success) {
-        setIsModalOpen(false)
+        closeModal()
         fetchExams()
       } else {
         alert("Gagal menyimpan ujian: " + data.error)
@@ -443,15 +458,20 @@ export default function ExamsManagement() {
       {/* Modal / Slide Over for Editing */}
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex justify-end">
-          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm transition-opacity" onClick={() => setIsModalOpen(false)}></div>
-          <div className={`relative w-full max-w-md h-full flex flex-col shadow-2xl animate-in slide-in-from-right duration-300 ${isDark ? 'bg-[#0a0a0a] border-l border-zinc-800' : 'bg-white border-l border-zinc-200'}`}>
+          <div 
+            className={`absolute inset-0 bg-black/40 backdrop-blur-sm transition-opacity duration-300 ease-in-out ${isModalVisible ? 'opacity-100' : 'opacity-0'}`} 
+            onClick={closeModal}
+          ></div>
+          <div 
+            className={`relative w-full max-w-md h-full flex flex-col shadow-2xl transition-transform duration-300 ease-in-out ${isModalVisible ? 'translate-x-0' : 'translate-x-full'} ${isDark ? 'bg-[#0a0a0a] border-l border-zinc-800' : 'bg-white border-l border-zinc-200'}`}
+          >
             
             {/* Header */}
             <div className={`flex items-center justify-between p-6 border-b ${isDark ? 'border-zinc-800' : 'border-zinc-100'}`}>
               <h2 className={`text-lg font-medium tracking-tight ${isDark ? 'text-white' : 'text-black'}`}>
                 {editingId ? "Edit Konfigurasi Ujian" : "Buat Ujian Baru"}
               </h2>
-              <button onClick={() => setIsModalOpen(false)} className={`p-2 rounded-full transition-colors ${isDark ? 'hover:bg-zinc-800 text-zinc-400' : 'hover:bg-zinc-100 text-zinc-500'}`}>
+              <button onClick={closeModal} className={`p-2 rounded-full transition-colors ${isDark ? 'hover:bg-zinc-800 text-zinc-400' : 'hover:bg-zinc-100 text-zinc-500'}`}>
                 <LogOut size={16} className="rotate-180" />
               </button>
             </div>
@@ -608,7 +628,7 @@ export default function ExamsManagement() {
             <div className={`p-6 border-t flex justify-end gap-3 ${isDark ? 'border-zinc-800 bg-[#0a0a0a]' : 'border-zinc-100 bg-white'}`}>
               <button 
                 type="button" 
-                onClick={() => setIsModalOpen(false)}
+                onClick={closeModal}
                 className={`px-5 py-2.5 text-sm font-medium rounded-lg transition-colors ${isDark ? 'text-zinc-400 hover:text-white hover:bg-zinc-900' : 'text-zinc-500 hover:text-black hover:bg-zinc-100'}`}
               >
                 Batal
