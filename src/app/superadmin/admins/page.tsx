@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { useEffect, useState } from "react"
 import { Users, LogOut, ShieldCheck, Moon, Sun, Lock, ShieldAlert, Activity, Trash2, Plus, X } from "lucide-react"
+import { useTheme } from "@/hooks/useTheme";
 
 export default function SuperadminAdminsPage() {
   const { data: session, status } = useSession()
@@ -12,7 +13,7 @@ export default function SuperadminAdminsPage() {
   const [searchTerm, setSearchTerm] = useState("")
   const [admins, setAdmins] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
-  const [theme, setTheme] = useState<"dark" | "light">("dark")
+  const [theme, setTheme] = useTheme()
 
   const [isAddModalOpen, setIsAddModalOpen] = useState(false)
   const [newAdminName, setNewAdminName] = useState("")

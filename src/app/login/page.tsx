@@ -4,6 +4,7 @@ import { signIn, getSession } from "next-auth/react"
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { Shield, Moon, Sun, ArrowRight } from "lucide-react"
+import { useTheme } from "@/hooks/useTheme";
 
 export default function LoginPage() {
   const router = useRouter()
@@ -11,7 +12,7 @@ export default function LoginPage() {
   const [password, setPassword] = useState("")
   const [error, setError] = useState("")
   const [isLoading, setIsLoading] = useState(false)
-  const [theme, setTheme] = useState<"dark" | "light">("dark")
+  const [theme, setTheme] = useTheme()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()

@@ -5,12 +5,13 @@ import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { useEffect, useState } from "react"
 import { Users, LogOut, Moon, Sun, ShieldAlert, FileText, UserCheck, Activity, BarChart3, Clock, ChevronRight } from "lucide-react"
+import { useTheme } from "@/hooks/useTheme";
 
 export default function SuperadminDashboard() {
   const { data: session, status } = useSession()
   const router = useRouter()
   const [loading, setLoading] = useState(true)
-  const [theme, setTheme] = useState<"dark" | "light">("dark")
+  const [theme, setTheme] = useTheme()
   
   const [stats, setStats] = useState({
     totalStudents: 0,

@@ -8,6 +8,7 @@ import { Settings, LogOut, Search, ShieldCheck, Moon, Sun, FileText, FileSpreads
 import jsPDF from "jspdf"
 import "jspdf-autotable"
 import * as XLSX from "xlsx"
+import { useTheme } from "@/hooks/useTheme";
 
 export default function ResultsManagement() {
   const { data: session, status } = useSession()
@@ -18,7 +19,7 @@ export default function ResultsManagement() {
   const [resultsData, setResultsData] = useState<any>(null)
   const [loading, setLoading] = useState(false)
   const [searchTerm, setSearchTerm] = useState("")
-  const [theme, setTheme] = useState<"dark" | "light">("dark")
+  const [theme, setTheme] = useTheme()
 
   useEffect(() => {
     if (status === "unauthenticated") {

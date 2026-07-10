@@ -5,13 +5,14 @@ import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { useEffect, useState, useRef } from "react"
 import { LogOut, Plus, Trash2, CheckCircle, ShieldCheck, Moon, Sun, Download, Upload, ShieldAlert, Library } from "lucide-react"
+import { useTheme } from "@/hooks/useTheme";
 
 export default function QuestionBank() {
   const { data: session, status } = useSession()
   const router = useRouter()
 
   const [questions, setQuestions] = useState<any[]>([])
-  const [theme, setTheme] = useState<"dark" | "light">("dark")
+  const [theme, setTheme] = useTheme()
 
   // Form states
   const [loading, setLoading] = useState(false)

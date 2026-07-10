@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { useEffect, useState } from "react"
 import { Users, AlertTriangle, CheckCircle, Video, LogOut, Search, Activity, ShieldCheck, ShieldAlert, Lock, Moon, Sun, Eye, Clock, Image as ImageIcon, X } from "lucide-react"
+import { useTheme } from "@/hooks/useTheme";
 
 export default function AdminDashboard() {
   const { data: session, status } = useSession()
@@ -12,7 +13,7 @@ export default function AdminDashboard() {
   const [searchTerm, setSearchTerm] = useState("")
   const [participants, setParticipants] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
-  const [theme, setTheme] = useState<"dark" | "light">("dark")
+  const [theme, setTheme] = useTheme()
 
   // Log viewer state
   const [selectedLogUser, setSelectedLogUser] = useState<any>(null)

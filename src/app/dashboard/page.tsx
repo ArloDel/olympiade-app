@@ -4,6 +4,7 @@ import { useSession, signOut } from "next-auth/react"
 import { useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
 import { LogOut, Camera, Shield, Award, Moon, Sun, Monitor, AlertTriangle, Clock } from "lucide-react"
+import { useTheme } from "@/hooks/useTheme";
 
 export default function DashboardPage() {
   const { data: session, status } = useSession()
@@ -14,7 +15,7 @@ export default function DashboardPage() {
   const [exam, setExam] = useState<any>(null)
   const [examLoading, setExamLoading] = useState(true)
   const [result, setResult] = useState<any>(null)
-  const [theme, setTheme] = useState<"dark" | "light">("dark")
+  const [theme, setTheme] = useTheme()
   const [showScore, setShowScore] = useState(false)
 
   useEffect(() => {

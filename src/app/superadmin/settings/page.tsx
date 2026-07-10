@@ -5,11 +5,12 @@ import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { useEffect, useState } from "react"
 import { ShieldAlert, Moon, Sun, LogOut, Wrench, StopCircle, Download, AlertTriangle } from "lucide-react"
+import { useTheme } from "@/hooks/useTheme";
 
 export default function SuperadminSettingsPage() {
   const { data: session, status } = useSession()
   const router = useRouter()
-  const [theme, setTheme] = useState<"dark" | "light">("dark")
+  const [theme, setTheme] = useTheme()
   
   const [maintenanceMode, setMaintenanceMode] = useState(false)
   const [loading, setLoading] = useState(true)

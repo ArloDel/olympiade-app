@@ -6,13 +6,14 @@ import Link from "next/link"
 import { useEffect, useState } from "react"
 import { ShieldCheck, Moon, Sun, LogOut, Plus, Edit, Trash2, Calendar, Clock, BookOpen, ShieldAlert, GripVertical } from "lucide-react"
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd"
+import { useTheme } from "@/hooks/useTheme";
 
 export default function ExamsManagement() {
   const { data: session, status } = useSession()
   const router = useRouter()
 
   const [exams, setExams] = useState<any[]>([])
-  const [theme, setTheme] = useState<"dark" | "light">("dark")
+  const [theme, setTheme] = useTheme()
   const [loading, setLoading] = useState(true)
   const [isMounted, setIsMounted] = useState(false)
 

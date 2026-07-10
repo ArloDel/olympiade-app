@@ -5,13 +5,14 @@ import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { useEffect, useState } from "react"
 import { ShieldAlert, Sun, Moon, LogOut, Clock, User, Activity, FileText } from "lucide-react"
+import { useTheme } from "@/hooks/useTheme";
 
 export default function SuperadminLogsPage() {
   const { data: session, status } = useSession()
   const router = useRouter()
   const [logs, setLogs] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
-  const [theme, setTheme] = useState<"dark" | "light">("dark")
+  const [theme, setTheme] = useTheme()
 
   useEffect(() => {
     if (status === "unauthenticated") {

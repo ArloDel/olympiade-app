@@ -6,6 +6,7 @@ import Link from "next/link"
 import { useEffect, useState, useRef } from "react"
 import { Settings, LogOut, Plus, Trash2, CheckCircle, ShieldCheck, Moon, Sun, Download, Upload, ShieldAlert } from "lucide-react"
 import * as XLSX from "xlsx"
+import { useTheme } from "@/hooks/useTheme";
 
 export default function QuestionsManagement() {
   const { data: session, status } = useSession()
@@ -14,7 +15,7 @@ export default function QuestionsManagement() {
   const [exams, setExams] = useState<any[]>([])
   const [selectedExamId, setSelectedExamId] = useState<string>("")
   const [questions, setQuestions] = useState<any[]>([])
-  const [theme, setTheme] = useState<"dark" | "light">("dark")
+  const [theme, setTheme] = useTheme()
 
   // Bank Soal Modal states
   const [showBankModal, setShowBankModal] = useState(false)

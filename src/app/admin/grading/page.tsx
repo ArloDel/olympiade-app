@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { useEffect, useState } from "react"
 import { LogOut, ShieldCheck, Moon, Sun, CheckCircle, ShieldAlert } from "lucide-react"
+import { useTheme } from "@/hooks/useTheme";
 
 export default function GradingManagement() {
   const { data: session, status } = useSession()
@@ -14,7 +15,7 @@ export default function GradingManagement() {
   const [selectedExamId, setSelectedExamId] = useState<string>("")
   const [answers, setAnswers] = useState<Record<string, any>[]>([])
   const [loading, setLoading] = useState(false)
-  const [theme, setTheme] = useState<"dark" | "light">("dark")
+  const [theme, setTheme] = useTheme()
 
   type FilterStatus = "UNGRADED" | "GRADED" | "ALL"
   const [filterStatus, setFilterStatus] = useState<FilterStatus>("UNGRADED")

@@ -4,6 +4,7 @@ import { useSession } from "next-auth/react"
 import { useRouter, useParams } from "next/navigation"
 import { useEffect, useState, useRef } from "react"
 import { Clock, ChevronLeft, ChevronRight, Flag, LayoutGrid, X, Moon, Sun, Shield, ShieldOff, WifiOff } from "lucide-react"
+import { useTheme } from "@/hooks/useTheme";
 
 export default function ExamTakingInterface() {
   const { data: session, status } = useSession()
@@ -38,7 +39,7 @@ export default function ExamTakingInterface() {
   const [warningModal, setWarningModal] = useState<{ show: boolean, warnings: number, isLocked: boolean } | null>(null)
 
   // Theme state matches dashboard
-  const [theme, setTheme] = useState<"dark" | "light">("dark")
+  const [theme, setTheme] = useTheme()
   const isDark = theme === "dark"
 
   const fetchQuestions = async () => {
