@@ -145,6 +145,7 @@ model Question {
   correctAnswer String?  @db.Text
   points        Float    @default(1)
   difficulty    Difficulty @default(MEDIUM)
+  imageUrl      String?  @db.Text
   
   subjectId     String?
   topicId       String?

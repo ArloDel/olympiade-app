@@ -141,7 +141,7 @@ export async function GET(req: Request) {
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const { examId, text, order, options, type, correctAnswer, points, difficulty, subjectId, topicId } = body;
+    const { examId, text, order, options, type, correctAnswer, points, difficulty, subjectId, topicId, imageUrl } = body;
 
     if (!text) {
       return NextResponse.json(
@@ -162,6 +162,7 @@ export async function POST(req: Request) {
         difficulty: difficulty || "MEDIUM",
         subjectId: subjectId || null,
         topicId: topicId || null,
+        imageUrl: imageUrl || null,
         ...(examId && order !== undefined ? {
           examQuestions: {
             create: {

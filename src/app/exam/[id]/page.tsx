@@ -525,9 +525,15 @@ export default function ExamTakingInterface() {
             </div>
 
             {/* Question Card */}
-            <div className={`text-lg mb-12 leading-relaxed font-light ${isDark ? 'text-zinc-200' : 'text-zinc-800'}`}>
+            <div className={`text-lg leading-relaxed font-light ${isDark ? 'text-zinc-200' : 'text-zinc-800'} ${currentQ.imageUrl ? 'mb-6' : 'mb-12'}`}>
               {currentQ.text}
             </div>
+
+            {currentQ.imageUrl && (
+              <div className="mb-12">
+                <img src={currentQ.imageUrl} alt="Gambar Pendukung" className={`max-h-80 w-auto rounded border object-contain shadow-sm ${isDark ? 'border-zinc-800' : 'border-zinc-200'}`} />
+              </div>
+            )}
 
             {/* Options / Answer Input */}
             {(!currentQ.type || currentQ.type === 'MULTIPLE_CHOICE') && (

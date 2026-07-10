@@ -34,6 +34,8 @@ export default function QuestionsManagement() {
     { text: "", isCorrect: false },
     { text: "", isCorrect: false },
   ])
+  const [imageUrl, setImageUrl] = useState("")
+  const [isUploadingImage, setIsUploadingImage] = useState(false)
 
   useEffect(() => {
     if (status === "unauthenticated") {
@@ -189,6 +191,43 @@ export default function QuestionsManagement() {
     setOptions(newOptions)
   }
 
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    const MAX_SIZE = 5 * 1024 * 1024
+    if (file.size > MAX_SIZE) {
+      alert("Ukuran gambar melebihi batas 5MB!")
+      return
+    }
+
+    if (!file.type.startsWith("image/")) {
+      alert("File harus berupa gambar!")
+      return
+    }
+
+    setIsUploadingImage(true)
+    const formData = new FormData()
+    formData.append("file", file)
+
+    try {
+      const res = await fetch("/api/upload", {
+        method: "POST",
+        body: formData
+      })
+      const data = await res.json()
+      if (data.success) {
+        setImageUrl(data.url)
+      } else {
+        alert(data.error)
+      }
+    } catch (err) {
+      alert("Gagal mengunggah gambar.")
+    } finally {
+      setIsUploadingImage(false)
+    }
+  }
+
   const handleSaveQuestion = async () => {
     if (!selectedExamId) return alert("Pilih ujian terlebih dahulu")
     if (!questionText.trim()) return alert("Teks soal tidak boleh kosong")
@@ -208,6 +247,7 @@ export default function QuestionsManagement() {
           points: parseFloat(points) || 1,
           correctAnswer: questionType === "SHORT_ANSWER" ? correctAnswer : null,
           options: questionType === "MULTIPLE_CHOICE" ? options : [],
+          imageUrl: imageUrl || null
         }),
       })
       const data = await res.json()
@@ -221,6 +261,7 @@ export default function QuestionsManagement() {
           { text: "", isCorrect: false },
           { text: "", isCorrect: false },
         ])
+        setImageUrl("")
         fetchQuestions(selectedExamId)
       } else {
         alert("Gagal menyimpan soal: " + data.error)
@@ -484,6 +525,34 @@ export default function QuestionsManagement() {
                 placeholder="Masukkan teks soal..."
                 className={`w-full p-4 text-sm outline-none resize-y transition-colors border ${isDark ? 'bg-transparent border-zinc-800 text-white placeholder-zinc-700 focus:border-zinc-500' : 'bg-transparent border-zinc-200 text-black placeholder-zinc-300 focus:border-zinc-400'}`}
               />
+              
+              <div className="mt-4">
+                <label className={`block text-xs font-bold uppercase tracking-widest mb-2 ${isDark ? 'text-zinc-600' : 'text-zinc-400'}`}>
+                  Gambar Pendukung (Opsional, Maks 5MB)
+                </label>
+                <div className="flex items-center gap-4">
+                  <input 
+                    type="file"
+                    accept="image/*"
+                    onChange={handleImageUpload}
+                    disabled={isUploadingImage}
+                    className={`text-sm ${isDark ? 'text-zinc-400' : 'text-zinc-600'} file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-xs file:font-medium file:transition-colors ${isDark ? 'file:bg-zinc-800 file:text-zinc-300 hover:file:bg-zinc-700' : 'file:bg-zinc-100 file:text-zinc-700 hover:file:bg-zinc-200'} disabled:opacity-50`}
+                  />
+                  {isUploadingImage && <span className="text-xs text-amber-500 animate-pulse">Mengunggah...</span>}
+                </div>
+                {imageUrl && (
+                  <div className="mt-4 relative inline-block">
+                    <img src={imageUrl} alt="Preview" className="max-h-40 rounded border border-zinc-700 object-contain" />
+                    <button 
+                      onClick={() => setImageUrl("")}
+                      className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition-colors flex items-center justify-center"
+                      title="Hapus gambar"
+                    >
+                      <Trash2 size={12} />
+                    </button>
+                  </div>
+                )}
+              </div>
             </div>
 
             {questionType === "MULTIPLE_CHOICE" && (
@@ -575,6 +644,12 @@ export default function QuestionsManagement() {
                       </div>
                     </div>
                     <div className={`text-sm mb-3 leading-relaxed ${isDark ? 'text-zinc-300' : 'text-zinc-700'}`}>{q.text}</div>
+                    
+                    {q.imageUrl && (
+                      <div className="mb-4">
+                        <img src={q.imageUrl} alt="Soal Image" className="max-h-40 rounded border border-zinc-700 object-contain" />
+                      </div>
+                    )}
                     
                     {q.type === 'MULTIPLE_CHOICE' && (
                     <div className="space-y-1">
