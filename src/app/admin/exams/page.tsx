@@ -247,7 +247,7 @@ export default function ExamsManagement() {
       ref={provided.innerRef}
       {...provided.draggableProps}
       className={`p-5 mb-4 border rounded-xl shadow-sm flex flex-col gap-3 group
-        ${isDark ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200'}
+        ${isDark ? 'glass-panel glass-panel-hover glow-border' : 'bg-white border-zinc-200'}
         ${snapshot.isDragging ? (isDark ? 'shadow-white/10 rotate-2' : 'shadow-black/10 rotate-2') : ''}
         transition-all`}
     >
@@ -298,10 +298,10 @@ export default function ExamsManagement() {
   )
 
   return (
-    <div className={`min-h-screen flex flex-col font-sans transition-colors duration-300 ${isDark ? 'bg-[#0a0a0a] text-zinc-300 selection:bg-white/20' : 'bg-white text-zinc-600 selection:bg-black/10'}`}>
+    <div className={`min-h-screen flex flex-col font-sans transition-colors duration-300 ${isDark ? 'bg-transparent text-zinc-300 selection:bg-indigo-500/30' : 'bg-white text-zinc-600 selection:bg-black/10'}`}>
       
       {/* Ultra Minimal Header */}
-      <header className={`sticky top-0 z-30 border-b ${isDark ? 'border-zinc-900 bg-[#0a0a0a]/80' : 'border-zinc-100 bg-white/80'} backdrop-blur-md`}>
+      <header className={`sticky top-0 z-30 border-b ${isDark ? 'border-white/10 bg-black/40 backdrop-blur-xl' : 'border-zinc-100 bg-white/80 backdrop-blur-md'}`}>
         <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-8">
             <div className={`font-semibold text-sm tracking-tight flex items-center gap-2 ${isDark ? 'text-white' : 'text-black'}`}>
@@ -357,7 +357,7 @@ export default function ExamsManagement() {
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               
               {/* Kolom DRAFT */}
-              <div className={`flex flex-col rounded-2xl border p-4 ${isDark ? 'bg-[#111] border-zinc-800/50' : 'bg-zinc-50 border-zinc-200/50'}`}>
+              <div className={`flex flex-col rounded-2xl border p-4 ${isDark ? 'glass-panel glow-border' : 'bg-zinc-50 border-zinc-200/50'}`}>
                 <div className="flex items-center justify-between mb-4 px-2">
                   <h2 className={`font-semibold text-sm ${isDark ? 'text-white' : 'text-black'}`}>
                     Belum Aktif <span className={`ml-2 text-xs font-normal px-2 py-0.5 rounded-full ${isDark ? 'bg-zinc-800 text-zinc-400' : 'bg-zinc-200 text-zinc-600'}`}>{draftExams.length}</span>
@@ -382,7 +382,7 @@ export default function ExamsManagement() {
               </div>
 
               {/* Kolom ACTIVE */}
-              <div className={`flex flex-col rounded-2xl border p-4 ${isDark ? 'bg-[#111] border-zinc-800/50' : 'bg-zinc-50 border-zinc-200/50'}`}>
+              <div className={`flex flex-col rounded-2xl border p-4 ${isDark ? 'glass-panel glow-border' : 'bg-zinc-50 border-zinc-200/50'}`}>
                 <div className="flex items-center justify-between mb-4 px-2">
                   <h2 className={`font-semibold text-sm ${isDark ? 'text-white' : 'text-black'}`}>
                     Sedang Berjalan <span className={`ml-2 text-xs font-normal px-2 py-0.5 rounded-full ${isDark ? 'bg-zinc-800 text-zinc-400' : 'bg-zinc-200 text-zinc-600'}`}>{activeExams.length}</span>
@@ -412,7 +412,7 @@ export default function ExamsManagement() {
               </div>
 
               {/* Kolom FINISHED */}
-              <div className={`flex flex-col rounded-2xl border p-4 opacity-75 ${isDark ? 'bg-[#111] border-zinc-800/50' : 'bg-zinc-50 border-zinc-200/50'}`}>
+              <div className={`flex flex-col rounded-2xl border p-4 opacity-75 ${isDark ? 'glass-panel glow-border' : 'bg-zinc-50 border-zinc-200/50'}`}>
                 <div className="flex items-center justify-between mb-4 px-2">
                   <h2 className={`font-semibold text-sm ${isDark ? 'text-zinc-500' : 'text-zinc-400'}`}>
                     Selesai <span className={`ml-2 text-xs font-normal px-2 py-0.5 rounded-full ${isDark ? 'bg-zinc-800 text-zinc-500' : 'bg-zinc-200 text-zinc-400'}`}>{finishedExams.length}</span>
@@ -463,11 +463,11 @@ export default function ExamsManagement() {
             onClick={closeModal}
           ></div>
           <div 
-            className={`relative w-full max-w-md h-full flex flex-col shadow-2xl transition-transform duration-300 ease-in-out ${isModalVisible ? 'translate-x-0' : 'translate-x-full'} ${isDark ? 'bg-[#0a0a0a] border-l border-zinc-800' : 'bg-white border-l border-zinc-200'}`}
+            className={`relative w-full max-w-md h-full flex flex-col shadow-2xl transition-transform duration-300 ease-in-out ${isModalVisible ? 'translate-x-0' : 'translate-x-full'} ${isDark ? 'glass-panel border-l border-white/10' : 'bg-white border-l border-zinc-200'}`}
           >
             
             {/* Header */}
-            <div className={`flex items-center justify-between p-6 border-b ${isDark ? 'border-zinc-800' : 'border-zinc-100'}`}>
+            <div className={`flex items-center justify-between p-6 border-b ${isDark ? 'border-white/10' : 'border-zinc-100'}`}>
               <h2 className={`text-lg font-medium tracking-tight ${isDark ? 'text-white' : 'text-black'}`}>
                 {editingId ? "Edit Konfigurasi Ujian" : "Buat Ujian Baru"}
               </h2>
@@ -625,7 +625,7 @@ export default function ExamsManagement() {
             </div>
 
             {/* Footer / Actions */}
-            <div className={`p-6 border-t flex justify-end gap-3 ${isDark ? 'border-zinc-800 bg-[#0a0a0a]' : 'border-zinc-100 bg-white'}`}>
+            <div className={`p-6 border-t flex justify-end gap-3 ${isDark ? 'border-white/10 bg-black/20' : 'border-zinc-100 bg-white'}`}>
               <button 
                 type="button" 
                 onClick={closeModal}

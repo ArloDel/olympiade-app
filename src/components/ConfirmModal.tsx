@@ -60,7 +60,7 @@ export default function ConfirmModal({
         className="absolute inset-0 bg-black/40 backdrop-blur-sm transition-opacity" 
         onClick={onClose}
       ></div>
-      <div className={`relative w-full max-w-sm p-6 rounded-xl shadow-2xl animate-in fade-in zoom-in-95 duration-200 ${isDark ? 'bg-zinc-900 border border-zinc-800' : 'bg-white border border-zinc-200'}`}>
+      <div className={`relative w-full max-w-sm p-6 rounded-xl shadow-2xl animate-in fade-in zoom-in-95 duration-200 ${isDark ? 'glass-panel glow-border' : 'bg-white border border-zinc-200'}`}>
         <button 
           onClick={onClose}
           className={`absolute top-4 right-4 p-1 rounded-full transition-colors ${isDark ? 'text-zinc-500 hover:bg-zinc-800' : 'text-zinc-400 hover:bg-zinc-100'}`}
