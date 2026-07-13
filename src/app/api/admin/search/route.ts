@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getServerSession } from "next-auth/next";
+import { authOptions } from "@/lib/auth";
 
 export async function GET(req: NextRequest) {
   try {
-    const session = await getServerSession();
+    const session = await getServerSession(authOptions);
     // Only ADMIN or SUPERADMIN can access this search
     const role = (session?.user as any)?.role;
     if (!session || (role !== "ADMIN" && role !== "SUPERADMIN")) {
