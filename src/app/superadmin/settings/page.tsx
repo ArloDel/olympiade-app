@@ -26,7 +26,7 @@ export default function SuperadminSettingsPage() {
     }
   }, [status, router, session])
 
-  const fetchMaintenanceStatus = async () => {
+  async function fetchMaintenanceStatus() {
     try {
       const res = await fetch("/api/superadmin/emergency", {
         method: "POST",
