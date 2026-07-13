@@ -1,25 +1,33 @@
 "use client"
 
 import { useSession, signOut } from "next-auth/react"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import Link from "next/link"
-import { useEffect, useState } from "react"
+import { useEffect, useState, Suspense } from "react"
 import { Settings, LogOut, Search, ShieldCheck, Moon, Sun, FileText, FileSpreadsheet, ShieldAlert } from "lucide-react"
 import jsPDF from "jspdf"
 import "jspdf-autotable"
 import * as XLSX from "xlsx"
 import { useTheme } from "@/hooks/useTheme";
 
-export default function ResultsManagement() {
+function ResultsContent() {
   const { data: session, status } = useSession()
   const router = useRouter()
+  const searchParams = useSearchParams()
 
   const [exams, setExams] = useState<any[]>([])
-  const [selectedExamId, setSelectedExamId] = useState<string>("")
+  const [selectedExamId, setSelectedExamId] = useState<string>(searchParams.get("examId") || "")
   const [resultsData, setResultsData] = useState<any>(null)
   const [loading, setLoading] = useState(false)
-  const [searchTerm, setSearchTerm] = useState("")
+  const [searchTerm, setSearchTerm] = useState(searchParams.get("search") || "")
   const [theme, setTheme] = useTheme()
+
+  useEffect(() => {
+    const paramExam = searchParams.get("examId")
+    const paramSearch = searchParams.get("search")
+    if (paramExam) setSelectedExamId(paramExam)
+    if (paramSearch) setSearchTerm(paramSearch)
+  }, [searchParams])
 
   useEffect(() => {
     if (status === "unauthenticated") {
@@ -43,7 +51,7 @@ export default function ResultsManagement() {
       const data = await res.json()
       if (data.success) {
         setExams(data.data)
-        if (data.data.length > 0) {
+        if (data.data.length > 0 && !searchParams.get("examId") && !selectedExamId) {
           setSelectedExamId(data.data[0].id)
         }
       }
@@ -301,5 +309,13 @@ export default function ResultsManagement() {
         </Link>
       )}
     </div>
+  )
+}
+
+export default function ResultsManagement() {
+  return (
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center"><div className="w-6 h-6 border-2 border-zinc-600 border-t-black dark:border-t-white rounded-full animate-spin"></div></div>}>
+      <ResultsContent />
+    </Suspense>
   )
 }
