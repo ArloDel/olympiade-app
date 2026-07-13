@@ -129,10 +129,10 @@ export default function ResultsManagement() {
   const isDark = theme === "dark"
 
   return (
-    <div className={`min-h-screen flex flex-col font-sans transition-colors duration-300 ${isDark ? 'bg-[#0a0a0a] text-zinc-300 selection:bg-white/20' : 'bg-white text-zinc-600 selection:bg-black/10'}`}>
+    <div className={`min-h-screen flex flex-col font-sans transition-colors duration-300 ${isDark ? 'bg-transparent text-zinc-300 selection:bg-indigo-500/30' : 'bg-white text-zinc-600 selection:bg-black/10'}`}>
       
       {/* Ultra Minimal Header */}
-      <header className={`sticky top-0 z-30 border-b ${isDark ? 'border-zinc-900 bg-[#0a0a0a]/80' : 'border-zinc-100 bg-white/80'} backdrop-blur-md`}>
+      <header className={`sticky top-0 z-30 border-b ${isDark ? 'border-white/10 bg-black/40 backdrop-blur-xl' : 'border-zinc-100 bg-white/80'} backdrop-blur-md`}>
         <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-8">
             <div className={`font-semibold text-sm tracking-tight flex items-center gap-2 ${isDark ? 'text-white' : 'text-black'}`}>

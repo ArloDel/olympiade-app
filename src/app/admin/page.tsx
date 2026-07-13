@@ -122,10 +122,10 @@ export default function AdminDashboard() {
   const isDark = theme === "dark"
 
   return (
-    <div className={`min-h-screen flex flex-col font-sans transition-colors duration-300 ${isDark ? 'bg-[#0a0a0a] text-zinc-300 selection:bg-white/20' : 'bg-white text-zinc-600 selection:bg-black/10'}`}>
+    <div className={`min-h-screen flex flex-col font-sans transition-colors duration-300 ${isDark ? 'bg-transparent text-zinc-300 selection:bg-indigo-500/30' : 'bg-white text-zinc-600 selection:bg-black/10'}`}>
       
       {/* Ultra Minimal Header */}
-      <header className={`sticky top-0 z-30 border-b ${isDark ? 'border-zinc-900 bg-[#0a0a0a]/80' : 'border-zinc-100 bg-white/80'} backdrop-blur-md`}>
+      <header className={`sticky top-0 z-30 border-b ${isDark ? 'border-white/10 bg-black/40 backdrop-blur-xl' : 'border-zinc-100 bg-white/80 backdrop-blur-md'}`}>
         <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-8">
             <div className={`font-semibold text-sm tracking-tight flex items-center gap-2 ${isDark ? 'text-white' : 'text-black'}`}>
@@ -278,9 +278,9 @@ export default function AdminDashboard() {
       {selectedLogUser && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 md:p-6">
           <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setSelectedLogUser(null)}></div>
-          <div className={`relative w-full max-w-2xl max-h-[85vh] flex flex-col rounded-xl shadow-2xl animate-in fade-in zoom-in-95 duration-200 ${isDark ? 'bg-[#0a0a0a] border border-zinc-800' : 'bg-white border border-zinc-100'}`}>
+          <div className={`relative w-full max-w-2xl max-h-[85vh] flex flex-col rounded-xl shadow-2xl animate-in fade-in zoom-in-95 duration-200 ${isDark ? 'glass-panel glow-border' : 'bg-white border border-zinc-100'}`}>
             
-            <div className={`flex items-center justify-between p-6 border-b ${isDark ? 'border-zinc-900' : 'border-zinc-100'}`}>
+            <div className={`flex items-center justify-between p-6 border-b ${isDark ? 'border-white/10' : 'border-zinc-100'}`}>
               <div>
                 <h2 className={`text-lg font-medium ${isDark ? 'text-white' : 'text-black'}`}>Log Bukti: {selectedLogUser.name}</h2>
                 <p className={`text-xs ${isDark ? 'text-zinc-500' : 'text-zinc-500'}`}>{selectedLogUser.email}</p>

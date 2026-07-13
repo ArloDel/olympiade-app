@@ -124,16 +124,16 @@ export default function SuperadminAdminsPage() {
 
   if (status === "loading" || loading) {
      return (
-       <div className={`min-h-screen flex items-center justify-center ${isDark ? 'bg-[#0a0a0a]' : 'bg-white'}`}>
-         <div className={`w-6 h-6 border-2 rounded-full animate-spin ${isDark ? 'border-zinc-600 border-t-white' : 'border-zinc-300 border-t-black'}`}></div>
-       </div>
-     )
+      <div className={`min-h-screen flex items-center justify-center ${isDark ? 'bg-transparent' : 'bg-white'}`}>
+        <div className={`w-6 h-6 border-2 rounded-full animate-spin ${isDark ? 'border-zinc-600 border-t-white' : 'border-zinc-300 border-t-black'}`}></div>
+      </div>
+    )
   }
 
   return (
-    <div className={`min-h-screen flex flex-col font-sans transition-colors duration-300 ${isDark ? 'bg-[#0a0a0a] text-zinc-300' : 'bg-white text-zinc-600'}`}>
+    <div className={`min-h-screen flex flex-col font-sans transition-colors duration-300 ${isDark ? 'bg-transparent text-zinc-300 selection:bg-indigo-500/30' : 'bg-white text-zinc-600'}`}>
       
-      <header className={`sticky top-0 z-30 border-b ${isDark ? 'border-zinc-900 bg-[#0a0a0a]/80' : 'border-zinc-100 bg-white/80'} backdrop-blur-md`}>
+      <header className={`sticky top-0 z-30 border-b ${isDark ? 'border-white/10 bg-black/40 backdrop-blur-xl' : 'border-zinc-100 bg-white/80'} backdrop-blur-md`}>
         <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-8">
             <div className={`font-semibold text-sm tracking-tight flex items-center gap-2 ${isDark ? 'text-white' : 'text-black'}`}>
@@ -253,8 +253,8 @@ export default function SuperadminAdminsPage() {
       {isAddModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setIsAddModalOpen(false)}></div>
-          <div className={`relative w-full max-w-md flex flex-col rounded-xl shadow-2xl animate-in fade-in zoom-in-95 duration-200 ${isDark ? 'bg-[#111] border border-zinc-800' : 'bg-white border border-zinc-200'}`}>
-            <div className={`flex items-center justify-between p-6 border-b ${isDark ? 'border-zinc-800' : 'border-zinc-100'}`}>
+          <div className={`relative w-full max-w-md flex flex-col rounded-xl shadow-2xl animate-in fade-in zoom-in-95 duration-200 ${isDark ? 'glass-panel glow-border' : 'bg-white border border-zinc-200'}`}>
+            <div className={`flex items-center justify-between p-6 border-b ${isDark ? 'border-white/10' : 'border-zinc-100'}`}>
               <h2 className={`text-lg font-medium ${isDark ? 'text-white' : 'text-black'}`}>Tambah Admin Baru</h2>
               <button onClick={() => setIsAddModalOpen(false)} className={`transition-colors ${isDark ? 'text-zinc-500 hover:text-white' : 'text-zinc-400 hover:text-black'}`}>
                 <X size={20} />

@@ -387,10 +387,10 @@ export default function QuestionsManagement() {
   const isDark = theme === "dark"
 
   return (
-    <div className={`min-h-screen flex flex-col font-sans transition-colors duration-300 ${isDark ? 'bg-[#0a0a0a] text-zinc-300 selection:bg-white/20' : 'bg-white text-zinc-600 selection:bg-black/10'}`}>
+    <div className={`min-h-screen flex flex-col font-sans transition-colors duration-300 ${isDark ? 'bg-transparent text-zinc-300 selection:bg-indigo-500/30' : 'bg-white text-zinc-600 selection:bg-black/10'}`}>
       
       {/* Ultra Minimal Header */}
-      <header className={`sticky top-0 z-30 border-b ${isDark ? 'border-zinc-900 bg-[#0a0a0a]/80' : 'border-zinc-100 bg-white/80'} backdrop-blur-md`}>
+      <header className={`sticky top-0 z-30 border-b ${isDark ? 'border-white/10 bg-black/40 backdrop-blur-xl' : 'border-zinc-100 bg-white/80 backdrop-blur-md'}`}>
         <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-8">
             <div className={`font-semibold text-sm tracking-tight flex items-center gap-2 ${isDark ? 'text-white' : 'text-black'}`}>
@@ -498,7 +498,7 @@ export default function QuestionsManagement() {
                   <select 
                     value={questionType}
                     onChange={(e) => setQuestionType(e.target.value as any)}
-                    className={`w-full p-3 text-sm outline-none transition-colors border ${isDark ? 'bg-[#0a0a0a] border-zinc-800 text-white focus:border-zinc-500' : 'bg-white border-zinc-200 text-black focus:border-zinc-400'}`}
+                    className={`w-full p-3 text-sm outline-none transition-colors border ${isDark ? 'glass-panel glow-border text-white focus:border-white/40' : 'bg-white border-zinc-200 text-black focus:border-zinc-400'}`}
                   >
                     <option value="MULTIPLE_CHOICE">Pilihan Ganda</option>
                     <option value="SHORT_ANSWER">Isian Singkat</option>
@@ -514,7 +514,7 @@ export default function QuestionsManagement() {
                     min="0"
                     step="0.5"
                     title="Bobot Nilai Maksimal"
-                    className={`w-full p-3 text-sm outline-none transition-colors border ${isDark ? 'bg-[#0a0a0a] border-zinc-800 text-white focus:border-zinc-500' : 'bg-white border-zinc-200 text-black focus:border-zinc-400'}`}
+                    className={`w-full p-3 text-sm outline-none transition-colors border ${isDark ? 'glass-panel glow-border text-white focus:border-white/40' : 'bg-white border-zinc-200 text-black focus:border-zinc-400'}`}
                   />
                 </div>
               </div>
@@ -664,7 +664,7 @@ export default function QuestionsManagement() {
                     )}
 
                     {q.type === 'SHORT_ANSWER' && (
-                      <div className={`text-xs p-3 rounded border ${isDark ? 'bg-zinc-900 border-zinc-800 text-zinc-300' : 'bg-zinc-50 border-zinc-200 text-zinc-700'}`}>
+                      <div className={`text-xs p-3 rounded border ${isDark ? 'glass-panel glow-border text-zinc-300' : 'bg-zinc-50 border-zinc-200 text-zinc-700'}`}>
                         <span className="font-semibold mr-2 opacity-50">Kunci:</span> {q.correctAnswer}
                       </div>
                     )}
@@ -688,8 +688,8 @@ export default function QuestionsManagement() {
       {/* Bank Soal Modal */}
       {showBankModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-          <div className={`w-full max-w-3xl max-h-[85vh] flex flex-col rounded-xl overflow-hidden shadow-2xl ${isDark ? 'bg-[#111] border border-zinc-800' : 'bg-white border border-zinc-200'}`}>
-            <div className={`px-6 py-4 border-b flex justify-between items-center ${isDark ? 'border-zinc-800' : 'border-zinc-100'}`}>
+          <div className={`w-full max-w-3xl max-h-[85vh] flex flex-col rounded-xl overflow-hidden shadow-2xl ${isDark ? 'glass-panel glow-border' : 'bg-white border border-zinc-200'}`}>
+            <div className={`px-6 py-4 border-b flex justify-between items-center ${isDark ? 'border-white/10' : 'border-zinc-100'}`}>
               <h3 className={`font-semibold ${isDark ? 'text-white' : 'text-black'}`}>Pilih dari Bank Soal</h3>
               <button onClick={() => setShowBankModal(false)} className={`text-sm ${isDark ? 'text-zinc-500 hover:text-white' : 'text-zinc-400 hover:text-black'}`}>Tutup</button>
             </div>
@@ -732,7 +732,7 @@ export default function QuestionsManagement() {
               )}
             </div>
 
-            <div className={`px-6 py-4 border-t flex justify-between items-center ${isDark ? 'border-zinc-800 bg-[#0a0a0a]' : 'border-zinc-100 bg-zinc-50'}`}>
+            <div className={`px-6 py-4 border-t flex justify-between items-center ${isDark ? 'border-white/10 bg-black/20' : 'border-zinc-100 bg-zinc-50'}`}>
               <div className={`text-sm font-medium ${isDark ? 'text-zinc-400' : 'text-zinc-600'}`}>
                 {selectedBankQuestions.size} soal dipilih
               </div>

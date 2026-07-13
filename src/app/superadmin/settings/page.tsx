@@ -100,16 +100,16 @@ export default function SuperadminSettingsPage() {
 
   if (status === "loading" || loading) {
      return (
-       <div className={`min-h-screen flex items-center justify-center ${isDark ? 'bg-[#0a0a0a]' : 'bg-white'}`}>
+       <div className={`min-h-screen flex items-center justify-center ${isDark ? 'bg-transparent' : 'bg-white'}`}>
          <div className={`w-6 h-6 border-2 rounded-full animate-spin ${isDark ? 'border-zinc-600 border-t-white' : 'border-zinc-300 border-t-black'}`}></div>
        </div>
      )
   }
 
   return (
-    <div className={`min-h-screen flex flex-col font-sans transition-colors duration-300 ${isDark ? 'bg-[#0a0a0a] text-zinc-300' : 'bg-white text-zinc-600'}`}>
+    <div className={`min-h-screen flex flex-col font-sans transition-colors duration-300 ${isDark ? 'bg-transparent text-zinc-300 selection:bg-indigo-500/30' : 'bg-white text-zinc-600'}`}>
       
-      <header className={`sticky top-0 z-30 border-b ${isDark ? 'border-zinc-900 bg-[#0a0a0a]/80' : 'border-zinc-100 bg-white/80'} backdrop-blur-md`}>
+      <header className={`sticky top-0 z-30 border-b ${isDark ? 'border-white/10 bg-black/40 backdrop-blur-xl' : 'border-zinc-100 bg-white/80'} backdrop-blur-md`}>
         <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-8">
             <div className={`font-semibold text-sm tracking-tight flex items-center gap-2 ${isDark ? 'text-white' : 'text-black'}`}>
@@ -155,7 +155,7 @@ export default function SuperadminSettingsPage() {
         <div className="space-y-6">
           
           {/* Maintenance Mode */}
-          <div className={`p-6 md:p-8 rounded-2xl border flex flex-col md:flex-row gap-6 md:items-center justify-between ${isDark ? 'bg-[#111] border-zinc-800' : 'bg-white border-zinc-200 shadow-sm'}`}>
+          <div className={`p-6 md:p-8 rounded-2xl border flex flex-col md:flex-row gap-6 md:items-center justify-between ${isDark ? 'glass-panel glow-border' : 'bg-white border-zinc-200 shadow-sm'}`}>
             <div>
               <div className={`flex items-center gap-3 mb-2 font-medium ${isDark ? 'text-white' : 'text-black'}`}>
                 <div className={`p-2 rounded-lg ${isDark ? 'bg-amber-500/10 text-amber-500' : 'bg-amber-50 text-amber-600'}`}>
@@ -203,7 +203,7 @@ export default function SuperadminSettingsPage() {
           </div>
 
           {/* Export Data */}
-          <div className={`p-6 md:p-8 rounded-2xl border flex flex-col md:flex-row gap-6 md:items-center justify-between ${isDark ? 'bg-[#111] border-zinc-800' : 'bg-white border-zinc-200 shadow-sm'}`}>
+          <div className={`p-6 md:p-8 rounded-2xl border flex flex-col md:flex-row gap-6 md:items-center justify-between ${isDark ? 'glass-panel glow-border' : 'bg-white border-zinc-200 shadow-sm'}`}>
             <div>
               <div className={`flex items-center gap-3 mb-2 font-medium ${isDark ? 'text-emerald-400' : 'text-emerald-600'}`}>
                 <div className={`p-2 rounded-lg ${isDark ? 'bg-emerald-500/10' : 'bg-emerald-50'}`}>

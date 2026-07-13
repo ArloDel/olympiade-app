@@ -151,10 +151,10 @@ export default function GradingManagement() {
   const isDark = theme === "dark"
 
   return (
-    <div className={`min-h-screen flex flex-col font-sans transition-colors duration-300 ${isDark ? 'bg-[#0a0a0a] text-zinc-300 selection:bg-white/20' : 'bg-white text-zinc-600 selection:bg-black/10'}`}>
+    <div className={`min-h-screen flex flex-col font-sans transition-colors duration-300 ${isDark ? 'bg-transparent text-zinc-300 selection:bg-indigo-500/30' : 'bg-white text-zinc-600 selection:bg-black/10'}`}>
       
       {/* Header */}
-      <header className={`sticky top-0 z-30 border-b ${isDark ? 'border-zinc-900 bg-[#0a0a0a]/80' : 'border-zinc-100 bg-white/80'} backdrop-blur-md`}>
+      <header className={`sticky top-0 z-30 border-b ${isDark ? 'border-white/10 bg-black/40 backdrop-blur-xl' : 'border-zinc-100 bg-white/80'} backdrop-blur-md`}>
         <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-8">
             <div className={`font-semibold text-sm tracking-tight flex items-center gap-2 ${isDark ? 'text-white' : 'text-black'}`}>
@@ -248,7 +248,7 @@ export default function GradingManagement() {
             ) : (
               <div className="space-y-6">
                 {paginatedAnswers.map((ans, idx) => (
-              <div key={ans.id} className={`p-6 border rounded-xl transition-colors ${isDark ? 'bg-[#0f0f0f] border-zinc-800' : 'bg-zinc-50 border-zinc-200'}`}>
+              <div key={ans.id} className={`p-6 rounded-xl transition-colors ${isDark ? 'glass-panel glow-border' : 'border bg-zinc-50 border-zinc-200'}`}>
                 
                 <div className="flex justify-between items-start mb-6">
                   <div>
@@ -271,7 +271,7 @@ export default function GradingManagement() {
                   </div>
                 </div>
 
-                <div className={`mb-6 p-4 rounded-lg text-sm leading-relaxed ${isDark ? 'bg-black text-zinc-300' : 'bg-white text-zinc-700'}`}>
+                <div className={`mb-6 p-4 rounded-lg text-sm leading-relaxed ${isDark ? 'glass-panel glow-border text-zinc-300' : 'bg-white text-zinc-700'}`}>
                   <div className={`text-[10px] font-bold uppercase tracking-widest mb-2 ${isDark ? 'text-zinc-600' : 'text-zinc-400'}`}>Soal:</div>
                   {ans.question.text}
                   
@@ -283,7 +283,7 @@ export default function GradingManagement() {
                   )}
                 </div>
 
-                <div className={`mb-6 p-4 rounded-lg text-sm leading-relaxed whitespace-pre-wrap ${isDark ? 'bg-zinc-900 text-white' : 'bg-zinc-100 text-black'}`}>
+                <div className={`mb-6 p-4 rounded-lg text-sm leading-relaxed whitespace-pre-wrap ${isDark ? 'glass-panel glow-border text-white' : 'bg-zinc-100 text-black'}`}>
                   <div className={`text-[10px] font-bold uppercase tracking-widest mb-2 ${isDark ? 'text-zinc-500' : 'text-zinc-400'}`}>Jawaban Siswa:</div>
                   {ans.textAnswer || <span className="italic opacity-50">Kosong</span>}
                 </div>

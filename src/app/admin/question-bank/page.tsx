@@ -121,10 +121,10 @@ export default function QuestionBank() {
   const isDark = theme === "dark"
 
   return (
-    <div className={`min-h-screen flex flex-col font-sans transition-colors duration-300 ${isDark ? 'bg-[#0a0a0a] text-zinc-300 selection:bg-white/20' : 'bg-white text-zinc-600 selection:bg-black/10'}`}>
+    <div className={`min-h-screen flex flex-col font-sans transition-colors duration-300 ${isDark ? 'bg-transparent text-zinc-300 selection:bg-indigo-500/30' : 'bg-white text-zinc-600 selection:bg-black/10'}`}>
       
       {/* Ultra Minimal Header */}
-      <header className={`sticky top-0 z-30 border-b ${isDark ? 'border-zinc-900 bg-[#0a0a0a]/80' : 'border-zinc-100 bg-white/80'} backdrop-blur-md`}>
+      <header className={`sticky top-0 z-30 border-b ${isDark ? 'border-white/10 bg-black/40 backdrop-blur-xl' : 'border-zinc-100 bg-white/80'} backdrop-blur-md`}>
         <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-8">
             <div className={`font-semibold text-sm tracking-tight flex items-center gap-2 ${isDark ? 'text-white' : 'text-black'}`}>
@@ -183,7 +183,7 @@ export default function QuestionBank() {
                   <select 
                     value={questionType}
                     onChange={(e) => setQuestionType(e.target.value as any)}
-                    className={`w-full p-3 text-sm outline-none transition-colors border ${isDark ? 'bg-[#0a0a0a] border-zinc-800 text-white focus:border-zinc-500' : 'bg-white border-zinc-200 text-black focus:border-zinc-400'}`}
+                    className={`w-full p-3 text-sm outline-none transition-colors border ${isDark ? 'bg-white/5 border-white/10 text-white focus:border-white/20' : 'bg-white border-zinc-200 text-black focus:border-zinc-400'}`}
                   >
                     <option value="MULTIPLE_CHOICE">Pilihan Ganda</option>
                     <option value="SHORT_ANSWER">Isian Singkat</option>
@@ -194,7 +194,7 @@ export default function QuestionBank() {
                   <select 
                     value={difficulty}
                     onChange={(e) => setDifficulty(e.target.value)}
-                    className={`w-full p-3 text-sm outline-none transition-colors border ${isDark ? 'bg-[#0a0a0a] border-zinc-800 text-white focus:border-zinc-500' : 'bg-white border-zinc-200 text-black focus:border-zinc-400'}`}
+                    className={`w-full p-3 text-sm outline-none transition-colors border ${isDark ? 'bg-white/5 border-white/10 text-white focus:border-white/20' : 'bg-white border-zinc-200 text-black focus:border-zinc-400'}`}
                   >
                     <option value="EASY">Mudah (Easy)</option>
                     <option value="MEDIUM">Sedang (Medium)</option>
@@ -209,7 +209,7 @@ export default function QuestionBank() {
                     placeholder="Poin"
                     min="0"
                     step="0.5"
-                    className={`w-full p-3 text-sm outline-none transition-colors border ${isDark ? 'bg-[#0a0a0a] border-zinc-800 text-white focus:border-zinc-500' : 'bg-white border-zinc-200 text-black focus:border-zinc-400'}`}
+                    className={`w-full p-3 text-sm outline-none transition-colors border ${isDark ? 'bg-white/5 border-white/10 text-white focus:border-white/20' : 'bg-white border-zinc-200 text-black focus:border-zinc-400'}`}
                   />
                 </div>
               </div>
@@ -219,7 +219,7 @@ export default function QuestionBank() {
                 value={questionText}
                 onChange={(e) => setQuestionText(e.target.value)}
                 placeholder="Masukkan teks soal..."
-                className={`w-full p-4 text-sm outline-none resize-y transition-colors border ${isDark ? 'bg-transparent border-zinc-800 text-white placeholder-zinc-700 focus:border-zinc-500' : 'bg-transparent border-zinc-200 text-black placeholder-zinc-300 focus:border-zinc-400'}`}
+                className={`w-full p-4 text-sm outline-none resize-y transition-colors border ${isDark ? 'bg-transparent border-white/10 text-white placeholder-zinc-500 focus:border-white/20' : 'bg-transparent border-zinc-200 text-black placeholder-zinc-300 focus:border-zinc-400'}`}
               />
             </div>
 
@@ -230,7 +230,7 @@ export default function QuestionBank() {
               </label>
               <div className="space-y-0">
                 {options.map((opt, idx) => (
-                  <div key={idx} className={`group flex items-center gap-4 py-3 border-b transition-colors ${isDark ? 'border-zinc-900 hover:bg-zinc-900/30' : 'border-zinc-50 hover:bg-zinc-50'}`}>
+                  <div key={idx} className={`group flex items-center gap-4 py-3 border-b transition-colors ${isDark ? 'border-white/10 hover:bg-white/5' : 'border-zinc-50 hover:bg-zinc-50'}`}>
                     <button 
                       onClick={() => handleSetCorrect(idx)}
                       className={`flex-shrink-0 flex items-center justify-center transition-colors ${opt.isCorrect ? (isDark ? 'text-white' : 'text-black') : (isDark ? 'text-zinc-700 hover:text-zinc-500' : 'text-zinc-300 hover:text-zinc-400')}`}
@@ -242,7 +242,7 @@ export default function QuestionBank() {
                       value={opt.text}
                       onChange={(e) => handleOptionChange(idx, e.target.value)}
                       placeholder={`Opsi ${String.fromCharCode(65 + idx)}`}
-                      className={`flex-1 bg-transparent text-sm outline-none ${isDark ? 'text-zinc-300 placeholder-zinc-700' : 'text-zinc-700 placeholder-zinc-300'}`}
+                      className={`flex-1 bg-transparent text-sm outline-none ${isDark ? 'text-zinc-300 placeholder-zinc-500' : 'text-zinc-700 placeholder-zinc-300'}`}
                     />
                     <button onClick={() => removeOption(idx)} className={`transition-colors opacity-0 group-hover:opacity-100 ${isDark ? 'text-zinc-600 hover:text-white' : 'text-zinc-400 hover:text-black'}`}>
                       <Trash2 size={14} />
@@ -269,7 +269,7 @@ export default function QuestionBank() {
                   value={correctAnswer}
                   onChange={(e) => setCorrectAnswer(e.target.value)}
                   placeholder="Ketik kunci jawaban persis..."
-                  className={`w-full p-4 text-sm outline-none transition-colors border ${isDark ? 'bg-transparent border-zinc-800 text-white placeholder-zinc-700 focus:border-zinc-500' : 'bg-transparent border-zinc-200 text-black placeholder-zinc-300 focus:border-zinc-400'}`}
+                  className={`w-full p-4 text-sm outline-none transition-colors border ${isDark ? 'bg-transparent border-white/10 text-white placeholder-zinc-500 focus:border-white/20' : 'bg-transparent border-zinc-200 text-black placeholder-zinc-300 focus:border-zinc-400'}`}
                 />
               </div>
             )}
@@ -280,7 +280,7 @@ export default function QuestionBank() {
                   disabled={loading}
                   className={`px-6 py-2.5 text-xs font-medium rounded transition-colors disabled:cursor-not-allowed ${
                     isDark 
-                      ? 'bg-white text-black hover:bg-zinc-200 disabled:bg-zinc-900 disabled:text-zinc-600' 
+                      ? 'bg-white text-black hover:bg-zinc-200 disabled:bg-white/10 disabled:text-zinc-500' 
                       : 'bg-black text-white hover:bg-zinc-800 disabled:bg-zinc-100 disabled:text-zinc-400'
                   }`}
                 >
@@ -303,7 +303,7 @@ export default function QuestionBank() {
                 </div>
               ) : (
                 questions.map((q, idx) => (
-                  <div key={q.id} className={`py-4 border-b ${isDark ? 'border-zinc-900' : 'border-zinc-100'}`}>
+                  <div key={q.id} className={`py-4 border-b ${isDark ? 'border-white/10' : 'border-zinc-100'}`}>
                     <div className={`text-[10px] font-bold mb-2 uppercase tracking-widest flex justify-between items-center ${isDark ? 'text-zinc-600' : 'text-zinc-400'}`}>
                       <span>ID: {q.id.substring(q.id.length - 6)}</span>
                       <div className="flex gap-1.5 flex-wrap justify-end">
