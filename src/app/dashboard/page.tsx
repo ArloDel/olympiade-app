@@ -3,7 +3,7 @@
 import { useSession, signOut } from "next-auth/react"
 import { useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
-import { LogOut, Camera, Shield, Award, Moon, Sun, Monitor, AlertTriangle, Clock } from "lucide-react"
+import { LogOut, Camera, Shield, Award, Moon, Sun, Monitor, AlertTriangle, Clock, CheckCircle2, AlertCircle } from "lucide-react"
 import { useTheme } from "@/hooks/useTheme";
 
 export default function DashboardPage() {
@@ -17,6 +17,7 @@ export default function DashboardPage() {
   const [result, setResult] = useState<any>(null)
   const [theme, setTheme] = useTheme()
   const [showScore, setShowScore] = useState(false)
+  const [agreedToRules, setAgreedToRules] = useState(false)
 
   useEffect(() => {
     if (status === "unauthenticated") {
@@ -209,84 +210,120 @@ export default function DashboardPage() {
                 )}
               </div>
             ) : (
-              <div className="flex flex-col">
+              <div className="flex flex-col animate-in fade-in slide-in-from-bottom-4 duration-700">
+                {/* Boarding Pass Concept with Glassmorphism */}
+                <div className={`p-8 rounded-2xl mb-8 relative overflow-hidden shadow-2xl ${isDark ? 'glass-panel glow-border' : 'bg-white border border-zinc-200'}`}>
+                  
+                  {/* Decorative blur blob */}
+                  {isDark && (
+                    <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-500/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3 pointer-events-none"></div>
+                  )}
 
-                <div className="mb-12">
-                  <div className={`inline-flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest mb-6 ${isDark ? 'text-emerald-500' : 'text-emerald-600'}`}>
-                    <span className={`w-1.5 h-1.5 rounded-full ${isDark ? 'bg-emerald-500' : 'bg-emerald-500'}`}></span>
-                    Sesi Aktif
-                  </div>
-
-                  <h1 className={`text-3xl font-medium tracking-tight mb-4 ${isDark ? 'text-white' : 'text-black'}`}>
-                    {exam.title}
-                  </h1>
-                  <p className={`text-sm leading-relaxed max-w-lg ${isDark ? 'text-zinc-500' : 'text-zinc-500'}`}>
-                    Anda terdaftar pada modul ini. Pastikan Anda membaca tata tertib dan melakukan verifikasi perangkat sebelum memulai.
-                  </p>
-                </div>
-
-                {/* Minimal List for Details */}
-                <div className={`flex flex-col gap-4 py-8 border-y ${isDark ? 'border-zinc-900' : 'border-zinc-100'} mb-12`}>
-                  <div className="flex justify-between items-center">
-                    <span className={`text-xs ${isDark ? 'text-zinc-500' : 'text-zinc-500'}`}>Durasi Pengerjaan</span>
-                    <span className={`text-sm font-medium ${isDark ? 'text-zinc-300' : 'text-zinc-700'}`}>{exam.duration} Menit</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className={`text-xs ${isDark ? 'text-zinc-500' : 'text-zinc-500'}`}>Total Soal</span>
-                    <span className={`text-sm font-medium ${isDark ? 'text-zinc-300' : 'text-zinc-700'}`}>{exam.totalQuestions} Butir</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className={`text-xs ${isDark ? 'text-zinc-500' : 'text-zinc-500'}`}>Waktu Mulai</span>
-                    <span className={`text-sm font-medium ${isDark ? 'text-zinc-300' : 'text-zinc-700'}`}>{new Date(exam.startTime).toLocaleString('id-ID', { dateStyle: 'long', timeStyle: 'short' })}</span>
-                  </div>
-                </div>
-
-                {/* Minimal Device Check */}
-                <div className="mb-12 flex flex-col gap-4">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <Camera size={16} className={isDark ? 'text-zinc-600' : 'text-zinc-400'} />
-                      <span className={`text-xs ${isDark ? 'text-zinc-500' : 'text-zinc-500'}`}>Status Kamera</span>
+                  <div className="relative z-10">
+                    <div className={`inline-flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest mb-6 ${isDark ? 'text-emerald-400' : 'text-emerald-600'}`}>
+                      <span className={`w-1.5 h-1.5 rounded-full ${isDark ? 'bg-emerald-400' : 'bg-emerald-500'} animate-pulse`}></span>
+                      Ujian Tersedia
                     </div>
-                    <span className={`text-xs font-medium ${cameraPermission === 'granted' ? 'text-emerald-500' : cameraPermission === 'denied' ? 'text-rose-500' : isDark ? 'text-zinc-500' : 'text-zinc-400'}`}>
-                      {cameraPermission === 'granted' && "Terhubung"}
-                      {cameraPermission === 'denied' && "Akses Ditolak"}
-                      {cameraPermission === 'pending' && "Belum Diverifikasi"}
-                    </span>
+
+                    <h1 className={`text-3xl font-medium tracking-tight mb-2 ${isDark ? 'text-white' : 'text-black'}`}>
+                      {exam.title}
+                    </h1>
+                    <p className={`text-sm leading-relaxed max-w-lg mb-8 ${isDark ? 'text-zinc-400' : 'text-zinc-500'}`}>
+                      Silakan persiapkan diri Anda. Mohon baca tata tertib dan lakukan pengecekan sistem sebelum memulai ujian.
+                    </p>
+
+                    <div className={`grid grid-cols-3 gap-6 py-6 border-t ${isDark ? 'border-white/10' : 'border-zinc-100'}`}>
+                      <div className="flex flex-col">
+                        <span className={`text-xs ${isDark ? 'text-zinc-500' : 'text-zinc-400'} mb-1`}>Durasi Pengerjaan</span>
+                        <span className={`text-sm font-medium ${isDark ? 'text-zinc-200' : 'text-zinc-800'}`}>
+                          {exam.duration} Menit
+                        </span>
+                      </div>
+                      <div className="flex flex-col">
+                        <span className={`text-xs ${isDark ? 'text-zinc-500' : 'text-zinc-400'} mb-1`}>Total Soal</span>
+                        <span className={`text-sm font-medium ${isDark ? 'text-zinc-200' : 'text-zinc-800'}`}>
+                          {exam.totalQuestions} Butir
+                        </span>
+                      </div>
+                      <div className="flex flex-col">
+                        <span className={`text-xs ${isDark ? 'text-zinc-500' : 'text-zinc-400'} mb-1`}>Dimulai Pada</span>
+                        <span className={`text-sm font-medium ${isDark ? 'text-zinc-200' : 'text-zinc-800'}`}>
+                          {new Date(exam.startTime).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })} WIB
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Pre-flight Checklist */}
+                <div className="mb-10 flex flex-col gap-3">
+                  <h3 className={`text-xs font-bold uppercase tracking-widest mb-2 ${isDark ? 'text-zinc-500' : 'text-zinc-400'}`}>Daftar Periksa Sistem</h3>
+                  
+                  {/* Camera Check */}
+                  <div className={`flex items-center justify-between p-4 rounded-xl border transition-colors ${cameraPermission === 'granted' ? (isDark ? 'bg-emerald-950/20 border-emerald-900/30' : 'bg-emerald-50 border-emerald-100') : (isDark ? 'bg-black/20 border-zinc-800' : 'bg-zinc-50 border-zinc-200')}`}>
+                    <div className="flex items-center gap-4">
+                      <div className={`w-10 h-10 rounded-full flex items-center justify-center ${cameraPermission === 'granted' ? (isDark ? 'bg-emerald-900/30 text-emerald-400' : 'bg-emerald-100 text-emerald-600') : (isDark ? 'bg-zinc-800 text-zinc-400' : 'bg-zinc-200 text-zinc-500')}`}>
+                        <Camera size={18} />
+                      </div>
+                      <div className="flex flex-col">
+                        <span className={`text-sm font-medium ${isDark ? 'text-zinc-200' : 'text-zinc-800'}`}>Akses Kamera</span>
+                        <span className={`text-xs ${cameraPermission === 'granted' ? (isDark ? 'text-emerald-400' : 'text-emerald-600') : (cameraPermission === 'denied' ? 'text-rose-500' : (isDark ? 'text-zinc-500' : 'text-zinc-500'))}`}>
+                          {cameraPermission === 'granted' ? "Kamera terhubung dan aktif" : cameraPermission === 'denied' ? "Akses kamera ditolak" : "Membutuhkan akses kamera untuk pengawasan"}
+                        </span>
+                      </div>
+                    </div>
+                    {cameraPermission === 'pending' && (
+                      <button
+                        onClick={checkCamera}
+                        disabled={checkingCamera}
+                        className={`text-xs font-medium py-2 px-4 rounded-lg transition-colors ${isDark ? 'bg-white text-black hover:bg-zinc-200' : 'bg-black text-white hover:bg-zinc-800'}`}
+                      >
+                        {checkingCamera ? "Memeriksa..." : "Izinkan"}
+                      </button>
+                    )}
+                    {cameraPermission === 'granted' && (
+                      <CheckCircle2 size={20} className={isDark ? 'text-emerald-400' : 'text-emerald-500'} />
+                    )}
+                    {cameraPermission === 'denied' && (
+                      <AlertCircle size={20} className="text-rose-500" />
+                    )}
                   </div>
 
-                  {cameraPermission === 'pending' && (
-                    <button
-                      onClick={checkCamera}
-                      disabled={checkingCamera}
-                      className={`text-xs font-medium py-2 px-4 rounded self-start transition-colors ${isDark ? 'bg-zinc-900 text-white hover:bg-zinc-800' : 'bg-zinc-100 text-black hover:bg-zinc-200'}`}
-                    >
-                      {checkingCamera ? "Memeriksa..." : "Izinkan Kamera"}
-                    </button>
-                  )}
-
-                  {cameraPermission === 'denied' && (
-                    <p className="text-[11px] text-rose-500">Kamera wajib diizinkan di pengaturan browser Anda.</p>
-                  )}
+                  {/* Rules Consent */}
+                  <label className={`flex items-start gap-4 p-4 rounded-xl border cursor-pointer transition-colors ${agreedToRules ? (isDark ? 'bg-indigo-950/20 border-indigo-900/30' : 'bg-indigo-50 border-indigo-100') : (isDark ? 'bg-black/20 border-zinc-800 hover:border-zinc-700' : 'bg-zinc-50 border-zinc-200 hover:border-zinc-300')}`}>
+                    <div className="mt-1">
+                      <input 
+                        type="checkbox" 
+                        checked={agreedToRules}
+                        onChange={(e) => setAgreedToRules(e.target.checked)}
+                        className={`w-5 h-5 rounded border-zinc-300 text-black focus:ring-black accent-black cursor-pointer ${isDark ? 'bg-zinc-900 border-zinc-700' : ''}`}
+                      />
+                    </div>
+                    <div className="flex flex-col">
+                      <span className={`text-sm font-medium ${isDark ? 'text-zinc-200' : 'text-zinc-800'}`}>Tata Tertib Ujian</span>
+                      <span className={`text-xs mt-1 leading-relaxed ${isDark ? 'text-zinc-400' : 'text-zinc-600'}`}>
+                        Saya berjanji untuk mengerjakan ujian dengan jujur. Saya menyadari bahwa sistem ini dilengkapi fitur pengawasan yang mendeteksi <strong>perpindahan tab</strong>, meminimalkan jendela browser, serta merekam layar secara berkala. Pelanggaran berulang dapat menyebabkan ujian dihentikan otomatis.
+                      </span>
+                    </div>
+                  </label>
                 </div>
 
                 {/* Action */}
                 <div className="flex flex-col gap-3">
                   <button
-                    disabled={cameraPermission !== 'granted' || !exam}
+                    disabled={cameraPermission !== 'granted' || !agreedToRules || !exam}
                     onClick={() => exam && router.push(`/exam/${exam.id}`)}
-                    className={`w-full py-4 text-sm font-medium transition-colors disabled:cursor-not-allowed ${isDark
-                        ? 'bg-white text-black hover:bg-zinc-200 disabled:bg-zinc-900 disabled:text-zinc-600'
-                        : 'bg-black text-white hover:bg-zinc-800 disabled:bg-zinc-100 disabled:text-zinc-400'
-                      }`}
+                    className={`w-full py-4 text-sm font-medium rounded-xl transition-all disabled:cursor-not-allowed ${
+                      cameraPermission === 'granted' && agreedToRules
+                        ? (isDark ? 'bg-white text-black hover:bg-zinc-200 hover:shadow-[0_0_20px_rgba(255,255,255,0.1)]' : 'bg-black text-white hover:bg-zinc-800 hover:shadow-xl hover:shadow-black/20')
+                        : (isDark ? 'bg-zinc-900 text-zinc-600' : 'bg-zinc-100 text-zinc-400')
+                    }`}
                   >
-                    Mulai Evaluasi
+                    Mulai Evaluasi Sekarang
                   </button>
-                  {cameraPermission !== 'granted' && (
-                    <p className={`text-[11px] text-center ${isDark ? 'text-zinc-600' : 'text-zinc-400'}`}>
-                      Selesaikan verifikasi sistem sebelum melanjutkan.
-                    </p>
-                  )}
+                  <p className={`text-[11px] text-center ${isDark ? 'text-zinc-600' : 'text-zinc-400'}`}>
+                    Tombol akan aktif setelah Anda mengizinkan kamera dan menyetujui tata tertib.
+                  </p>
                 </div>
 
               </div>
