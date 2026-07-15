@@ -3,7 +3,7 @@
 import { useSession } from "next-auth/react"
 import { useRouter, useParams } from "next/navigation"
 import { useEffect, useState, useRef } from "react"
-import { Clock, ChevronLeft, ChevronRight, Flag, LayoutGrid, X, Moon, Sun, Shield, ShieldOff, WifiOff } from "lucide-react"
+import { Clock, ChevronLeft, ChevronRight, Flag, LayoutGrid, X, Moon, Sun, Shield, ShieldOff, WifiOff, Save, CheckCircle2, Loader2 } from "lucide-react"
 import { useTheme } from "@/hooks/useTheme";
 
 export default function ExamTakingInterface() {
@@ -30,6 +30,7 @@ export default function ExamTakingInterface() {
   // Connection Resilience State
   const [isOffline, setIsOffline] = useState(false)
   const [waitingForOnlineSubmit, setWaitingForOnlineSubmit] = useState(false)
+  const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved">("idle")
 
   // Camera State
   const videoRef = useRef<HTMLVideoElement>(null)
@@ -175,12 +176,20 @@ export default function ExamTakingInterface() {
     // 2. Debounced API Sync (save progress without finishing)
     const timeoutId = setTimeout(() => {
       if (!navigator.onLine || Object.keys(answers).length === 0) return
+      setSaveStatus("saving")
       fetch("/api/submissions", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ examId, answers })
+      }).then((res) => res.json()).then(data => {
+        if(data.success) {
+          setSaveStatus("saved")
+          setTimeout(() => setSaveStatus("idle"), 3000)
+        } else {
+          setSaveStatus("idle")
+        }
       }).catch(console.error)
-    }, 5000)
+    }, 2000)
 
     return () => clearTimeout(timeoutId)
   }, [answers, flagged, examId, session?.user?.id, status])
@@ -399,17 +408,25 @@ export default function ExamTakingInterface() {
   return (
     <div className={`min-h-screen transition-colors duration-300 flex flex-col font-sans overflow-hidden relative ${isDark ? 'bg-[#0a0a0a] text-zinc-300 selection:bg-white/20' : 'bg-white text-zinc-600 selection:bg-black/10'}`}>
       
-      {/* Floating Camera View */}
-      <div className={`fixed bottom-4 left-4 lg:bottom-8 lg:left-8 z-40 w-28 h-36 sm:w-36 sm:h-48 rounded overflow-hidden shadow-2xl border ${isDark ? 'border-zinc-800' : 'border-zinc-200'} flex items-center justify-center bg-black`}>
-        <video 
-          ref={videoRef} 
-          autoPlay 
-          playsInline 
-          muted 
-          className="w-full h-full object-cover opacity-80"
-          style={{ transform: "scaleX(-1)" }}
-        />
-        <div className="absolute top-2 left-2 flex items-center gap-1.5 bg-black/60 px-2 py-1 text-[10px] font-bold text-white backdrop-blur-md">
+      {/* Dynamic Island Style Camera View */}
+      <div className={`fixed top-20 left-1/2 -translate-x-1/2 z-40 h-10 md:h-12 rounded-full overflow-hidden shadow-2xl border transition-all duration-300 hover:h-48 hover:rounded-3xl hover:w-36 hover:top-1/2 hover:-translate-y-1/2 ${isDark ? 'border-white/10 bg-black/60' : 'border-black/10 bg-white/60'} backdrop-blur-xl flex items-center gap-3 pr-4 group`}>
+        <div className="h-full aspect-[4/3] relative overflow-hidden bg-black shrink-0 transition-all duration-300 group-hover:w-full group-hover:aspect-[3/4]">
+          <video 
+            ref={videoRef} 
+            autoPlay 
+            playsInline 
+            muted 
+            className="w-full h-full object-cover opacity-90"
+            style={{ transform: "scaleX(-1)" }}
+          />
+        </div>
+        <div className="flex items-center gap-2 group-hover:hidden whitespace-nowrap cursor-default">
+          <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.8)]"></div>
+          <span className={`text-[10px] md:text-xs font-medium tracking-widest uppercase ${isDark ? 'text-zinc-200' : 'text-zinc-800'}`}>
+            Pengawasan Aktif
+          </span>
+        </div>
+        <div className="absolute top-3 right-3 hidden group-hover:flex items-center gap-1.5 bg-black/60 rounded-full px-2 py-1 text-[10px] font-bold text-white backdrop-blur-md">
           <div className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse"></div>
           REC
         </div>
@@ -461,21 +478,35 @@ export default function ExamTakingInterface() {
         </div>
       )}
 
+      {/* Progress Bar (Focus HUD) */}
+      <div className="fixed top-0 left-0 right-0 h-1 z-50 bg-zinc-800/20">
+        <div 
+          className="h-full bg-gradient-to-r from-emerald-400 to-indigo-500 transition-all duration-500"
+          style={{ width: `${questions.length > 0 ? (Object.keys(answers).length / questions.length) * 100 : 0}%` }}
+        />
+      </div>
+
       {/* Ultra Minimal Header */}
       <header className={`sticky top-0 z-30 border-b ${isDark ? 'border-zinc-900 bg-[#0a0a0a]/80' : 'border-zinc-100 bg-white/80'} backdrop-blur-md`}>
         <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
-          <div className={`font-semibold text-sm tracking-tight flex items-center gap-2 ${isDark ? 'text-white' : 'text-black'} hidden sm:flex`}>
-            <Shield size={16} />
-            Evaluasi Aktif
+          <div className={`font-semibold text-sm tracking-tight flex items-center gap-2 ${isDark ? 'text-emerald-400' : 'text-emerald-600'} hidden sm:flex bg-emerald-500/10 px-3 py-1.5 rounded-full`}>
+            <Shield size={14} />
+            Secure Session
           </div>
           
           {/* Timer */}
-          <div className={`flex items-center gap-2 font-mono text-sm tracking-widest ${timeLeft < 300 ? 'text-rose-500 animate-pulse' : (isDark ? 'text-zinc-300' : 'text-zinc-700')}`}>
-            <Clock size={14} />
+          <div className={`flex items-center gap-2 font-mono text-lg tracking-widest ${timeLeft < 300 ? 'text-rose-500 animate-pulse font-bold' : (isDark ? 'text-zinc-300' : 'text-zinc-700')}`}>
+            <Clock size={16} />
             {formatTime(timeLeft)}
           </div>
 
           <div className="flex items-center gap-4">
+            {/* Auto-save indicator */}
+            <div className={`hidden md:flex items-center gap-2 text-[10px] font-medium uppercase tracking-widest transition-opacity duration-300 ${saveStatus === 'idle' ? 'opacity-0' : 'opacity-100'}`}>
+              {saveStatus === 'saving' && <><Loader2 size={12} className={`animate-spin ${isDark ? 'text-zinc-400' : 'text-zinc-500'}`} /><span className={isDark ? 'text-zinc-400' : 'text-zinc-500'}>Menyimpan...</span></>}
+              {saveStatus === 'saved' && <><CheckCircle2 size={12} className="text-emerald-500" /><span className="text-emerald-500">Tersimpan</span></>}
+            </div>
+
             {isOffline && (
               <div className="flex items-center gap-1.5 text-[10px] font-bold text-yellow-500 bg-yellow-500/10 px-2 py-1 rounded">
                 <WifiOff size={12} />
@@ -509,118 +540,125 @@ export default function ExamTakingInterface() {
 
       <div className="flex-1 flex max-w-7xl w-full mx-auto relative overflow-hidden">
         {/* Main Content */}
-        <main className="flex-1 overflow-y-auto px-6 py-12">
-          <div className="max-w-2xl mx-auto">
-            {/* Question Header */}
-            <div className="flex items-center justify-between mb-10">
-              <div className={`text-xs font-bold uppercase tracking-widest ${isDark ? 'text-zinc-600' : 'text-zinc-400'}`}>
-                Soal {currentIndex + 1} <span className="font-normal mx-1 text-zinc-500">dari</span> {questions.length}
+        <main className="flex-1 overflow-y-auto px-6 py-12 pb-32">
+          <div className="max-w-3xl mx-auto">
+            
+            {/* Glassmorphism Question Container */}
+            <div className={`p-8 md:p-12 rounded-3xl transition-all duration-500 relative ${isDark ? 'glass-panel glow-border bg-[#111111]/90' : 'bg-white shadow-2xl shadow-zinc-200/50 border border-zinc-100'}`}>
+              
+              {/* Question Header */}
+              <div className="flex items-center justify-between mb-10 pb-6 border-b border-zinc-500/20">
+                <div className={`text-xs font-bold uppercase tracking-widest ${isDark ? 'text-zinc-500' : 'text-zinc-400'}`}>
+                  Soal <span className={`text-lg ml-1 ${isDark ? 'text-white' : 'text-black'}`}>{currentIndex + 1}</span> <span className="font-normal mx-1 text-zinc-500">dari</span> {questions.length}
+                </div>
+                <button 
+                  onClick={() => toggleFlag(currentQ.id)}
+                  className={`text-xs flex items-center gap-2 transition-colors px-3 py-1.5 rounded-full ${isFlagged ? 'bg-orange-500/10 text-orange-500 border border-orange-500/20' : (isDark ? 'text-zinc-500 hover:bg-zinc-800' : 'text-zinc-400 hover:bg-zinc-100')}`}
+                >
+                  <Flag size={14} className={isFlagged ? 'fill-orange-500' : ''} />
+                  {isFlagged ? 'Ditandai Ragu' : 'Tandai Ragu'}
+                </button>
               </div>
-              <button 
-                onClick={() => toggleFlag(currentQ.id)}
-                className={`text-xs flex items-center gap-1.5 transition-colors ${isFlagged ? 'text-orange-500' : (isDark ? 'text-zinc-500 hover:text-zinc-300' : 'text-zinc-400 hover:text-zinc-600')}`}
-              >
-                <Flag size={14} className={isFlagged ? 'fill-orange-500' : ''} />
-                {isFlagged ? 'Ditandai Ragu' : 'Tandai Ragu'}
-              </button>
+
+              {/* Question Card */}
+              <div className={`text-xl md:text-2xl leading-relaxed font-light ${isDark ? 'text-zinc-100' : 'text-zinc-800'} ${currentQ.imageUrl ? 'mb-8' : 'mb-14'}`}>
+                {currentQ.text}
+              </div>
+
+              {currentQ.imageUrl && (
+                <div className="mb-14">
+                  <img src={currentQ.imageUrl} alt="Gambar Pendukung" className={`max-h-[400px] w-auto rounded-xl border object-contain shadow-md ${isDark ? 'border-zinc-800' : 'border-zinc-200'}`} />
+                </div>
+              )}
+
+              {/* Options / Answer Input */}
+              {(!currentQ.type || currentQ.type === 'MULTIPLE_CHOICE') && (
+              <div className="flex flex-col gap-4">
+                {currentQ.options?.map((opt: any, idx: number) => {
+                  const selected = answers[currentQ.id]?.optionId === opt.id || answers[currentQ.id] === opt.id
+                  return (
+                    <button
+                      key={opt.id}
+                      onClick={() => handleSelectOption(currentQ.id, opt.id)}
+                      className={`w-full text-left p-5 rounded-xl border transition-all duration-300 flex items-start gap-5 ${
+                        selected 
+                          ? (isDark ? 'border-indigo-500 bg-indigo-500/10 shadow-[0_0_15px_rgba(99,102,241,0.1)]' : 'border-indigo-500 bg-indigo-50 shadow-md') 
+                          : (isDark ? 'border-zinc-800 hover:border-zinc-600 bg-black/20' : 'border-zinc-200 hover:border-zinc-300 bg-white')
+                      }`}
+                    >
+                      <div className={`shrink-0 w-8 h-8 rounded flex items-center justify-center text-xs font-bold mt-0.5 transition-colors ${
+                        selected 
+                          ? (isDark ? 'bg-indigo-500 text-white' : 'bg-indigo-600 text-white') 
+                          : (isDark ? 'bg-zinc-800 text-zinc-400' : 'bg-zinc-100 text-zinc-500')
+                      }`}>
+                        {String.fromCharCode(65 + idx)}
+                      </div>
+                      <div className={`text-base md:text-lg pt-1 ${
+                        selected 
+                          ? (isDark ? 'text-indigo-100' : 'text-indigo-900') 
+                          : (isDark ? 'text-zinc-300' : 'text-zinc-700')
+                      }`}>
+                        {opt.text}
+                      </div>
+                    </button>
+                  )
+                })}
+              </div>
+              )}
+
+              {currentQ.type === 'SHORT_ANSWER' && (
+                <div className="flex flex-col gap-3">
+                  <input 
+                    type="text"
+                    placeholder="Ketik jawaban Anda di sini..."
+                    value={answers[currentQ.id]?.textAnswer || (typeof answers[currentQ.id] === 'string' ? answers[currentQ.id] : "")}
+                    onChange={(e) => {
+                      setAnswers(prev => ({
+                        ...prev,
+                        [currentQ.id]: { textAnswer: e.target.value }
+                      }))
+                    }}
+                    className={`w-full p-5 rounded-xl text-lg outline-none transition-all duration-300 border focus:ring-2 ${isDark ? 'bg-black/50 border-zinc-800 text-white placeholder-zinc-700 focus:border-indigo-500 focus:ring-indigo-500/20' : 'bg-zinc-50 border-zinc-200 text-black placeholder-zinc-400 focus:border-indigo-500 focus:ring-indigo-500/20'}`}
+                  />
+                </div>
+              )}
+
+              {currentQ.type === 'ESSAY' && (
+                <div className="flex flex-col gap-3">
+                  <textarea 
+                    rows={8}
+                    placeholder="Ketik jawaban esai Anda di sini..."
+                    value={answers[currentQ.id]?.textAnswer || (typeof answers[currentQ.id] === 'string' ? answers[currentQ.id] : "")}
+                    onChange={(e) => {
+                      setAnswers(prev => ({
+                        ...prev,
+                        [currentQ.id]: { textAnswer: e.target.value }
+                      }))
+                    }}
+                    className={`w-full p-5 rounded-xl text-lg outline-none resize-y transition-all duration-300 border focus:ring-2 ${isDark ? 'bg-black/50 border-zinc-800 text-white placeholder-zinc-700 focus:border-indigo-500 focus:ring-indigo-500/20' : 'bg-zinc-50 border-zinc-200 text-black placeholder-zinc-400 focus:border-indigo-500 focus:ring-indigo-500/20'}`}
+                  />
+                </div>
+              )}
             </div>
 
-            {/* Question Card */}
-            <div className={`text-lg leading-relaxed font-light ${isDark ? 'text-zinc-200' : 'text-zinc-800'} ${currentQ.imageUrl ? 'mb-6' : 'mb-12'}`}>
-              {currentQ.text}
-            </div>
-
-            {currentQ.imageUrl && (
-              <div className="mb-12">
-                <img src={currentQ.imageUrl} alt="Gambar Pendukung" className={`max-h-80 w-auto rounded border object-contain shadow-sm ${isDark ? 'border-zinc-800' : 'border-zinc-200'}`} />
-              </div>
-            )}
-
-            {/* Options / Answer Input */}
-            {(!currentQ.type || currentQ.type === 'MULTIPLE_CHOICE') && (
-            <div className="flex flex-col gap-3">
-              {currentQ.options?.map((opt: any, idx: number) => {
-                const selected = answers[currentQ.id]?.optionId === opt.id || answers[currentQ.id] === opt.id
-                return (
-                  <button
-                    key={opt.id}
-                    onClick={() => handleSelectOption(currentQ.id, opt.id)}
-                    className={`w-full text-left p-4 border transition-colors flex items-start gap-4 ${
-                      selected 
-                        ? (isDark ? 'border-white bg-white/5' : 'border-black bg-black/5') 
-                        : (isDark ? 'border-zinc-900 hover:border-zinc-700 bg-transparent' : 'border-zinc-100 hover:border-zinc-300 bg-transparent')
-                    }`}
-                  >
-                    <div className={`shrink-0 text-xs font-mono mt-0.5 ${
-                      selected 
-                        ? (isDark ? 'text-white' : 'text-black') 
-                        : (isDark ? 'text-zinc-600' : 'text-zinc-400')
-                    }`}>
-                      {String.fromCharCode(65 + idx)}
-                    </div>
-                    <div className={`text-sm ${
-                      selected 
-                        ? (isDark ? 'text-zinc-200' : 'text-zinc-800') 
-                        : (isDark ? 'text-zinc-400' : 'text-zinc-600')
-                    }`}>
-                      {opt.text}
-                    </div>
-                  </button>
-                )
-              })}
-            </div>
-            )}
-
-            {currentQ.type === 'SHORT_ANSWER' && (
-              <div className="flex flex-col gap-3">
-                <input 
-                  type="text"
-                  placeholder="Ketik jawaban Anda di sini..."
-                  value={answers[currentQ.id]?.textAnswer || (typeof answers[currentQ.id] === 'string' ? answers[currentQ.id] : "")}
-                  onChange={(e) => {
-                    setAnswers(prev => ({
-                      ...prev,
-                      [currentQ.id]: { textAnswer: e.target.value }
-                    }))
-                  }}
-                  className={`w-full p-4 text-sm outline-none transition-colors border focus:ring-1 ${isDark ? 'bg-[#0a0a0a] border-zinc-800 text-white placeholder-zinc-700 focus:border-white focus:ring-white/20' : 'bg-white border-zinc-200 text-black placeholder-zinc-400 focus:border-black focus:ring-black/10'}`}
-                />
-              </div>
-            )}
-
-            {currentQ.type === 'ESSAY' && (
-              <div className="flex flex-col gap-3">
-                <textarea 
-                  rows={8}
-                  placeholder="Ketik jawaban esai Anda di sini..."
-                  value={answers[currentQ.id]?.textAnswer || (typeof answers[currentQ.id] === 'string' ? answers[currentQ.id] : "")}
-                  onChange={(e) => {
-                    setAnswers(prev => ({
-                      ...prev,
-                      [currentQ.id]: { textAnswer: e.target.value }
-                    }))
-                  }}
-                  className={`w-full p-4 text-sm outline-none resize-y transition-colors border focus:ring-1 ${isDark ? 'bg-[#0a0a0a] border-zinc-800 text-white placeholder-zinc-700 focus:border-white focus:ring-white/20' : 'bg-white border-zinc-200 text-black placeholder-zinc-400 focus:border-black focus:ring-black/10'}`}
-                />
-              </div>
-            )}
-
-            {/* Navigation Bottom */}
-            <div className={`mt-16 pt-8 border-t flex items-center justify-between ${isDark ? 'border-zinc-900' : 'border-zinc-100'}`}>
+            {/* Floating Navigation Bottom */}
+            <div className={`fixed bottom-6 left-1/2 -translate-x-1/2 lg:translate-x-0 lg:left-auto lg:right-80 z-40 px-6 py-4 rounded-full shadow-2xl backdrop-blur-xl border flex items-center gap-8 ${isDark ? 'bg-[#0a0a0a]/80 border-white/10' : 'bg-white/80 border-black/10'}`}>
               <button 
                 onClick={() => setCurrentIndex(prev => Math.max(0, prev - 1))}
                 disabled={currentIndex === 0}
-                className={`text-xs flex items-center gap-2 transition-colors disabled:opacity-30 disabled:cursor-not-allowed ${isDark ? 'text-zinc-400 hover:text-white' : 'text-zinc-500 hover:text-black'}`}
+                className={`text-sm font-medium flex items-center gap-2 transition-colors disabled:opacity-30 disabled:cursor-not-allowed ${isDark ? 'text-zinc-300 hover:text-white' : 'text-zinc-700 hover:text-black'}`}
               >
-                <ChevronLeft size={14} /> Sebelumnya
+                <ChevronLeft size={16} /> Sebelumnya
               </button>
               
+              <div className={`w-px h-6 ${isDark ? 'bg-zinc-800' : 'bg-zinc-300'}`}></div>
+
               <button 
                 onClick={() => setCurrentIndex(prev => Math.min(questions.length - 1, prev + 1))}
                 disabled={currentIndex === questions.length - 1}
-                className={`text-xs flex items-center gap-2 transition-colors disabled:opacity-30 disabled:cursor-not-allowed ${isDark ? 'text-zinc-400 hover:text-white' : 'text-zinc-500 hover:text-black'}`}
+                className={`text-sm font-medium flex items-center gap-2 transition-colors disabled:opacity-30 disabled:cursor-not-allowed ${isDark ? 'text-zinc-300 hover:text-white' : 'text-zinc-700 hover:text-black'}`}
               >
-                Selanjutnya <ChevronRight size={14} />
+                Selanjutnya <ChevronRight size={16} />
               </button>
             </div>
           </div>
