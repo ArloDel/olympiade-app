@@ -1,0 +1,33 @@
+config:
+  target: "http://localhost:3000"
+  phases:
+    - duration: 30
+      arrivalRate: 2
+      rampTo: 10
+      name: "Fase Pemanasan: Siswa mulai ujian perlahan"
+    - duration: 60
+      arrivalRate: 10
+      name: "Fase Ujian Aktif: Lonjakan murid mengirim jawaban"
+  payload:
+    path: "users.csv"
+    fields:
+      - "sessionToken"
+      - "examId"
+      - "questionId"
+      - "optionId"
+    order: sequence
+scenarios:
+  - name: "Auto-save Jawaban (PATCH /api/submissions)"
+    flow:
+      - patch:
+          url: "/api/submissions"
+          headers:
+            Cookie: "next-auth.session-token={{ sessionToken }}"
+            Content-Type: "application/json"
+          json:
+            examId: "{{ examId }}"
+            answers:
+              "{{ questionId }}":
+                optionId: "{{ optionId }}"
+          expect:
+            - statusCode: 200

@@ -31,6 +31,7 @@ export default function ExamTakingInterface() {
   const [isOffline, setIsOffline] = useState(false)
   const [waitingForOnlineSubmit, setWaitingForOnlineSubmit] = useState(false)
   const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved">("idle")
+  const [localSaveStatus, setLocalSaveStatus] = useState(false)
 
   // Camera State
   const videoRef = useRef<HTMLVideoElement>(null)
@@ -116,6 +117,8 @@ export default function ExamTakingInterface() {
       ...prev,
       [qId]: { optionId: optId }
     }))
+    setLocalSaveStatus(true)
+    setTimeout(() => setLocalSaveStatus(false), 2000)
   }
 
   const checkAnswered = (qId: string) => {
@@ -603,6 +606,11 @@ export default function ExamTakingInterface() {
                     </button>
                   )
                 })}
+                
+                {/* Inline Local Auto-save Indicator */}
+                <div className={`mt-2 flex justify-end items-center gap-1.5 text-xs font-medium transition-opacity duration-300 ${localSaveStatus ? 'opacity-100 text-emerald-500' : 'opacity-0'}`}>
+                  <CheckCircle2 size={14} /> Jawaban tersimpan
+                </div>
               </div>
               )}
 
