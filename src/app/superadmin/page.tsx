@@ -1,5 +1,6 @@
 "use client"
 
+import Link from "next/link"
 import { useEffect, useState } from "react"
 import { Users, ShieldAlert, FileText, UserCheck, Activity, BarChart3, Clock, ChevronRight, Zap, ShieldX } from "lucide-react"
 import { useTheme } from "@/hooks/useTheme";
