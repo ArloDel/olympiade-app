@@ -1,30 +1,19 @@
 "use client"
 
-import { useSession, signOut } from "next-auth/react"
-import { useRouter } from "next/navigation"
-import Link from "next/link"
 import { useEffect, useState } from "react"
-import { ShieldAlert, Moon, Sun, LogOut, Wrench, StopCircle, Download, AlertTriangle } from "lucide-react"
+import { ShieldAlert, Wrench, StopCircle, Download, AlertTriangle } from "lucide-react"
 import { useTheme } from "@/hooks/useTheme";
 
 export default function SuperadminSettingsPage() {
-  const { data: session, status } = useSession()
-  const router = useRouter()
-  const [theme, setTheme] = useTheme()
+  const [theme] = useTheme()
   
   const [maintenanceMode, setMaintenanceMode] = useState(false)
   const [loading, setLoading] = useState(true)
   const [actionLoading, setActionLoading] = useState(false)
 
   useEffect(() => {
-    if (status === "unauthenticated") {
-      router.replace("/login")
-    } else if (status === "authenticated" && (session?.user as any)?.role !== "SUPERADMIN") {
-      router.replace("/dashboard")
-    } else if (status === "authenticated") {
-      fetchMaintenanceStatus()
-    }
-  }, [status, router, session])
+    fetchMaintenanceStatus()
+  }, [])
 
   async function fetchMaintenanceStatus() {
     try {
@@ -98,50 +87,16 @@ export default function SuperadminSettingsPage() {
 
   const isDark = theme === "dark"
 
-  if (status === "loading" || loading) {
+  if (loading) {
      return (
-       <div className={`min-h-screen flex items-center justify-center ${isDark ? 'bg-transparent' : 'bg-white'}`}>
+       <div className={`min-h-[60vh] flex items-center justify-center`}>
          <div className={`w-6 h-6 border-2 rounded-full animate-spin ${isDark ? 'border-zinc-600 border-t-white' : 'border-zinc-300 border-t-black'}`}></div>
        </div>
      )
   }
 
   return (
-    <div className={`min-h-screen flex flex-col font-sans transition-colors duration-300 ${isDark ? 'bg-transparent text-zinc-300 selection:bg-indigo-500/30' : 'bg-white text-zinc-600'}`}>
-      
-      <header className={`sticky top-0 z-30 border-b ${isDark ? 'border-white/10 bg-black/40 backdrop-blur-xl' : 'border-zinc-100 bg-white/80'} backdrop-blur-md`}>
-        <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-8">
-            <div className={`font-semibold text-sm tracking-tight flex items-center gap-2 ${isDark ? 'text-white' : 'text-black'}`}>
-              <div className={`w-6 h-6 rounded flex items-center justify-center ${isDark ? 'bg-amber-500 text-black' : 'bg-amber-600 text-white'}`}>
-                <ShieldAlert size={14} />
-              </div>
-              Superadmin
-            </div>
-            <nav className="hidden md:flex gap-6 text-sm">
-              <Link href="/superadmin" className={`transition-colors ${isDark ? 'text-zinc-500 hover:text-white' : 'text-zinc-500 hover:text-black'}`}>Dashboard</Link>
-              <Link href="/superadmin/admins" className={`transition-colors ${isDark ? 'text-zinc-500 hover:text-white' : 'text-zinc-500 hover:text-black'}`}>Kelola Admin</Link>
-              <Link href="/superadmin/logs" className={`transition-colors ${isDark ? 'text-zinc-500 hover:text-white' : 'text-zinc-500 hover:text-black'}`}>Log Aktivitas</Link>
-              <Link href="/superadmin/settings" className={`font-medium ${isDark ? 'text-white' : 'text-black'}`}>Pengaturan Global</Link>
-              <Link href="/admin" className={`transition-colors ${isDark ? 'text-zinc-500 hover:text-white' : 'text-zinc-500 hover:text-black'}`}>Panel Admin Reguler</Link>
-            </nav>
-          </div>
-          <div className="flex items-center gap-6">
-            <button 
-              onClick={() => setTheme(isDark ? "light" : "dark")}
-              className={`text-xs flex items-center gap-1.5 transition-colors ${isDark ? 'text-zinc-500 hover:text-white' : 'text-zinc-400 hover:text-black'}`}
-            >
-              {isDark ? <Sun size={14} /> : <Moon size={14} />}
-              {isDark ? 'Light' : 'Dark'}
-            </button>
-            <button onClick={() => signOut({ callbackUrl: '/login' })} className={`transition-colors ${isDark ? 'text-zinc-600 hover:text-white' : 'text-zinc-300 hover:text-black'}`}>
-              <LogOut size={16} />
-            </button>
-          </div>
-        </div>
-      </header>
-
-      <main className="flex-1 p-6 md:p-10 max-w-4xl mx-auto w-full">
+    <div className="p-6 md:p-10 max-w-4xl mx-auto w-full">
         
         <div className="mb-10">
           <div className={`flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest mb-4 ${isDark ? 'text-amber-500' : 'text-amber-600'}`}>
@@ -225,7 +180,6 @@ export default function SuperadminSettingsPage() {
 
         </div>
 
-      </main>
     </div>
   )
 }

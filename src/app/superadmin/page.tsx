@@ -1,17 +1,12 @@
 "use client"
 
-import { useSession, signOut } from "next-auth/react"
-import { useRouter } from "next/navigation"
-import Link from "next/link"
 import { useEffect, useState } from "react"
-import { Users, LogOut, Moon, Sun, ShieldAlert, FileText, UserCheck, Activity, BarChart3, Clock, ChevronRight } from "lucide-react"
+import { Users, ShieldAlert, FileText, UserCheck, Activity, BarChart3, Clock, ChevronRight, Zap, ShieldX } from "lucide-react"
 import { useTheme } from "@/hooks/useTheme";
 
 export default function SuperadminDashboard() {
-  const { data: session, status } = useSession()
-  const router = useRouter()
   const [loading, setLoading] = useState(true)
-  const [theme, setTheme] = useTheme()
+  const [theme] = useTheme()
   
   const [stats, setStats] = useState({
     totalStudents: 0,
@@ -22,14 +17,8 @@ export default function SuperadminDashboard() {
   })
 
   useEffect(() => {
-    if (status === "unauthenticated") {
-      router.replace("/login")
-    } else if (status === "authenticated" && (session?.user as any)?.role !== "SUPERADMIN") {
-      router.replace("/dashboard")
-    } else if (status === "authenticated") {
-      fetchDashboardData()
-    }
-  }, [status, router, session])
+    fetchDashboardData()
+  }, [])
 
   const fetchDashboardData = async () => {
     try {
@@ -69,50 +58,42 @@ export default function SuperadminDashboard() {
     }
   }
 
-  if (status === "loading" || loading) {
+  if (loading) {
      return (
-       <div className={`min-h-screen flex items-center justify-center ${isDark ? 'bg-transparent' : 'bg-white'}`}>
+       <div className={`min-h-[60vh] flex items-center justify-center`}>
          <div className={`w-6 h-6 border-2 rounded-full animate-spin ${isDark ? 'border-zinc-600 border-t-white' : 'border-zinc-300 border-t-black'}`}></div>
        </div>
      )
   }
 
   return (
-    <div className={`min-h-screen flex flex-col font-sans transition-colors duration-300 ${isDark ? 'bg-transparent text-zinc-300 selection:bg-indigo-500/30' : 'bg-white text-zinc-600'}`}>
+    <div className="p-6 md:p-10 max-w-7xl mx-auto w-full space-y-8">
       
-      <header className={`sticky top-0 z-30 border-b ${isDark ? 'border-white/10 bg-black/40 backdrop-blur-xl' : 'border-zinc-100 bg-white/80'} backdrop-blur-md`}>
-        <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-8">
-            <div className={`font-semibold text-sm tracking-tight flex items-center gap-2 ${isDark ? 'text-white' : 'text-black'}`}>
-              <div className={`w-6 h-6 rounded flex items-center justify-center ${isDark ? 'bg-amber-500 text-black' : 'bg-amber-600 text-white'}`}>
-                <ShieldAlert size={14} />
-              </div>
-              Superadmin
-            </div>
-            <nav className="hidden md:flex gap-6 text-sm">
-              <Link href="/superadmin" className={`font-medium ${isDark ? 'text-white' : 'text-black'}`}>Dashboard</Link>
-              <Link href="/superadmin/admins" className={`transition-colors ${isDark ? 'text-zinc-500 hover:text-white' : 'text-zinc-500 hover:text-black'}`}>Kelola Admin</Link>
-              <Link href="/superadmin/logs" className={`transition-colors ${isDark ? 'text-zinc-500 hover:text-white' : 'text-zinc-500 hover:text-black'}`}>Log Aktivitas</Link>
-              <Link href="/superadmin/settings" className={`transition-colors ${isDark ? 'text-zinc-500 hover:text-white' : 'text-zinc-500 hover:text-black'}`}>Pengaturan Global</Link>
-              <Link href="/admin" className={`transition-colors ${isDark ? 'text-zinc-500 hover:text-white' : 'text-zinc-500 hover:text-black'}`}>Panel Admin Reguler</Link>
-            </nav>
-          </div>
-          <div className="flex items-center gap-6">
-            <button 
-              onClick={() => setTheme(isDark ? "light" : "dark")}
-              className={`text-xs flex items-center gap-1.5 transition-colors ${isDark ? 'text-zinc-500 hover:text-white' : 'text-zinc-400 hover:text-black'}`}
-            >
-              {isDark ? <Sun size={14} /> : <Moon size={14} />}
-              {isDark ? 'Light' : 'Dark'}
-            </button>
-            <button onClick={() => signOut({ callbackUrl: '/login' })} className={`transition-colors ${isDark ? 'text-zinc-600 hover:text-white' : 'text-zinc-300 hover:text-black'}`}>
-              <LogOut size={16} />
-            </button>
-          </div>
+      {/* Quick Actions (Command Center) */}
+      <div className={`p-6 rounded-2xl border ${isDark ? 'glass-panel glow-border border-white/10' : 'bg-white border-zinc-200 shadow-sm'}`}>
+        <div className="flex items-center gap-2 mb-4">
+          <Zap size={18} className={isDark ? 'text-amber-400' : 'text-amber-600'} />
+          <h2 className={`font-medium ${isDark ? 'text-white' : 'text-black'}`}>Quick Actions</h2>
         </div>
-      </header>
-
-      <main className="flex-1 p-6 md:p-10 max-w-7xl mx-auto w-full space-y-12">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+          <button className={`flex flex-col items-center justify-center p-4 rounded-xl border transition-all ${isDark ? 'bg-black/20 border-white/5 hover:bg-white/10 hover:border-white/20' : 'bg-zinc-50 border-zinc-200 hover:bg-zinc-100'}`}>
+            <ShieldX size={24} className="mb-2 text-red-500" />
+            <span className={`text-xs font-medium ${isDark ? 'text-zinc-300' : 'text-zinc-700'}`}>Panic: Lock All</span>
+          </button>
+          <button className={`flex flex-col items-center justify-center p-4 rounded-xl border transition-all ${isDark ? 'bg-black/20 border-white/5 hover:bg-white/10 hover:border-white/20' : 'bg-zinc-50 border-zinc-200 hover:bg-zinc-100'}`}>
+            <UserCheck size={24} className="mb-2 text-emerald-500" />
+            <span className={`text-xs font-medium ${isDark ? 'text-zinc-300' : 'text-zinc-700'}`}>Add Admin</span>
+          </button>
+          <button className={`flex flex-col items-center justify-center p-4 rounded-xl border transition-all ${isDark ? 'bg-black/20 border-white/5 hover:bg-white/10 hover:border-white/20' : 'bg-zinc-50 border-zinc-200 hover:bg-zinc-100'}`}>
+            <Activity size={24} className="mb-2 text-blue-500" />
+            <span className={`text-xs font-medium ${isDark ? 'text-zinc-300' : 'text-zinc-700'}`}>System Health</span>
+          </button>
+          <button className={`flex flex-col items-center justify-center p-4 rounded-xl border transition-all ${isDark ? 'bg-black/20 border-white/5 hover:bg-white/10 hover:border-white/20' : 'bg-zinc-50 border-zinc-200 hover:bg-zinc-100'}`}>
+            <FileText size={24} className="mb-2 text-purple-500" />
+            <span className={`text-xs font-medium ${isDark ? 'text-zinc-300' : 'text-zinc-700'}`}>Clear Old Logs</span>
+          </button>
+        </div>
+      </div>
         
         <div>
           <div className={`flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest mb-4 ${isDark ? 'text-amber-500' : 'text-amber-600'}`}>
@@ -232,7 +213,6 @@ export default function SuperadminDashboard() {
           </div>
         </div>
 
-      </main>
     </div>
   )
 }
