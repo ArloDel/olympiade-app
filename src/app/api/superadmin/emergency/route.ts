@@ -52,6 +52,26 @@ export async function POST(req: NextRequest) {
 
       return NextResponse.json({ success: true, data: { stoppedCount: result.count } });
     }
+
+    if (action === "LOCK_ALL_ADMINS") {
+      const result = await prisma.user.updateMany({
+        where: { 
+          role: "ADMIN",
+          isLocked: false, 
+        },
+        data: { isLocked: true }
+      });
+
+      await prisma.auditLog.create({
+        data: {
+          userId: (session.user as any).id,
+          action: "LOCK_ALL_ADMINS",
+          details: JSON.stringify({ adminsLocked: result.count })
+        }
+      });
+
+      return NextResponse.json({ success: true, data: { lockedCount: result.count } });
+    }
     
     // GET_MAINTENANCE (to fetch current status)
     if (action === "GET_MAINTENANCE") {

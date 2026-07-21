@@ -3,8 +3,12 @@
 import { useEffect, useState } from "react"
 import { Users, ShieldCheck, Lock, ShieldAlert, Activity, Trash2, Plus, X } from "lucide-react"
 import { useTheme } from "@/hooks/useTheme";
+import { useRouter, useSearchParams } from "next/navigation";
 
 export default function SuperadminAdminsPage() {
+  const router = useRouter()
+  const searchParams = useSearchParams()
+  
   const [searchTerm, setSearchTerm] = useState("")
   const [admins, setAdmins] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
@@ -18,6 +22,13 @@ export default function SuperadminAdminsPage() {
   useEffect(() => {
     fetchAdmins()
   }, [])
+
+  useEffect(() => {
+    if (searchParams.get("add") === "true") {
+      setIsAddModalOpen(true)
+      router.replace("/superadmin/admins") // Clear the query param
+    }
+  }, [searchParams, router])
 
   const fetchAdmins = async () => {
     try {

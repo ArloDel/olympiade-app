@@ -32,3 +32,36 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ success: false, error: error.message }, { status: 500 });
   }
 }
+
+export async function DELETE(req: NextRequest) {
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session || (session.user as any).role !== "SUPERADMIN") {
+      return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
+    }
+
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+    const result = await prisma.auditLog.deleteMany({
+      where: {
+        createdAt: {
+          lt: thirtyDaysAgo
+        }
+      }
+    });
+
+    await prisma.auditLog.create({
+      data: {
+        userId: (session.user as any).id,
+        action: "CLEAR_OLD_LOGS",
+        details: JSON.stringify({ deletedCount: result.count })
+      }
+    });
+
+    return NextResponse.json({ success: true, data: { deletedCount: result.count } });
+  } catch (error: any) {
+    console.error("Error clearing audit logs:", error);
+    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+  }
+}

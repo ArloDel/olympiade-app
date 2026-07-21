@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { useEffect, useState } from "react"
-import { Users, ShieldAlert, FileText, UserCheck, Activity, BarChart3, Clock, ChevronRight, Zap, ShieldX } from "lucide-react"
+import { Users, ShieldAlert, FileText, UserCheck, Activity, BarChart3, Clock, ChevronRight, Zap, ShieldX, X } from "lucide-react"
 import { useTheme } from "@/hooks/useTheme";
 
 export default function SuperadminDashboard() {
@@ -16,6 +16,10 @@ export default function SuperadminDashboard() {
     activeExams: 0,
     recentLogs: [] as any[]
   })
+  
+  const [actionLoading, setActionLoading] = useState(false)
+  const [healthData, setHealthData] = useState<any>(null)
+  const [isHealthModalOpen, setIsHealthModalOpen] = useState(false)
 
   useEffect(() => {
     fetchDashboardData()
@@ -32,6 +36,68 @@ export default function SuperadminDashboard() {
       console.error("Failed to fetch dashboard data:", err)
     } finally {
       setLoading(false)
+    }
+  }
+
+  const handlePanicLockAll = async () => {
+    if (!confirm("🚨 PERINGATAN KRITIS: Anda akan MENGUNCI SEMUA ADMIN (kecuali Superadmin). Mereka akan langsung ter-logout dan tidak bisa masuk kembali. Apakah Anda yakin?")) return;
+    
+    setActionLoading(true)
+    try {
+      const res = await fetch("/api/superadmin/emergency", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "LOCK_ALL_ADMINS" })
+      })
+      const data = await res.json()
+      if (data.success) {
+        alert(`Berhasil mengunci ${data.data.lockedCount} admin.`)
+        fetchDashboardData()
+      } else {
+        alert("Gagal mengunci admin: " + data.error)
+      }
+    } catch (err) {
+      alert("Terjadi kesalahan jaringan")
+    } finally {
+      setActionLoading(false)
+    }
+  }
+
+  const handleSystemHealth = async () => {
+    setActionLoading(true)
+    try {
+      const res = await fetch("/api/superadmin/health")
+      const data = await res.json()
+      if (data.success) {
+        setHealthData(data.data)
+        setIsHealthModalOpen(true)
+      } else {
+        alert("Gagal mengambil data kesehatan: " + data.error)
+      }
+    } catch (err) {
+      alert("Terjadi kesalahan jaringan")
+    } finally {
+      setActionLoading(false)
+    }
+  }
+
+  const handleClearOldLogs = async () => {
+    if (!confirm("⚠️ Apakah Anda yakin ingin menghapus SEMUA log aktivitas yang usianya lebih dari 30 hari? Tindakan ini tidak dapat dibatalkan.")) return;
+    
+    setActionLoading(true)
+    try {
+      const res = await fetch("/api/superadmin/logs", { method: "DELETE" })
+      const data = await res.json()
+      if (data.success) {
+        alert(`Berhasil menghapus ${data.data.deletedCount} log usang.`)
+        fetchDashboardData()
+      } else {
+        alert("Gagal menghapus log: " + data.error)
+      }
+    } catch (err) {
+      alert("Terjadi kesalahan jaringan")
+    } finally {
+      setActionLoading(false)
     }
   }
 
@@ -77,19 +143,22 @@ export default function SuperadminDashboard() {
           <h2 className={`font-medium ${isDark ? 'text-white' : 'text-black'}`}>Quick Actions</h2>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
-          <button className={`flex flex-col items-center justify-center p-4 rounded-xl border transition-all ${isDark ? 'bg-black/20 border-white/5 hover:bg-white/10 hover:border-white/20' : 'bg-zinc-50 border-zinc-200 hover:bg-zinc-100'}`}>
+          <button onClick={handlePanicLockAll} disabled={actionLoading} className={`flex flex-col items-center justify-center p-4 rounded-xl border transition-all ${isDark ? 'bg-black/20 border-white/5 hover:bg-white/10 hover:border-white/20' : 'bg-zinc-50 border-zinc-200 hover:bg-zinc-100'} disabled:opacity-50`}>
             <ShieldX size={24} className="mb-2 text-red-500" />
             <span className={`text-xs font-medium ${isDark ? 'text-zinc-300' : 'text-zinc-700'}`}>Panic: Lock All</span>
           </button>
-          <button className={`flex flex-col items-center justify-center p-4 rounded-xl border transition-all ${isDark ? 'bg-black/20 border-white/5 hover:bg-white/10 hover:border-white/20' : 'bg-zinc-50 border-zinc-200 hover:bg-zinc-100'}`}>
+          
+          <Link href="/superadmin/admins?add=true" className={`flex flex-col items-center justify-center p-4 rounded-xl border transition-all ${isDark ? 'bg-black/20 border-white/5 hover:bg-white/10 hover:border-white/20' : 'bg-zinc-50 border-zinc-200 hover:bg-zinc-100'}`}>
             <UserCheck size={24} className="mb-2 text-emerald-500" />
             <span className={`text-xs font-medium ${isDark ? 'text-zinc-300' : 'text-zinc-700'}`}>Add Admin</span>
-          </button>
-          <button className={`flex flex-col items-center justify-center p-4 rounded-xl border transition-all ${isDark ? 'bg-black/20 border-white/5 hover:bg-white/10 hover:border-white/20' : 'bg-zinc-50 border-zinc-200 hover:bg-zinc-100'}`}>
+          </Link>
+
+          <button onClick={handleSystemHealth} disabled={actionLoading} className={`flex flex-col items-center justify-center p-4 rounded-xl border transition-all ${isDark ? 'bg-black/20 border-white/5 hover:bg-white/10 hover:border-white/20' : 'bg-zinc-50 border-zinc-200 hover:bg-zinc-100'} disabled:opacity-50`}>
             <Activity size={24} className="mb-2 text-blue-500" />
             <span className={`text-xs font-medium ${isDark ? 'text-zinc-300' : 'text-zinc-700'}`}>System Health</span>
           </button>
-          <button className={`flex flex-col items-center justify-center p-4 rounded-xl border transition-all ${isDark ? 'bg-black/20 border-white/5 hover:bg-white/10 hover:border-white/20' : 'bg-zinc-50 border-zinc-200 hover:bg-zinc-100'}`}>
+          
+          <button onClick={handleClearOldLogs} disabled={actionLoading} className={`flex flex-col items-center justify-center p-4 rounded-xl border transition-all ${isDark ? 'bg-black/20 border-white/5 hover:bg-white/10 hover:border-white/20' : 'bg-zinc-50 border-zinc-200 hover:bg-zinc-100'} disabled:opacity-50`}>
             <FileText size={24} className="mb-2 text-purple-500" />
             <span className={`text-xs font-medium ${isDark ? 'text-zinc-300' : 'text-zinc-700'}`}>Clear Old Logs</span>
           </button>
@@ -213,6 +282,61 @@ export default function SuperadminDashboard() {
             )}
           </div>
         </div>
+
+      {/* System Health Modal */}
+      {isHealthModalOpen && healthData && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setIsHealthModalOpen(false)}></div>
+          <div className={`relative w-full max-w-md flex flex-col rounded-xl shadow-2xl animate-in fade-in zoom-in-95 duration-200 ${isDark ? 'glass-panel glow-border' : 'bg-white border border-zinc-200'}`}>
+            <div className={`flex items-center justify-between p-6 border-b ${isDark ? 'border-white/10' : 'border-zinc-100'}`}>
+              <h2 className={`text-lg font-medium flex items-center gap-2 ${isDark ? 'text-white' : 'text-black'}`}>
+                <Activity size={18} className="text-blue-500" />
+                Status Kesehatan Sistem
+              </h2>
+              <button onClick={() => setIsHealthModalOpen(false)} className={`transition-colors ${isDark ? 'text-zinc-500 hover:text-white' : 'text-zinc-400 hover:text-black'}`}>
+                <X size={20} />
+              </button>
+            </div>
+            <div className="p-6 space-y-4 text-sm">
+              <div className="grid grid-cols-2 gap-y-3">
+                <div className={isDark ? 'text-zinc-400' : 'text-zinc-500'}>Status:</div>
+                <div className={`font-medium ${healthData.status === 'OK' ? 'text-emerald-500' : 'text-rose-500'}`}>{healthData.status}</div>
+                
+                <div className={isDark ? 'text-zinc-400' : 'text-zinc-500'}>Environment:</div>
+                <div className={`font-medium ${isDark ? 'text-zinc-200' : 'text-zinc-800'}`}>{healthData.environment}</div>
+                
+                <div className={isDark ? 'text-zinc-400' : 'text-zinc-500'}>Uptime:</div>
+                <div className={`font-medium ${isDark ? 'text-zinc-200' : 'text-zinc-800'}`}>{healthData.uptime}</div>
+              </div>
+
+              <div className={`pt-4 mt-4 border-t ${isDark ? 'border-zinc-800' : 'border-zinc-100'}`}>
+                <div className={`font-medium mb-3 ${isDark ? 'text-zinc-300' : 'text-zinc-700'}`}>Penggunaan Memori (RAM)</div>
+                <div className="grid grid-cols-2 gap-y-3">
+                  <div className={isDark ? 'text-zinc-400' : 'text-zinc-500'}>RSS:</div>
+                  <div className={`font-medium ${isDark ? 'text-zinc-200' : 'text-zinc-800'}`}>{healthData.memory.rss}</div>
+                  
+                  <div className={isDark ? 'text-zinc-400' : 'text-zinc-500'}>Heap Total:</div>
+                  <div className={`font-medium ${isDark ? 'text-zinc-200' : 'text-zinc-800'}`}>{healthData.memory.heapTotal}</div>
+                  
+                  <div className={isDark ? 'text-zinc-400' : 'text-zinc-500'}>Heap Used:</div>
+                  <div className={`font-medium ${isDark ? 'text-zinc-200' : 'text-zinc-800'}`}>{healthData.memory.heapUsed}</div>
+                </div>
+              </div>
+
+              <div className={`pt-4 mt-4 border-t ${isDark ? 'border-zinc-800' : 'border-zinc-100'}`}>
+                <div className={`font-medium mb-3 ${isDark ? 'text-zinc-300' : 'text-zinc-700'}`}>Informasi Server</div>
+                <div className="grid grid-cols-2 gap-y-3">
+                  <div className={isDark ? 'text-zinc-400' : 'text-zinc-500'}>Platform:</div>
+                  <div className={`font-medium ${isDark ? 'text-zinc-200' : 'text-zinc-800'}`}>{healthData.system.platform} ({healthData.system.arch})</div>
+                  
+                  <div className={isDark ? 'text-zinc-400' : 'text-zinc-500'}>Total CPU:</div>
+                  <div className={`font-medium ${isDark ? 'text-zinc-200' : 'text-zinc-800'}`}>{healthData.system.cpus} Cores</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
     </div>
   )
