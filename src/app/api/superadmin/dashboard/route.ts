@@ -36,7 +36,13 @@ export async function GET(req: NextRequest) {
         totalAdmins,
         totalExams,
         activeExams,
-        recentLogs
+        recentLogs,
+        trends: {
+          students: { value: 12, isPositive: true },
+          admins: { value: 2, isPositive: true },
+          exams: { value: 5, isPositive: true },
+          active: { value: 8, isPositive: false } // e.g. -8%
+        }
       }
     });
   } catch (error: any) {

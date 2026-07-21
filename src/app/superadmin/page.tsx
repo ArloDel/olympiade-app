@@ -2,8 +2,75 @@
 
 import Link from "next/link"
 import { useEffect, useState } from "react"
-import { Users, ShieldAlert, FileText, UserCheck, Activity, BarChart3, Clock, ChevronRight, Zap, ShieldX, X } from "lucide-react"
+import { Users, ShieldAlert, FileText, UserCheck, Activity, BarChart3, Clock, ChevronRight, Zap, ShieldX, X, TrendingUp, TrendingDown } from "lucide-react"
 import { useTheme } from "@/hooks/useTheme";
+
+const MetricCard = ({ title, value, icon: Icon, color, trend, isDark, progress }: any) => {
+  const colorMap: any = {
+    blue: isDark ? 'bg-blue-500/10 text-blue-400' : 'bg-blue-50 text-blue-600',
+    amber: isDark ? 'bg-amber-500/10 text-amber-400' : 'bg-amber-50 text-amber-600',
+    emerald: isDark ? 'bg-emerald-500/10 text-emerald-400' : 'bg-emerald-50 text-emerald-600',
+    purple: isDark ? 'bg-purple-500/10 text-purple-400' : 'bg-purple-50 text-purple-600',
+  }
+  const strokeColor: any = {
+    blue: '#3b82f6',
+    amber: '#f59e0b',
+    emerald: '#10b981',
+    purple: '#8b5cf6',
+  }
+
+  const bgGradientMap: any = {
+    blue: 'bg-blue-500',
+    amber: 'bg-amber-500',
+    emerald: 'bg-emerald-500',
+    purple: 'bg-purple-500',
+  }
+
+  const radius = 20;
+  const circumference = 2 * Math.PI * radius;
+  const strokeDashoffset = circumference - ((progress || 0) / 100) * circumference;
+
+  return (
+    <div className={`relative p-6 rounded-2xl border transition-all hover:scale-[1.02] overflow-hidden ${isDark ? 'glass-panel glow-border' : 'bg-white border-zinc-200 shadow-sm'}`}>
+      <div className={`absolute -right-10 -top-10 w-32 h-32 blur-3xl opacity-20 ${bgGradientMap[color]} rounded-full pointer-events-none`}></div>
+      <div className="flex justify-between items-start mb-4 relative z-10">
+        <div className={`p-2 rounded-lg ${colorMap[color]}`}>
+          <Icon size={20} />
+        </div>
+        
+        <div className="relative w-12 h-12 flex items-center justify-center">
+          <svg className="w-full h-full transform -rotate-90" viewBox="0 0 48 48">
+            <circle cx="24" cy="24" r={radius} className={`${isDark ? 'stroke-white/10' : 'stroke-zinc-200'}`} strokeWidth="4" fill="none" />
+            <circle cx="24" cy="24" r={radius} stroke={strokeColor[color]} strokeWidth="4" fill="none" strokeDasharray={circumference} strokeDashoffset={strokeDashoffset} className="transition-all duration-1000 ease-out" strokeLinecap="round" />
+          </svg>
+          <span className={`absolute text-[10px] font-bold ${isDark ? 'text-white' : 'text-zinc-700'}`}>{progress || 0}%</span>
+        </div>
+      </div>
+      
+      <div className={`text-3xl font-semibold mb-2 relative z-10 ${isDark ? 'text-white' : 'text-black'}`}>
+        {value}
+      </div>
+      
+      <div className={`flex items-center justify-between mt-2 relative z-10`}>
+        <div className={`text-xs ${isDark ? 'text-zinc-400' : 'text-zinc-500'}`}>
+          {title}
+        </div>
+        
+        {trend && (
+          <div className={`flex items-center gap-1 text-[10px] font-medium px-2 py-0.5 rounded-full ${
+            trend.isPositive 
+              ? (isDark ? 'bg-emerald-500/10 text-emerald-400' : 'bg-emerald-50 text-emerald-600') 
+              : (isDark ? 'bg-rose-500/10 text-rose-400' : 'bg-rose-50 text-rose-600')
+          }`}>
+            {trend.isPositive ? <TrendingUp size={10} /> : <TrendingDown size={10} />}
+            {trend.isPositive ? '+' : '-'}{trend.value}%
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
 
 export default function SuperadminDashboard() {
   const [loading, setLoading] = useState(true)
@@ -14,7 +81,13 @@ export default function SuperadminDashboard() {
     totalAdmins: 0,
     totalExams: 0,
     activeExams: 0,
-    recentLogs: [] as any[]
+    recentLogs: [] as any[],
+    trends: {
+      students: { value: 0, isPositive: true },
+      admins: { value: 0, isPositive: true },
+      exams: { value: 0, isPositive: true },
+      active: { value: 0, isPositive: true }
+    }
   })
   
   const [actionLoading, setActionLoading] = useState(false)
@@ -176,61 +249,42 @@ export default function SuperadminDashboard() {
 
         {/* Metric Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <div className={`p-6 rounded-2xl border transition-all hover:scale-[1.02] ${isDark ? 'glass-panel glow-border' : 'bg-white border-zinc-200 shadow-sm'}`}>
-            <div className="flex justify-between items-start mb-4">
-              <div className={`p-2 rounded-lg ${isDark ? 'bg-blue-500/10 text-blue-400' : 'bg-blue-50 text-blue-600'}`}>
-                <Users size={20} />
-              </div>
-            </div>
-            <div className={`text-3xl font-semibold mb-1 ${isDark ? 'text-white' : 'text-black'}`}>
-              {stats.totalStudents}
-            </div>
-            <div className={`text-xs ${isDark ? 'text-zinc-500' : 'text-zinc-400'} flex items-center gap-1`}>
-              Total Siswa Terdaftar
-            </div>
-          </div>
-
-          <div className={`p-6 rounded-2xl border transition-all hover:scale-[1.02] ${isDark ? 'glass-panel glow-border' : 'bg-white border-zinc-200 shadow-sm'}`}>
-            <div className="flex justify-between items-start mb-4">
-              <div className={`p-2 rounded-lg ${isDark ? 'bg-amber-500/10 text-amber-400' : 'bg-amber-50 text-amber-600'}`}>
-                <UserCheck size={20} />
-              </div>
-            </div>
-            <div className={`text-3xl font-semibold mb-1 ${isDark ? 'text-white' : 'text-black'}`}>
-              {stats.totalAdmins}
-            </div>
-            <div className={`text-xs ${isDark ? 'text-zinc-500' : 'text-zinc-400'} flex items-center gap-1`}>
-              Total Administrator
-            </div>
-          </div>
-
-          <div className={`p-6 rounded-2xl border transition-all hover:scale-[1.02] ${isDark ? 'glass-panel glow-border' : 'bg-white border-zinc-200 shadow-sm'}`}>
-            <div className="flex justify-between items-start mb-4">
-              <div className={`p-2 rounded-lg ${isDark ? 'bg-emerald-500/10 text-emerald-400' : 'bg-emerald-50 text-emerald-600'}`}>
-                <Activity size={20} />
-              </div>
-            </div>
-            <div className={`text-3xl font-semibold mb-1 ${isDark ? 'text-white' : 'text-black'}`}>
-              {stats.activeExams}
-            </div>
-            <div className={`text-xs ${isDark ? 'text-zinc-500' : 'text-zinc-400'} flex items-center gap-1`}>
-              Ujian Sedang Aktif
-            </div>
-          </div>
-
-          <div className={`p-6 rounded-2xl border transition-all hover:scale-[1.02] ${isDark ? 'glass-panel glow-border' : 'bg-white border-zinc-200 shadow-sm'}`}>
-            <div className="flex justify-between items-start mb-4">
-              <div className={`p-2 rounded-lg ${isDark ? 'bg-purple-500/10 text-purple-400' : 'bg-purple-50 text-purple-600'}`}>
-                <FileText size={20} />
-              </div>
-            </div>
-            <div className={`text-3xl font-semibold mb-1 ${isDark ? 'text-white' : 'text-black'}`}>
-              {stats.totalExams}
-            </div>
-            <div className={`text-xs ${isDark ? 'text-zinc-500' : 'text-zinc-400'} flex items-center gap-1`}>
-              Total Bank Ujian
-            </div>
-          </div>
+          <MetricCard 
+            title="Total Siswa Terdaftar" 
+            value={stats.totalStudents} 
+            icon={Users} 
+            color="blue" 
+            trend={stats.trends?.students} 
+            isDark={isDark} 
+            progress={Math.min(100, Math.max(0, 100 - (stats.totalStudents % 100)))} 
+          />
+          <MetricCard 
+            title="Total Administrator" 
+            value={stats.totalAdmins} 
+            icon={UserCheck} 
+            color="amber" 
+            trend={stats.trends?.admins} 
+            isDark={isDark} 
+            progress={Math.min(100, Math.max(0, stats.totalAdmins * 10))} 
+          />
+          <MetricCard 
+            title="Ujian Sedang Aktif" 
+            value={stats.activeExams} 
+            icon={Activity} 
+            color="emerald" 
+            trend={stats.trends?.active} 
+            isDark={isDark} 
+            progress={stats.totalExams === 0 ? 0 : Math.round((stats.activeExams / stats.totalExams) * 100)} 
+          />
+          <MetricCard 
+            title="Total Bank Ujian" 
+            value={stats.totalExams} 
+            icon={FileText} 
+            color="purple" 
+            trend={stats.trends?.exams} 
+            isDark={isDark} 
+            progress={Math.min(100, Math.max(0, 100 - (stats.totalExams % 100)))} 
+          />
         </div>
 
         {/* Recent Activity */}
