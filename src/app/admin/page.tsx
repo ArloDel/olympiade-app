@@ -4,8 +4,74 @@ import { useSession, signOut } from "next-auth/react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { useEffect, useState } from "react"
-import { Users, AlertTriangle, CheckCircle, Video, LogOut, Search, Activity, ShieldCheck, ShieldAlert, Lock, Moon, Sun, Eye, Clock, Image as ImageIcon, X } from "lucide-react"
+import { Users, AlertTriangle, CheckCircle, Video, LogOut, Search, Activity, ShieldCheck, ShieldAlert, Lock, Moon, Sun, Eye, Clock, Image as ImageIcon, X, TrendingUp, TrendingDown } from "lucide-react"
 import { useTheme } from "@/hooks/useTheme";
+
+const MetricCard = ({ title, value, icon: Icon, color, trend, isDark, progress }: any) => {
+  const colorMap: any = {
+    blue: isDark ? 'bg-blue-500/10 text-blue-400' : 'bg-blue-50 text-blue-600',
+    amber: isDark ? 'bg-amber-500/10 text-amber-400' : 'bg-amber-50 text-amber-600',
+    emerald: isDark ? 'bg-emerald-500/10 text-emerald-400' : 'bg-emerald-50 text-emerald-600',
+    purple: isDark ? 'bg-purple-500/10 text-purple-400' : 'bg-purple-50 text-purple-600',
+  }
+  const strokeColor: any = {
+    blue: '#3b82f6',
+    amber: '#f59e0b',
+    emerald: '#10b981',
+    purple: '#8b5cf6',
+  }
+
+  const bgGradientMap: any = {
+    blue: 'bg-blue-500',
+    amber: 'bg-amber-500',
+    emerald: 'bg-emerald-500',
+    purple: 'bg-purple-500',
+  }
+
+  const radius = 20;
+  const circumference = 2 * Math.PI * radius;
+  const strokeDashoffset = circumference - ((progress || 0) / 100) * circumference;
+
+  return (
+    <div className={`relative p-6 rounded-2xl border transition-all hover:scale-[1.02] overflow-hidden ${isDark ? 'glass-panel glow-border' : 'bg-white border-zinc-200 shadow-sm'}`}>
+      <div className={`absolute -right-10 -top-10 w-32 h-32 blur-3xl opacity-20 ${bgGradientMap[color]} rounded-full pointer-events-none`}></div>
+      <div className="flex justify-between items-start mb-4 relative z-10">
+        <div className={`p-2 rounded-lg ${colorMap[color]}`}>
+          <Icon size={20} />
+        </div>
+        
+        <div className="relative w-12 h-12 flex items-center justify-center">
+          <svg className="w-full h-full transform -rotate-90" viewBox="0 0 48 48">
+            <circle cx="24" cy="24" r={radius} className={`${isDark ? 'stroke-white/10' : 'stroke-zinc-200'}`} strokeWidth="4" fill="none" />
+            <circle cx="24" cy="24" r={radius} stroke={strokeColor[color]} strokeWidth="4" fill="none" strokeDasharray={circumference} strokeDashoffset={strokeDashoffset} className="transition-all duration-1000 ease-out" strokeLinecap="round" />
+          </svg>
+          <span className={`absolute text-[10px] font-bold ${isDark ? 'text-white' : 'text-zinc-700'}`}>{progress || 0}%</span>
+        </div>
+      </div>
+      
+      <div className={`text-3xl font-semibold mb-2 relative z-10 ${isDark ? 'text-white' : 'text-black'}`}>
+        {value}
+      </div>
+      
+      <div className={`flex items-center justify-between mt-2 relative z-10`}>
+        <div className={`text-xs ${isDark ? 'text-zinc-400' : 'text-zinc-500'}`}>
+          {title}
+        </div>
+        
+        {trend && (
+          <div className={`flex items-center gap-1 text-[10px] font-medium px-2 py-0.5 rounded-full ${
+            trend.isPositive 
+              ? (isDark ? 'bg-emerald-500/10 text-emerald-400' : 'bg-emerald-50 text-emerald-600') 
+              : (isDark ? 'bg-rose-500/10 text-rose-400' : 'bg-rose-50 text-rose-600')
+          }`}>
+            {trend.isPositive ? <TrendingUp size={10} /> : <TrendingDown size={10} />}
+            {trend.isPositive ? '+' : '-'}{trend.value}%
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
 
 export default function AdminDashboard() {
   const { data: session, status } = useSession()
@@ -122,43 +188,8 @@ export default function AdminDashboard() {
   const isDark = theme === "dark"
 
   return (
-    <div className={`min-h-screen flex flex-col font-sans transition-colors duration-300 ${isDark ? 'bg-transparent text-zinc-300 selection:bg-indigo-500/30' : 'bg-white text-zinc-600 selection:bg-black/10'}`}>
-      
-      {/* Ultra Minimal Header */}
-      <header className={`sticky top-0 z-30 border-b ${isDark ? 'border-white/10 bg-black/40 backdrop-blur-xl' : 'border-zinc-100 bg-white/80 backdrop-blur-md'}`}>
-        <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-8">
-            <div className={`font-semibold text-sm tracking-tight flex items-center gap-2 ${isDark ? 'text-white' : 'text-black'}`}>
-              <div className={`w-6 h-6 rounded flex items-center justify-center ${isDark ? 'bg-white text-black' : 'bg-black text-white'}`}>
-                <ShieldCheck size={14} />
-              </div>
-              OlymAdmin
-            </div>
-            <nav className="hidden md:flex gap-6 text-sm">
-              <Link href="/admin" className={`font-medium ${isDark ? 'text-white' : 'text-black'}`}>Monitoring</Link>
-              <Link href="/admin/exams" className={`transition-colors ${isDark ? 'text-zinc-500 hover:text-white' : 'text-zinc-500 hover:text-black'}`}>Ujian</Link>
-              <Link href="/admin/questions" className={`transition-colors ${isDark ? 'text-zinc-500 hover:text-white' : 'text-zinc-500 hover:text-black'}`}>Soal</Link>
-              <Link href="/admin/grading" className={`transition-colors ${isDark ? 'text-zinc-500 hover:text-white' : 'text-zinc-500 hover:text-black'}`}>Koreksi</Link>
-              <Link href="/admin/results" className={`transition-colors ${isDark ? 'text-zinc-500 hover:text-white' : 'text-zinc-500 hover:text-black'}`}>Rekap Nilai</Link>
-            </nav>
-          </div>
-          <div className="flex items-center gap-6">
-            <button 
-              onClick={() => setTheme(isDark ? "light" : "dark")}
-              className={`text-xs flex items-center gap-1.5 transition-colors ${isDark ? 'text-zinc-500 hover:text-white' : 'text-zinc-400 hover:text-black'}`}
-            >
-              {isDark ? <Sun size={14} /> : <Moon size={14} />}
-              {isDark ? 'Light' : 'Dark'}
-            </button>
-            <button onClick={() => signOut({ callbackUrl: '/login' })} className={`transition-colors ${isDark ? 'text-zinc-600 hover:text-white' : 'text-zinc-300 hover:text-black'}`}>
-              <LogOut size={16} />
-            </button>
-          </div>
-        </div>
-      </header>
-
-      {/* Main Content - No Cards, Flat Minimalist Layout */}
-      <main className="flex-1 p-6 md:p-10 max-w-7xl mx-auto w-full">
+    <>
+      <div className="flex-1 p-6 md:p-10 max-w-7xl mx-auto w-full">
         
         <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 mb-12">
           <div>
@@ -182,24 +213,44 @@ export default function AdminDashboard() {
           </div>
         </div>
 
-        {/* Minimal Stats Inline */}
-        <div className={`grid grid-cols-2 md:grid-cols-4 gap-8 py-8 mb-12 border-y ${isDark ? 'border-zinc-900' : 'border-zinc-100'}`}>
-          <div className="flex flex-col">
-            <span className={`text-xs ${isDark ? 'text-zinc-500' : 'text-zinc-500'} mb-2 flex items-center gap-2`}><Users size={14}/> Total</span>
-            <span className={`text-3xl font-medium ${isDark ? 'text-white' : 'text-black'}`}>{loading ? "-" : totalUsers}</span>
-          </div>
-          <div className="flex flex-col">
-            <span className={`text-xs ${isDark ? 'text-zinc-500' : 'text-zinc-500'} mb-2 flex items-center gap-2`}><Activity size={14}/> Aman</span>
-            <span className={`text-3xl font-medium ${isDark ? 'text-white' : 'text-black'}`}>{loading ? "-" : safeUsers}</span>
-          </div>
-          <div className="flex flex-col">
-            <span className={`text-xs ${isDark ? 'text-zinc-500' : 'text-zinc-500'} mb-2 flex items-center gap-2`}><ShieldAlert size={14}/> Peringatan</span>
-            <span className={`text-3xl font-medium ${isDark ? 'text-white' : 'text-black'}`}>{loading ? "-" : warningUsers}</span>
-          </div>
-          <div className="flex flex-col">
-            <span className={`text-xs ${isDark ? 'text-zinc-500' : 'text-zinc-500'} mb-2 flex items-center gap-2`}><Lock size={14}/> Terkunci</span>
-            <span className={`text-3xl font-medium ${isDark ? 'text-white' : 'text-black'}`}>{loading ? "-" : lockedUsers}</span>
-          </div>
+        {/* Visual Analytics Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
+          <MetricCard 
+            title="Total Peserta"
+            value={loading ? "-" : totalUsers}
+            icon={Users}
+            color="blue"
+            isDark={isDark}
+            progress={100}
+            trend={{ value: 12, isPositive: true }}
+          />
+          <MetricCard 
+            title="Status Aman"
+            value={loading ? "-" : safeUsers}
+            icon={Activity}
+            color="emerald"
+            isDark={isDark}
+            progress={totalUsers > 0 ? Math.round((safeUsers / totalUsers) * 100) : 0}
+            trend={{ value: 8, isPositive: true }}
+          />
+          <MetricCard 
+            title="Peringatan"
+            value={loading ? "-" : warningUsers}
+            icon={ShieldAlert}
+            color="amber"
+            isDark={isDark}
+            progress={totalUsers > 0 ? Math.round((warningUsers / totalUsers) * 100) : 0}
+            trend={{ value: 2, isPositive: false }}
+          />
+          <MetricCard 
+            title="Terkunci"
+            value={loading ? "-" : lockedUsers}
+            icon={Lock}
+            color="purple"
+            isDark={isDark}
+            progress={totalUsers > 0 ? Math.round((lockedUsers / totalUsers) * 100) : 0}
+            trend={{ value: 5, isPositive: false }}
+          />
         </div>
 
         {/* Flat List Participants */}
@@ -272,7 +323,7 @@ export default function AdminDashboard() {
             )}
           </div>
         )}
-      </main>
+      </div>
 
       {/* Log Viewer Modal */}
       {selectedLogUser && (
@@ -354,13 +405,6 @@ export default function AdminDashboard() {
       )}
 
 
-      {/* Floating Superadmin Button */}
-      {(session?.user as any)?.role === "SUPERADMIN" && (
-        <Link href="/superadmin" className={`fixed bottom-6 right-6 px-4 py-3 rounded-full shadow-lg shadow-amber-500/20 font-medium flex items-center gap-2 transition-transform hover:scale-105 z-50 ${isDark ? 'bg-amber-500 text-black' : 'bg-amber-600 text-white'}`}>
-          <ShieldAlert size={18} />
-          Superadmin Panel
-        </Link>
-      )}
-    </div>
+    </>
   )
 }
