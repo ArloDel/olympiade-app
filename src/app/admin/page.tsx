@@ -4,8 +4,10 @@ import { useSession, signOut } from "next-auth/react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { useEffect, useState } from "react"
-import { Users, AlertTriangle, CheckCircle, Video, LogOut, Search, Activity, ShieldCheck, ShieldAlert, Lock, Moon, Sun, Eye, Clock, Image as ImageIcon, X, TrendingUp, TrendingDown } from "lucide-react"
+import { Users, AlertTriangle, CheckCircle, Video, LogOut, Search, Activity, ShieldCheck, ShieldAlert, Lock, Moon, Sun, Eye, Clock, Image as ImageIcon, X, TrendingUp, TrendingDown, FileText } from "lucide-react"
 import { useTheme } from "@/hooks/useTheme";
+import jsPDF from "jspdf"
+import "jspdf-autotable"
 
 const MetricCard = ({ title, value, icon: Icon, color, trend, isDark, progress }: any) => {
   const colorMap: any = {
@@ -39,7 +41,7 @@ const MetricCard = ({ title, value, icon: Icon, color, trend, isDark, progress }
         <div className={`p-2 rounded-lg ${colorMap[color]}`}>
           <Icon size={20} />
         </div>
-        
+
         <div className="relative w-12 h-12 flex items-center justify-center">
           <svg className="w-full h-full transform -rotate-90" viewBox="0 0 48 48">
             <circle cx="24" cy="24" r={radius} className={`${isDark ? 'stroke-white/10' : 'stroke-zinc-200'}`} strokeWidth="4" fill="none" />
@@ -48,22 +50,21 @@ const MetricCard = ({ title, value, icon: Icon, color, trend, isDark, progress }
           <span className={`absolute text-[10px] font-bold ${isDark ? 'text-white' : 'text-zinc-700'}`}>{progress || 0}%</span>
         </div>
       </div>
-      
+
       <div className={`text-3xl font-semibold mb-2 relative z-10 ${isDark ? 'text-white' : 'text-black'}`}>
         {value}
       </div>
-      
+
       <div className={`flex items-center justify-between mt-2 relative z-10`}>
         <div className={`text-xs ${isDark ? 'text-zinc-400' : 'text-zinc-500'}`}>
           {title}
         </div>
-        
+
         {trend && (
-          <div className={`flex items-center gap-1 text-[10px] font-medium px-2 py-0.5 rounded-full ${
-            trend.isPositive 
-              ? (isDark ? 'bg-emerald-500/10 text-emerald-400' : 'bg-emerald-50 text-emerald-600') 
-              : (isDark ? 'bg-rose-500/10 text-rose-400' : 'bg-rose-50 text-rose-600')
-          }`}>
+          <div className={`flex items-center gap-1 text-[10px] font-medium px-2 py-0.5 rounded-full ${trend.isPositive
+            ? (isDark ? 'bg-emerald-500/10 text-emerald-400' : 'bg-emerald-50 text-emerald-600')
+            : (isDark ? 'bg-rose-500/10 text-rose-400' : 'bg-rose-50 text-rose-600')
+            }`}>
             {trend.isPositive ? <TrendingUp size={10} /> : <TrendingDown size={10} />}
             {trend.isPositive ? '+' : '-'}{trend.value}%
           </div>
@@ -127,6 +128,51 @@ export default function AdminDashboard() {
     }
   }
 
+  const exportLogsToPDF = () => {
+    if (!selectedLogUser || userLogs.length === 0) return
+    const doc = new jsPDF()
+    
+    doc.setFontSize(16)
+    doc.text("Laporan Aktivitas Peserta Ujian - OlymApp", 14, 20)
+    
+    doc.setFontSize(12)
+    doc.text(`Nama: ${selectedLogUser.name}`, 14, 28)
+    doc.text(`Email: ${selectedLogUser.email}`, 14, 34)
+    doc.text(`Tanggal Cetak: ${new Date().toLocaleString('id-ID')}`, 14, 40)
+
+    const headers = [["Waktu", "Tipe Aktivitas", "Keterangan"]]
+    const data = userLogs.map(log => {
+      let keterangan = "Aktivitas dicatat."
+      try {
+        if (log.details) {
+          const parsed = JSON.parse(log.details)
+          if (log.eventType === 'TAB_SWITCH') {
+            keterangan = `Berpindah tab/aplikasi (Peringatan ke-${parsed.warningsCount || 1})`
+          } else if (log.eventType === 'LOCKED') {
+            keterangan = `Akun dikunci (Total peringatan: ${parsed.warningsCount || 3})`
+          } else {
+            keterangan = parsed.message || "Aktivitas mencurigakan."
+          }
+        }
+      } catch (e) {}
+      return [
+        new Date(log.createdAt).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
+        log.eventType,
+        keterangan
+      ]
+    })
+    
+    ;(doc as any).autoTable({
+      startY: 46,
+      head: headers,
+      body: data,
+      styles: { fontSize: 9 },
+      headStyles: { fillColor: [41, 41, 41] },
+    })
+
+    doc.save(`Log_${selectedLogUser.name.replace(/\s+/g, "_")}.pdf`)
+  }
+
   const getEventTypeColor = (type: string, isDark: boolean) => {
     switch (type) {
       case 'TAB_SWITCH': return isDark ? 'text-amber-500' : 'text-amber-600'
@@ -147,9 +193,9 @@ export default function AdminDashboard() {
       })
       const data = await res.json()
       if (data.success) {
-        setParticipants(prev => prev.map(p => 
-          p.id === userId 
-            ? { ...p, isLocked: data.data.isLocked, warnings: data.data.warnings } 
+        setParticipants(prev => prev.map(p =>
+          p.id === userId
+            ? { ...p, isLocked: data.data.isLocked, warnings: data.data.warnings }
             : p
         ))
       } else {
@@ -175,8 +221,8 @@ export default function AdminDashboard() {
     return 'safe'
   }
 
-  const filteredParticipants = participants.filter(p => 
-    (p.name && p.name.toLowerCase().includes(searchTerm.toLowerCase())) || 
+  const filteredParticipants = participants.filter(p =>
+    (p.name && p.name.toLowerCase().includes(searchTerm.toLowerCase())) ||
     (p.email && p.email.toLowerCase().includes(searchTerm.toLowerCase()))
   )
 
@@ -190,7 +236,7 @@ export default function AdminDashboard() {
   return (
     <>
       <div className="flex-1 p-6 md:p-10 max-w-7xl mx-auto w-full">
-        
+
         <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 mb-12">
           <div>
             <div className={`flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest mb-4 ${isDark ? 'text-zinc-500' : 'text-zinc-400'}`}>
@@ -200,12 +246,12 @@ export default function AdminDashboard() {
             <h1 className={`text-3xl font-medium tracking-tight mb-2 ${isDark ? 'text-white' : 'text-black'}`}>Monitoring Peserta</h1>
             <p className={`text-sm ${isDark ? 'text-zinc-500' : 'text-zinc-500'}`}>Pantau aktivitas ujian secara real-time tanpa hambatan.</p>
           </div>
-          
+
           <div className="relative w-full md:w-72">
             <Search className={`absolute left-3 top-1/2 -translate-y-1/2 ${isDark ? 'text-zinc-600' : 'text-zinc-400'}`} size={16} />
-            <input 
-              type="text" 
-              placeholder="Cari peserta..." 
+            <input
+              type="text"
+              placeholder="Cari peserta..."
               value={searchTerm}
               onChange={e => setSearchTerm(e.target.value)}
               className={`w-full pl-9 pr-4 py-2.5 text-sm outline-none transition-colors border-b ${isDark ? 'bg-transparent border-zinc-800 text-white placeholder-zinc-600 focus:border-white' : 'bg-transparent border-zinc-200 text-black placeholder-zinc-400 focus:border-black'}`}
@@ -215,7 +261,7 @@ export default function AdminDashboard() {
 
         {/* Visual Analytics Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
-          <MetricCard 
+          <MetricCard
             title="Total Peserta"
             value={loading ? "-" : totalUsers}
             icon={Users}
@@ -224,7 +270,7 @@ export default function AdminDashboard() {
             progress={100}
             trend={{ value: 12, isPositive: true }}
           />
-          <MetricCard 
+          <MetricCard
             title="Status Aman"
             value={loading ? "-" : safeUsers}
             icon={Activity}
@@ -233,7 +279,7 @@ export default function AdminDashboard() {
             progress={totalUsers > 0 ? Math.round((safeUsers / totalUsers) * 100) : 0}
             trend={{ value: 8, isPositive: true }}
           />
-          <MetricCard 
+          <MetricCard
             title="Peringatan"
             value={loading ? "-" : warningUsers}
             icon={ShieldAlert}
@@ -242,7 +288,7 @@ export default function AdminDashboard() {
             progress={totalUsers > 0 ? Math.round((warningUsers / totalUsers) * 100) : 0}
             trend={{ value: 2, isPositive: false }}
           />
-          <MetricCard 
+          <MetricCard
             title="Terkunci"
             value={loading ? "-" : lockedUsers}
             icon={Lock}
@@ -271,51 +317,50 @@ export default function AdminDashboard() {
             {filteredParticipants.map(p => {
               const pStatus = getParticipantStatus(p)
               return (
-              <div key={p.id} className={`grid grid-cols-12 gap-4 py-4 items-center border-b transition-colors ${isDark ? 'border-zinc-900 hover:bg-zinc-900/30' : 'border-zinc-50 hover:bg-zinc-50'}`}>
-                
-                <div className="col-span-5 md:col-span-4 flex flex-col pr-2">
-                  <span className={`text-sm font-medium truncate ${isDark ? 'text-zinc-200' : 'text-zinc-800'}`}>{p.name}</span>
-                  <span className={`text-xs truncate ${isDark ? 'text-zinc-600' : 'text-zinc-400'}`}>{p.email}</span>
-                </div>
+                <div key={p.id} className={`grid grid-cols-12 gap-4 py-4 items-center border-b transition-colors ${isDark ? 'border-zinc-900 hover:bg-zinc-900/30' : 'border-zinc-50 hover:bg-zinc-50'}`}>
 
-                <div className="col-span-4 md:col-span-3 flex items-center">
-                  <span className={`text-xs font-medium capitalize flex items-center gap-2 ${getStatusColor(pStatus, isDark)}`}>
-                    {p.isLocked ? "Terkunci" : pStatus === 'warning' ? "Peringatan" : "Aman"}
-                    {p.warnings > 0 && !p.isLocked && ` (${p.warnings})`}
-                  </span>
-                </div>
+                  <div className="col-span-5 md:col-span-4 flex flex-col pr-2">
+                    <span className={`text-sm font-medium truncate ${isDark ? 'text-zinc-200' : 'text-zinc-800'}`}>{p.name}</span>
+                    <span className={`text-xs truncate ${isDark ? 'text-zinc-600' : 'text-zinc-400'}`}>{p.email}</span>
+                  </div>
 
-                <div className="col-span-3 md:col-span-2 flex justify-center">
-                  {p.isLocked ? (
-                    <Video size={16} className={isDark ? 'text-rose-500' : 'text-rose-500'} />
-                  ) : (
-                    <Video size={16} className={isDark ? 'text-zinc-500' : 'text-zinc-300'} />
-                  )}
-                </div>
+                  <div className="col-span-4 md:col-span-3 flex items-center">
+                    <span className={`text-xs font-medium capitalize flex items-center gap-2 ${getStatusColor(pStatus, isDark)}`}>
+                      {p.isLocked ? "Terkunci" : pStatus === 'warning' ? "Peringatan" : "Aman"}
+                      {p.warnings > 0 && !p.isLocked && ` (${p.warnings})`}
+                    </span>
+                  </div>
 
-                <div className="hidden md:flex md:col-span-3 justify-end gap-2">
-                  <button 
-                    onClick={() => openLogViewer(p)}
-                    className={`text-xs font-medium px-3 py-2 rounded transition-colors flex items-center gap-1.5 ${
-                      isDark ? "bg-zinc-900 text-zinc-300 hover:text-white hover:bg-zinc-800" : "bg-zinc-100 text-zinc-600 hover:text-black hover:bg-zinc-200"
-                    }`}
-                  >
-                    <Eye size={14} /> Log
-                  </button>
-                  <button 
-                    onClick={() => toggleLock(p.id, p.isLocked)}
-                    className={`text-xs font-medium px-4 py-2 rounded transition-colors ${
-                      p.isLocked 
+                  <div className="col-span-3 md:col-span-2 flex justify-center">
+                    {p.isLocked ? (
+                      <Video size={16} className={isDark ? 'text-rose-500' : 'text-rose-500'} />
+                    ) : (
+                      <Video size={16} className={isDark ? 'text-zinc-500' : 'text-zinc-300'} />
+                    )}
+                  </div>
+
+                  <div className="hidden md:flex md:col-span-3 justify-end gap-2">
+                    <button
+                      onClick={() => openLogViewer(p)}
+                      className={`text-xs font-medium px-3 py-2 rounded transition-colors flex items-center gap-1.5 ${isDark ? "bg-zinc-900 text-zinc-300 hover:text-white hover:bg-zinc-800" : "bg-zinc-100 text-zinc-600 hover:text-black hover:bg-zinc-200"
+                        }`}
+                    >
+                      <Eye size={14} /> Log
+                    </button>
+                    <button
+                      onClick={() => toggleLock(p.id, p.isLocked)}
+                      className={`text-xs font-medium px-4 py-2 rounded transition-colors ${p.isLocked
                         ? isDark ? "bg-zinc-800 text-white hover:bg-zinc-700" : "bg-zinc-200 text-black hover:bg-zinc-300"
                         : isDark ? "border border-zinc-800 text-zinc-400 hover:text-white hover:border-zinc-600" : "border border-zinc-200 text-zinc-500 hover:text-black hover:border-zinc-400"
-                    }`}
-                  >
-                    {p.isLocked ? "Buka Akses" : "Kunci"}
-                  </button>
+                        }`}
+                    >
+                      {p.isLocked ? "Buka Akses" : "Kunci"}
+                    </button>
+                  </div>
                 </div>
-              </div>
-            )})}
-            
+              )
+            })}
+
             {filteredParticipants.length === 0 && (
               <div className={`py-12 text-center text-sm ${isDark ? 'text-zinc-600' : 'text-zinc-400'}`}>
                 Tidak ada peserta yang ditemukan.
@@ -330,15 +375,28 @@ export default function AdminDashboard() {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 md:p-6">
           <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setSelectedLogUser(null)}></div>
           <div className={`relative w-full max-w-2xl max-h-[85vh] flex flex-col rounded-xl shadow-2xl animate-in fade-in zoom-in-95 duration-200 ${isDark ? 'glass-panel glow-border' : 'bg-white border border-zinc-100'}`}>
-            
+
             <div className={`flex items-center justify-between p-6 border-b ${isDark ? 'border-white/10' : 'border-zinc-100'}`}>
               <div>
                 <h2 className={`text-lg font-medium ${isDark ? 'text-white' : 'text-black'}`}>Log Bukti: {selectedLogUser.name}</h2>
                 <p className={`text-xs ${isDark ? 'text-zinc-500' : 'text-zinc-500'}`}>{selectedLogUser.email}</p>
               </div>
-              <button onClick={() => setSelectedLogUser(null)} className={`transition-colors ${isDark ? 'text-zinc-500 hover:text-white' : 'text-zinc-400 hover:text-black'}`}>
-                <X size={20} />
-              </button>
+              <div className="flex items-center gap-3">
+                <button 
+                  onClick={exportLogsToPDF}
+                  disabled={loadingLogs || userLogs.length === 0}
+                  className={`px-3 py-1.5 text-xs font-medium transition-colors rounded disabled:cursor-not-allowed flex items-center gap-1.5 ${
+                    isDark 
+                      ? 'bg-rose-900/20 text-rose-500 hover:bg-rose-900/40 disabled:bg-zinc-900 disabled:text-zinc-600' 
+                      : 'bg-rose-50 text-rose-600 hover:bg-rose-100 disabled:bg-zinc-100 disabled:text-zinc-400'
+                  }`}
+                >
+                  <FileText size={14} /> Cetak PDF
+                </button>
+                <button onClick={() => setSelectedLogUser(null)} className={`transition-colors p-1 rounded-full ${isDark ? 'text-zinc-500 hover:text-white hover:bg-zinc-800' : 'text-zinc-400 hover:text-black hover:bg-zinc-100'}`}>
+                  <X size={20} />
+                </button>
+              </div>
             </div>
 
             <div className="flex-1 overflow-y-auto p-6 space-y-6">
@@ -355,7 +413,7 @@ export default function AdminDashboard() {
                   {userLogs.map((log) => (
                     <div key={log.id} className="relative pl-6">
                       <div className={`absolute -left-[7px] top-1.5 w-3 h-3 rounded-full border-2 ${isDark ? 'bg-[#0a0a0a] border-zinc-700' : 'bg-white border-zinc-300'}`}></div>
-                      
+
                       <div className="flex items-center gap-2 mb-1">
                         <span className={`text-[10px] font-bold uppercase tracking-widest ${getEventTypeColor(log.eventType, isDark)}`}>
                           {log.eventType}
@@ -365,7 +423,7 @@ export default function AdminDashboard() {
                           {new Date(log.createdAt).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
                         </span>
                       </div>
-                      
+
                       <div className={`text-sm mb-3 ${isDark ? 'text-zinc-300' : 'text-zinc-700'}`}>
                         {(() => {
                           try {
@@ -385,12 +443,12 @@ export default function AdminDashboard() {
                           }
                         })()}
                       </div>
-                      
+
                       {log.snapshotUrl && (
                         <div className="mt-2">
-                          <img 
-                            src={log.snapshotUrl} 
-                            alt="Snapshot bukti" 
+                          <img
+                            src={log.snapshotUrl}
+                            alt="Snapshot bukti"
                             className={`w-full max-w-sm rounded-lg border object-cover ${isDark ? 'border-zinc-800' : 'border-zinc-200'}`}
                           />
                         </div>
