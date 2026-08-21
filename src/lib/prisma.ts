@@ -6,7 +6,7 @@ const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined
 }
 
-const connectionString = process.env.DATABASE_URL
+const connectionString = process.env.DATABASE_URL || "postgresql://postgres:postgres@aws-dummy.pooler.supabase.com:6543/postgres?pgbouncer=true"
 
 const getPrisma = () => {
   if (globalForPrisma.prisma) return globalForPrisma.prisma
