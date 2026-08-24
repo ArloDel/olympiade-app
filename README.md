@@ -18,15 +18,37 @@ Engineered specifically to solve academic integrity vulnerabilities and proctori
 
 ---
 
-## 🔑 Demo Access Credentials
+## 🔑 Demo Access
 
-You can test all 3 permission levels directly on the live deployment:
+You can test all 3 permission levels directly on the live deployment. (Credentials are provided separately).
 
-| Role | Username / Identifier | Password | Primary Capabilities |
-| :--- | :--- | :--- | :--- |
-| **👑 Superadmin** | `superadmin@olym.app` | `password123` | Global system health telemetry, maintenance kill-switch, admin delegation, audit logs |
-| **🛡️ Admin** | `admin@olym.app` | `password123` | Live exam proctoring room, session lock/unlock, question bank, PDF & Excel export |
-| **🎓 Student** | `student@olym.app` | `password123` | Exam runner, KaTeX formula support, anti-cheat state tracker, live countdown timer |
+| Role | Primary Capabilities |
+| :--- | :--- |
+| **👑 Superadmin** | Global system health telemetry, maintenance kill-switch, admin delegation, audit logs |
+| **🛡️ Admin** | Live exam proctoring room, session lock/unlock, question bank, PDF & Excel export |
+| **🎓 Student** | Exam runner, KaTeX formula support, anti-cheat state tracker, live countdown timer |
+
+---
+
+## 📸 Full Demo & Screenshots
+
+### 🎥 Login Process Demo
+![Login Process Animation](./public/portfolio/login_process.webp)
+
+### 1. Login Page
+![Login Page](./public/portfolio/01_login_page.png)
+
+### 2. Superadmin Dashboard
+![Superadmin Dashboard](./public/portfolio/02_superadmin_dashboard.png)
+
+### 3. Admin Command Center
+![Admin Command Center](./public/portfolio/03_admin_command_center.png)
+
+### 4. Admin Results Export
+![Results Export](./public/portfolio/04_admin_results_export.png)
+
+### 5. Student Dashboard
+![Student Dashboard](./public/portfolio/05_student_dashboard.png)
 
 ---
 
