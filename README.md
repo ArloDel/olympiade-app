@@ -1,36 +1,96 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 🏆 OlymApp — Modern Academic Olympiad & Secure Online Examination Platform
 
-## Getting Started
+[![Live Demo](https://img.shields.io/badge/Live_Demo-Vercel-000000?style=for-the-badge&logo=vercel&logoColor=white)](https://olympiade-app-kappa.vercel.app/login)
+[![Next.js](https://img.shields.io/badge/Next.js_16-React_19-black?style=for-the-badge&logo=next.js)](https://nextjs.org)
+[![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+[![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS_4-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white)](https://tailwindcss.com/)
+[![Prisma ORM](https://img.shields.io/badge/Prisma-PostgreSQL-2D3748?style=for-the-badge&logo=prisma&logoColor=white)](https://www.prisma.io/)
 
-First, run the development server:
+> **Live Application**: [https://olympiade-app-kappa.vercel.app/login](https://olympiade-app-kappa.vercel.app/login)
 
+---
+
+## 🌟 Executive Summary
+
+**OlymApp** is an enterprise-grade, high-concurrency online examination and academic competition platform engineered with **Next.js 16 (Turbopack)**, **TypeScript**, **PostgreSQL (Supabase)**, and **Prisma ORM**. 
+
+Engineered specifically to solve academic integrity vulnerabilities and proctoring bottlenecks in digital assessments, OlymApp features **Safe Exam Browser (SEB) verification**, **live proctoring with automated violation telemetry**, **real-time session lockouts**, and **LaTeX/KaTeX mathematical formula rendering**.
+
+---
+
+## 🔑 Demo Access Credentials
+
+You can test all 3 permission levels directly on the live deployment:
+
+| Role | Username / Identifier | Password | Primary Capabilities |
+| :--- | :--- | :--- | :--- |
+| **👑 Superadmin** | `superadmin@olym.app` | `password123` | Global system health telemetry, maintenance kill-switch, admin delegation, audit logs |
+| **🛡️ Admin** | `admin@olym.app` | `password123` | Live exam proctoring room, session lock/unlock, question bank, PDF & Excel export |
+| **🎓 Student** | `student@olym.app` | `password123` | Exam runner, KaTeX formula support, anti-cheat state tracker, live countdown timer |
+
+---
+
+## ✨ Key Features
+
+- 🛡️ **Anti-Cheat & SEB Integration**: Enforces Safe Exam Browser (SEB) via SHA-256 header hash validation, tab-switch monitoring, and automated violation logging.
+- ⚡ **Real-Time Admin Command Center**: Track student activity, review infraction timelines, and remotely lock/unlock exam sessions in real time.
+- 📊 **Instant Grading & Analytics**: Automated scoring, item-by-item analysis, and one-click report export to **PDF** and **Excel (.xlsx)**.
+- 🎨 **Premium Glassmorphism UI**: Ultra-clean, modern dark & light mode interface with responsive layout and LaTeX/KaTeX formula support.
+- 👥 **Multi-Role Access Control**: Granular permission system separating Superadmins, Admins, and Students via secure JWT authentication.
+
+---
+
+## 🛠️ Tech Stack
+
+- **Framework**: Next.js 16 (App Router & Turbopack)
+- **Language**: TypeScript
+- **Database & ORM**: PostgreSQL (Supabase Connection Pooler) + Prisma ORM
+- **Authentication**: NextAuth.js (JWT Strategy)
+- **Styling**: Tailwind CSS 4 + Glassmorphism UI System
+- **Math Rendering**: KaTeX & React-KaTeX
+- **Report Generation**: jsPDF, jspdf-autotable, XLSX
+- **Deployment**: Vercel CI/CD Pipeline
+
+---
+
+## 🚀 Getting Started Locally
+
+### 1. Clone the repository
+```bash
+git clone https://github.com/ArloDel/olympiade-app.git
+cd olympiade-app
+```
+
+### 2. Install dependencies
+```bash
+npm install
+```
+
+### 3. Setup environment variables
+Create a `.env` file in the root directory:
+```env
+DATABASE_URL="your-supabase-pooled-connection-string"
+DIRECT_URL="your-supabase-direct-connection-string"
+NEXT_PUBLIC_SUPABASE_URL="your-supabase-url"
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY="your-supabase-anon-key"
+SUPABASE_SERVICE_ROLE_KEY="your-supabase-service-role-key"
+NEXTAUTH_SECRET="your-nextauth-secret"
+NEXTAUTH_URL="http://localhost:3000"
+```
+
+### 4. Push database schema & generate client
+```bash
+npx prisma db push
+```
+
+### 5. Run development server
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+---
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## 📄 License
+This project is open source and available under the [MIT License](LICENSE).
