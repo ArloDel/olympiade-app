@@ -6,7 +6,7 @@
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS_4-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white)](https://tailwindcss.com/)
 [![Prisma ORM](https://img.shields.io/badge/Prisma-PostgreSQL-2D3748?style=for-the-badge&logo=prisma&logoColor=white)](https://www.prisma.io/)
 
-> **Live Application**: [https://olympiade-app-kappa.vercel.app/login](https://olympiade-app-kappa.vercel.app/login)
+> 🌐 **Live Website**: [https://olympiade-app-kappa.vercel.app/login](https://olympiade-app-kappa.vercel.app/login)
 
 ---
 
@@ -14,51 +14,52 @@
 
 **OlymApp** is an enterprise-grade, high-concurrency online examination and academic competition platform engineered with **Next.js 16 (Turbopack)**, **TypeScript**, **PostgreSQL (Supabase)**, and **Prisma ORM**. 
 
-Engineered specifically to solve academic integrity vulnerabilities and proctoring bottlenecks in digital assessments, OlymApp features **Safe Exam Browser (SEB) verification**, **live proctoring with automated violation telemetry**, **real-time session lockouts**, and **LaTeX/KaTeX mathematical formula rendering**.
+Engineered specifically to solve academic integrity vulnerabilities and proctoring bottlenecks in digital assessments, OlymApp features **Safe Exam Browser (SEB) verification**, **live camera proctoring**, **automated violation telemetry**, **real-time session lockouts**, and **LaTeX/KaTeX mathematical formula rendering**.
 
 ---
 
-## 🔑 Demo Access
+## 🔑 Demo Access Credentials
 
-You can test all 3 permission levels directly on the live deployment. (Credentials are provided separately).
+You can explore all 3 role workspaces directly on the live website:
 
-| Role | Primary Capabilities |
-| :--- | :--- |
-| **👑 Superadmin** | Global system health telemetry, maintenance kill-switch, admin delegation, audit logs |
-| **🛡️ Admin** | Live exam proctoring room, session lock/unlock, question bank, PDF & Excel export |
-| **🎓 Student** | Exam runner, KaTeX formula support, anti-cheat state tracker, live countdown timer |
-
----
-
-## 📸 Full Demo & Screenshots
-
-### 🎥 Login Process Demo
-![Login Process Animation](./public/portfolio/login_process.webp)
-
-### 1. Login Page
-![Login Page](./public/portfolio/01_login_page.png)
-
-### 2. Superadmin Dashboard
-![Superadmin Dashboard](./public/portfolio/02_superadmin_dashboard.png)
-
-### 3. Admin Command Center
-![Admin Command Center](./public/portfolio/03_admin_command_center.png)
-
-### 4. Admin Results Export
-![Results Export](./public/portfolio/04_admin_results_export.png)
-
-### 5. Student Dashboard
-![Student Dashboard](./public/portfolio/05_student_dashboard.png)
+| Role | Username / Identifier | Password | Core Focus Area |
+| :--- | :--- | :--- | :--- |
+| **🎓 Student** | `student@olym.app` | `password123` | Camera activation, anti-cheat state tracker, KaTeX formula support, timer |
+| **🛡️ Admin** | `admin@olym.app` | `password123` | Real-time proctoring command center, violation timeline, session lock/unlock |
+| **👑 Superadmin** | `superadmin@olym.app` | `password123` | Global system health diagnostics, emergency maintenance switch, admin delegation |
 
 ---
 
-## ✨ Key Features
+## 🎬 Core Role Workflows & Live Visual Demonstrations
 
-- 🛡️ **Anti-Cheat & SEB Integration**: Enforces Safe Exam Browser (SEB) via SHA-256 header hash validation, tab-switch monitoring, and automated violation logging.
-- ⚡ **Real-Time Admin Command Center**: Track student activity, review infraction timelines, and remotely lock/unlock exam sessions in real time.
-- 📊 **Instant Grading & Analytics**: Automated scoring, item-by-item analysis, and one-click report export to **PDF** and **Excel (.xlsx)**.
-- 🎨 **Premium Glassmorphism UI**: Ultra-clean, modern dark & light mode interface with responsive layout and LaTeX/KaTeX formula support.
-- 👥 **Multi-Role Access Control**: Granular permission system separating Superadmins, Admins, and Students via secure JWT authentication.
+### 1. 🎓 Student Experience: Camera & Proctoring Activation
+Upon entering an assessment, students undergo instant hardware verification. The proctoring engine requests webcam access, initializes the live video stream widget, and tracks focus visibility throughout the exam.
+
+![Student Camera & Exam Interface](public/demo/student_camera_activation.png)
+
+---
+
+### 2. 🛡️ Admin Command Center: Live Proctoring & Telemetry Inspection
+Admins monitor candidate sessions in real time. Clicking on any participant opens a granular violation timeline detailing tab switches, warning counts, and remote session lock controls.
+
+![Admin Live Proctoring & Telemetry Modal](public/demo/admin_live_monitoring.png)
+
+---
+
+### 3. 👑 Superadmin Control: System Health & Maintenance Governance
+Superadmins govern global infrastructure health, inspect database connection states, manage privileged administrator accounts, and trigger emergency maintenance switches.
+
+![Superadmin Health & System Governance](public/demo/superadmin_system_governance.png)
+
+---
+
+## ✨ Key Platform Features
+
+- 🛡️ **Anti-Cheat & SEB Integration**: Safe Exam Browser (SEB) validation via SHA-256 header hash checks, tab-switch monitors, and automated violation logging.
+- ⚡ **Real-Time Command Center**: Live telemetry stream with remote session freeze/unfreeze controls.
+- 📊 **Instant Grading & Analytics**: Automated scoring with one-click export to **PDF** and **Excel (.xlsx)**.
+- 📐 **Scientific & Math Engine**: Native KaTeX integration rendering multi-line equations and complex formulas with zero layout shift.
+- 🎨 **Adaptive Glassmorphism UI**: Unified Dark & Light theme state synchronization across all modules.
 
 ---
 
@@ -70,7 +71,7 @@ You can test all 3 permission levels directly on the live deployment. (Credentia
 - **Authentication**: NextAuth.js (JWT Strategy)
 - **Styling**: Tailwind CSS 4 + Glassmorphism UI System
 - **Math Rendering**: KaTeX & React-KaTeX
-- **Report Generation**: jsPDF, jspdf-autotable, XLSX
+- **Reporting**: jsPDF, jspdf-autotable, XLSX
 - **Deployment**: Vercel CI/CD Pipeline
 
 ---
@@ -110,7 +111,7 @@ npx prisma db push
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000) with your browser.
 
 ---
 
