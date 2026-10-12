@@ -6,8 +6,11 @@ import { authOptions } from "@/lib/auth";
 export async function GET() {
   try {
     const session = await getServerSession(authOptions);
-    const userId = session?.user?.id;
-    const role = (session?.user as any)?.role || "STUDENT";
+    if (!session?.user) {
+      return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
+    }
+    const userId = session.user.id;
+    const role = (session.user as any)?.role || "STUDENT";
 
     const exams = await prisma.exam.findMany({
       where: role === "STUDENT" ? { isActive: true } : undefined,
@@ -45,6 +48,15 @@ export async function GET() {
 
 export async function POST(req: Request) {
   try {
+    const session = await getServerSession(authOptions);
+    if (!session?.user) {
+      return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
+    }
+    const role = (session.user as any)?.role;
+    if (role !== "ADMIN" && role !== "SUPERADMIN") {
+      return NextResponse.json({ success: false, error: "Forbidden" }, { status: 403 });
+    }
+
     const body = await req.json();
     const { title, description, startTime, endTime, duration, randomizeQuestions, randomizeOptions, requireSeb, sebExamKey } = body;
 

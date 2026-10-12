@@ -7,8 +7,12 @@ import { isDemoMode } from "@/lib/demo";
 export async function PUT(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     const session = await getServerSession(authOptions);
-    if (session?.user?.role !== "ADMIN") {
-      return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 403 });
+    if (!session?.user) {
+      return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
+    }
+    const role = (session.user as any)?.role;
+    if (role !== "ADMIN" && role !== "SUPERADMIN") {
+      return NextResponse.json({ success: false, error: "Forbidden" }, { status: 403 });
     }
 
     const resolvedParams = await params;
@@ -44,8 +48,12 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
 export async function DELETE(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     const session = await getServerSession(authOptions);
-    if (session?.user?.role !== "ADMIN") {
-      return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 403 });
+    if (!session?.user) {
+      return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
+    }
+    const role = (session.user as any)?.role;
+    if (role !== "ADMIN" && role !== "SUPERADMIN") {
+      return NextResponse.json({ success: false, error: "Forbidden" }, { status: 403 });
     }
 
     if (isDemoMode()) {

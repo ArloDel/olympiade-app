@@ -7,8 +7,11 @@ import { isDemoMode } from "@/lib/demo";
 export async function GET(req: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
-    if (!session || (session.user as any).role !== "SUPERADMIN") {
+    if (!session?.user) {
       return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
+    }
+    if ((session.user as any)?.role !== "SUPERADMIN") {
+      return NextResponse.json({ success: false, error: "Forbidden" }, { status: 403 });
     }
 
     const logs = await prisma.auditLog.findMany({
@@ -37,8 +40,11 @@ export async function GET(req: NextRequest) {
 export async function DELETE(req: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
-    if (!session || (session.user as any).role !== "SUPERADMIN") {
+    if (!session?.user) {
       return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
+    }
+    if ((session.user as any)?.role !== "SUPERADMIN") {
+      return NextResponse.json({ success: false, error: "Forbidden" }, { status: 403 });
     }
 
     if (isDemoMode()) {

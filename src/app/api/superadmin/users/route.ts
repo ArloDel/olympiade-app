@@ -6,8 +6,11 @@ import { authOptions } from "@/lib/auth";
 export async function GET(req: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
-    if (!session || (session.user as any).role !== "SUPERADMIN") {
+    if (!session?.user) {
       return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
+    }
+    if ((session.user as any)?.role !== "SUPERADMIN") {
+      return NextResponse.json({ success: false, error: "Forbidden" }, { status: 403 });
     }
 
     const admins = await prisma.user.findMany({
@@ -35,8 +38,11 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
-    if (!session || (session.user as any).role !== "SUPERADMIN") {
+    if (!session?.user) {
       return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
+    }
+    if ((session.user as any)?.role !== "SUPERADMIN") {
+      return NextResponse.json({ success: false, error: "Forbidden" }, { status: 403 });
     }
 
     const body = await req.json();

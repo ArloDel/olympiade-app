@@ -44,12 +44,15 @@ function shuffle(array: any[], prng: () => number) {
 
 export async function GET(req: Request) {
   try {
+    const session = await getServerSession(authOptions);
+    if (!session?.user) {
+      return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
+    }
+    const userId = session.user.id;
+    const role = (session.user as any)?.role || "STUDENT";
+
     const { searchParams } = new URL(req.url);
     const examId = searchParams.get("examId");
-
-    const session = await getServerSession(authOptions);
-    const userId = session?.user?.id;
-    const role = (session?.user as any)?.role || "STUDENT";
 
     let questions = [];
 
@@ -120,7 +123,7 @@ export async function GET(req: Request) {
     } else {
       // If no examId, fetch all questions from the bank (for Admin)
       if (role !== "ADMIN" && role !== "SUPERADMIN") {
-         return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
+         return NextResponse.json({ success: false, error: "Forbidden" }, { status: 403 });
       }
       questions = await prisma.question.findMany({
         include: { options: true },
@@ -140,6 +143,15 @@ export async function GET(req: Request) {
 
 export async function POST(req: Request) {
   try {
+    const session = await getServerSession(authOptions);
+    if (!session?.user) {
+      return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
+    }
+    const role = (session.user as any)?.role;
+    if (role !== "ADMIN" && role !== "SUPERADMIN") {
+      return NextResponse.json({ success: false, error: "Forbidden" }, { status: 403 });
+    }
+
     const body = await req.json();
     const { examId, text, order, options, type, correctAnswer, points, difficulty, subjectId, topicId, imageUrl } = body;
 

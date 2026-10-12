@@ -7,11 +7,14 @@ import { isDemoMode, DEMO_PLACEHOLDER_IMAGE_URL } from "@/lib/demo";
 export async function POST(req: Request) {
   try {
     const session = await getServerSession(authOptions);
-    const role = (session?.user as any)?.role;
+    if (!session?.user) {
+      return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
+    }
+    const role = (session.user as any)?.role;
     
     // Only allow ADMIN or SUPERADMIN to upload files
-    if (!session || (role !== "ADMIN" && role !== "SUPERADMIN")) {
-      return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 403 });
+    if (role !== "ADMIN" && role !== "SUPERADMIN") {
+      return NextResponse.json({ success: false, error: "Forbidden" }, { status: 403 });
     }
 
     const formData = await req.formData();

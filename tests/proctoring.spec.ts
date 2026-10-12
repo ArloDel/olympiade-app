@@ -14,7 +14,18 @@ test.describe('Exam Proctoring System', () => {
       });
     });
 
-    // 2. Mock Start Exam API
+    // 2. Mock Exams & Start Exam API
+    await page.route('**/api/exams', async route => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          success: true,
+          data: [{ id: 'test-exam', duration: 120, isFinished: false }]
+        })
+      });
+    });
+
     await page.route('**/api/exams/test-exam/start', async route => {
       await route.fulfill({ status: 200, body: JSON.stringify({ success: true }) });
     });

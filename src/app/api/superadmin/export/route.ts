@@ -6,8 +6,11 @@ import { authOptions } from "@/lib/auth";
 export async function GET(req: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
-    if (!session || (session.user as any).role !== "SUPERADMIN") {
+    if (!session?.user) {
       return new NextResponse("Unauthorized", { status: 401 });
+    }
+    if ((session.user as any)?.role !== "SUPERADMIN") {
+      return new NextResponse("Forbidden", { status: 403 });
     }
 
     const answers = await prisma.answer.findMany({
