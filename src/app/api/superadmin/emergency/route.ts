@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import { isDemoMode } from "@/lib/demo";
 
 export async function POST(req: NextRequest) {
   try {
@@ -11,6 +12,21 @@ export async function POST(req: NextRequest) {
     }
 
     const { action } = await req.json();
+
+    if (
+      isDemoMode() &&
+      (action === "TOGGLE_MAINTENANCE" ||
+        action === "STOP_ALL_EXAMS" ||
+        action === "LOCK_ALL_ADMINS")
+    ) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Mode Demo: Tindakan darurat ini dinonaktifkan pada lingkungan demo portofolio.",
+        },
+        { status: 403 }
+      );
+    }
 
     if (action === "TOGGLE_MAINTENANCE") {
       const currentSetting = await prisma.systemSetting.findUnique({

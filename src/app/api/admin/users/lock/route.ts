@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import { isDemoMode, isProtectedDemoEmail } from "@/lib/demo";
 
 export async function POST(req: NextRequest) {
   try {
@@ -14,6 +15,19 @@ export async function POST(req: NextRequest) {
 
     if (!userId || typeof isLocked !== 'boolean') {
       return NextResponse.json({ success: false, error: "Missing required fields" }, { status: 400 });
+    }
+
+    if (isDemoMode() && isLocked) {
+      const targetUser = await prisma.user.findUnique({
+        where: { id: userId },
+        select: { email: true }
+      });
+      if (targetUser && isProtectedDemoEmail(targetUser.email)) {
+        return NextResponse.json(
+          { success: false, error: "Mode Demo: Akun demo utama tidak dapat dikunci." },
+          { status: 403 }
+        );
+      }
     }
 
     // Update the user's lock status. If unlocking (isLocked: false), reset warnings to 0

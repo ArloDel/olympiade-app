@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import { isDemoMode, isProtectedDemoEmail } from "@/lib/demo";
 
 const WARNING_THRESHOLD = 3;
 
@@ -30,21 +31,30 @@ export async function POST(req: Request) {
     // Check current user status
     const user = await prisma.user.findUnique({
       where: { id: userId },
-      select: { warnings: true, isLocked: true }
+      select: { email: true, warnings: true, isLocked: true }
     });
 
     if (!user) {
       return NextResponse.json({ success: false, error: "User not found" }, { status: 404 });
     }
 
-    let updatedWarnings = user.warnings;
-    let isNowLocked = user.isLocked;
+    const isProtectedDemoUser = isDemoMode() && isProtectedDemoEmail(user.email);
+
+    let updatedWarnings = isProtectedDemoUser
+      ? Math.min(user.warnings, WARNING_THRESHOLD - 1)
+      : user.warnings;
+    let isNowLocked = isProtectedDemoUser ? false : user.isLocked;
 
     // Process event logic
-    if (eventType === "TAB_SWITCH" && !user.isLocked) {
-      updatedWarnings += 1;
-      if (updatedWarnings >= WARNING_THRESHOLD) {
-        isNowLocked = true;
+    if (eventType === "TAB_SWITCH" && !isNowLocked) {
+      if (isProtectedDemoUser) {
+        updatedWarnings = Math.min(user.warnings + 1, WARNING_THRESHOLD - 1);
+        isNowLocked = false;
+      } else {
+        updatedWarnings += 1;
+        if (updatedWarnings >= WARNING_THRESHOLD) {
+          isNowLocked = true;
+        }
       }
       
       // Update user warning count & lock status
@@ -53,6 +63,14 @@ export async function POST(req: Request) {
         data: { 
           warnings: updatedWarnings,
           isLocked: isNowLocked 
+        }
+      });
+    } else if (isProtectedDemoUser && (user.isLocked || user.warnings >= WARNING_THRESHOLD)) {
+      await prisma.user.update({
+        where: { id: userId },
+        data: {
+          warnings: updatedWarnings,
+          isLocked: false
         }
       });
     }

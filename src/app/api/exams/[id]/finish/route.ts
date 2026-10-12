@@ -2,12 +2,20 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import { isDemoMode } from "@/lib/demo";
 
 export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     const session = await getServerSession(authOptions);
     if (!session || ((session.user as any).role !== "ADMIN" && (session.user as any).role !== "SUPERADMIN")) {
       return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
+    }
+
+    if (isDemoMode()) {
+      return NextResponse.json(
+        { success: false, error: "Mode Demo: Mengakhiri ujian secara paksa dinonaktifkan pada lingkungan demo." },
+        { status: 403 }
+      );
     }
 
     const resolvedParams = await params;

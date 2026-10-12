@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import { isDemoMode } from "@/lib/demo";
 
 export async function GET(req: NextRequest) {
   try {
@@ -38,6 +39,13 @@ export async function DELETE(req: NextRequest) {
     const session = await getServerSession(authOptions);
     if (!session || (session.user as any).role !== "SUPERADMIN") {
       return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
+    }
+
+    if (isDemoMode()) {
+      return NextResponse.json(
+        { success: false, error: "Mode Demo: Menghapus log audit dinonaktifkan pada lingkungan demo." },
+        { status: 403 }
+      );
     }
 
     const thirtyDaysAgo = new Date();

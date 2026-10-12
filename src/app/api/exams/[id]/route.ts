@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import { isDemoMode } from "@/lib/demo";
 
 export async function PUT(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -45,6 +46,13 @@ export async function DELETE(req: Request, { params }: { params: Promise<{ id: s
     const session = await getServerSession(authOptions);
     if (session?.user?.role !== "ADMIN") {
       return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 403 });
+    }
+
+    if (isDemoMode()) {
+      return NextResponse.json(
+        { success: false, error: "Mode Demo: Menghapus ujian dinonaktifkan pada lingkungan demo." },
+        { status: 403 }
+      );
     }
 
     const resolvedParams = await params;

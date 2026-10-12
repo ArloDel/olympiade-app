@@ -2,6 +2,7 @@ import { NextAuthOptions } from "next-auth"
 import CredentialsProvider from "next-auth/providers/credentials"
 import { PrismaAdapter } from "@auth/prisma-adapter"
 import { prisma } from "@/lib/prisma"
+import { isDemoMode, isProtectedDemoEmail } from "@/lib/demo"
 
 export const authOptions: NextAuthOptions = {
   adapter: PrismaAdapter(prisma) as any,
@@ -37,13 +38,24 @@ export const authOptions: NextAuthOptions = {
           throw new Error("Invalid password")
         }
 
+        const isProtectedDemoUser = isDemoMode() && isProtectedDemoEmail(user.email)
+
         // Check if user is locked
         if (user.isLocked) {
-          throw new Error("Account is locked due to suspicious activity. Please contact admin.")
+          if (isProtectedDemoUser) {
+            await prisma.user.update({
+              where: { id: user.id },
+              data: { isLocked: false, warnings: 0 }
+            })
+            user.isLocked = false
+            user.warnings = 0
+          } else {
+            throw new Error("Account is locked due to suspicious activity. Please contact admin.")
+          }
         }
 
         // Check maintenance mode for students
-        if (user.role === "STUDENT") {
+        if (user.role === "STUDENT" && !isProtectedDemoUser) {
           const maintenanceSetting = await prisma.systemSetting.findUnique({
             where: { key: "maintenanceMode" }
           })
@@ -62,6 +74,9 @@ export const authOptions: NextAuthOptions = {
         token.id = user.id
         token.role = (user as any).role
         token.isLocked = (user as any).isLocked
+      }
+      if (isDemoMode() && isProtectedDemoEmail(token.email)) {
+        token.isLocked = false
       }
       return token
     },

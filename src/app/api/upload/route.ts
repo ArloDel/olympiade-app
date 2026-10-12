@@ -2,12 +2,10 @@ import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import { isDemoMode, DEMO_PLACEHOLDER_IMAGE_URL } from "@/lib/demo";
 
 export async function POST(req: Request) {
   try {
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL || "https://dummy.supabase.co";
-    const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "dummy";
-    const supabase = createClient(supabaseUrl, supabaseKey);
     const session = await getServerSession(authOptions);
     const role = (session?.user as any)?.role;
     
@@ -33,6 +31,18 @@ export async function POST(req: Request) {
     if (!file.type.startsWith("image/")) {
       return NextResponse.json({ success: false, error: "File harus berupa gambar" }, { status: 400 });
     }
+
+    if (isDemoMode()) {
+      return NextResponse.json({
+        success: true,
+        url: DEMO_PLACEHOLDER_IMAGE_URL,
+        demo: true,
+      });
+    }
+
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL || "https://dummy.supabase.co";
+    const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "dummy";
+    const supabase = createClient(supabaseUrl, supabaseKey);
 
     const arrayBuffer = await file.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);

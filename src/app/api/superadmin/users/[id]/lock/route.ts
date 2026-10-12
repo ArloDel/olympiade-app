@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import { isDemoMode, isProtectedDemoEmail } from "@/lib/demo";
 
 export async function POST(
   req: NextRequest,
@@ -31,6 +32,13 @@ export async function POST(
 
     if (user.role === "SUPERADMIN") {
        return NextResponse.json({ success: false, error: "Cannot lock SUPERADMIN" }, { status: 403 });
+    }
+
+    if (isDemoMode() && isLocked && isProtectedDemoEmail(user.email)) {
+      return NextResponse.json(
+        { success: false, error: "Mode Demo: Akun demo utama tidak dapat dikunci." },
+        { status: 403 }
+      );
     }
 
     const updatedUser = await prisma.user.update({

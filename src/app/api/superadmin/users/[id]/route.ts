@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import { isDemoMode, isProtectedDemoEmail } from "@/lib/demo";
 
 export async function DELETE(
   req: NextRequest,
@@ -26,6 +27,13 @@ export async function DELETE(
 
     if (user.role === "SUPERADMIN") {
        return NextResponse.json({ success: false, error: "Cannot delete SUPERADMIN" }, { status: 403 });
+    }
+
+    if (isDemoMode() && isProtectedDemoEmail(user.email)) {
+      return NextResponse.json(
+        { success: false, error: "Mode Demo: Akun demo utama tidak dapat dihapus." },
+        { status: 403 }
+      );
     }
 
     await prisma.user.delete({
