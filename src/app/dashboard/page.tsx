@@ -3,8 +3,9 @@
 import { useSession, signOut } from "next-auth/react"
 import { useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
-import { LogOut, Camera, Shield, Award, Moon, Sun, Monitor, AlertTriangle, Clock, CheckCircle2, AlertCircle } from "lucide-react"
+import { LogOut, Camera, Shield, Award, Moon, Sun, Monitor, AlertTriangle, Clock, CheckCircle2, AlertCircle, RotateCcw } from "lucide-react"
 import { useTheme } from "@/hooks/useTheme";
+import { isDemoMode } from "@/lib/demo";
 
 export default function DashboardPage() {
   const { data: session, status } = useSession()
@@ -18,6 +19,7 @@ export default function DashboardPage() {
   const [theme, setTheme] = useTheme()
   const [showScore, setShowScore] = useState(false)
   const [agreedToRules, setAgreedToRules] = useState(false)
+  const demoMode = isDemoMode()
 
   useEffect(() => {
     if (status === "unauthenticated") {
@@ -40,7 +42,7 @@ export default function DashboardPage() {
         })
 
         if (latestExam.isFinished) {
-          fetchResult(latestExam.id)
+          await fetchResult(latestExam.id)
         }
       }
     } catch (err) {
@@ -78,17 +80,26 @@ export default function DashboardPage() {
   }
 
   const handleReset = async () => {
-    if (!confirm("DEV ONLY: Reset semua jawaban dan sesi untuk ujian ini?")) return;
+    if (!demoMode && !confirm("DEV ONLY: Reset semua jawaban dan sesi untuk ujian ini?")) return;
 
     setExamLoading(true);
     try {
-      const res = await fetch("/api/test/reset-exam", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ examId: exam.id })
-      });
+      const res = demoMode
+        ? await fetch("/api/demo/reset", { method: "POST" })
+        : await fetch("/api/test/reset-exam", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ examId: exam.id })
+          });
       const data = await res.json();
       if (data.success) {
+        try {
+          Object.keys(localStorage).forEach((key) => {
+            if (key.startsWith("olym_answers_")) {
+              localStorage.removeItem(key);
+            }
+          });
+        } catch {}
         window.location.reload();
       } else {
         alert("Gagal mereset: " + data.error);
@@ -206,6 +217,24 @@ export default function DashboardPage() {
                         <span className={`text-xs mt-1 ${isDark ? 'text-zinc-500' : 'text-zinc-400'}`}>Kosong</span>
                       </div>
                     </div>
+                  </div>
+                )}
+
+                {demoMode && (
+                  <div className="mt-8 flex justify-center">
+                    <button
+                      type="button"
+                      data-testid="dashboard-demo-reset-button"
+                      onClick={handleReset}
+                      className={`inline-flex items-center gap-2 px-6 py-3 rounded-full text-xs font-medium border transition-colors cursor-pointer ${
+                        isDark
+                          ? "bg-amber-500/10 text-amber-300 border-amber-500/30 hover:bg-amber-500/20"
+                          : "bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100"
+                      }`}
+                    >
+                      <RotateCcw size={14} />
+                      Ulangi Simulasi Ujian (Reset Demo)
+                    </button>
                   </div>
                 )}
               </div>
@@ -332,18 +361,33 @@ export default function DashboardPage() {
             <div className="flex flex-col items-center justify-center py-20 text-center">
               <Monitor size={24} className={`mb-4 ${isDark ? 'text-zinc-800' : 'text-zinc-200'}`} />
               <p className={`text-sm ${isDark ? 'text-zinc-500' : 'text-zinc-500'}`}>Tidak ada ujian yang dijadwalkan.</p>
+              {demoMode && (
+                <button
+                  type="button"
+                  onClick={handleReset}
+                  className={`mt-6 inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-xs font-medium border transition-colors cursor-pointer ${
+                    isDark
+                      ? "bg-amber-500/10 text-amber-300 border-amber-500/30 hover:bg-amber-500/20"
+                      : "bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100"
+                  }`}
+                >
+                  <RotateCcw size={14} />
+                  Aktifkan Kembali Simulasi Demo
+                </button>
+              )}
             </div>
           )}
         </div>
       </main>
 
-      {/* DEV ONLY Reset Button */}
-      {process.env.NODE_ENV === "development" && exam && (
+      {/* Demo / Dev Reset Button */}
+      {(demoMode || (process.env.NODE_ENV === "development" && exam)) && (
         <button
           onClick={handleReset}
-          className={`fixed bottom-6 right-6 px-4 py-2 rounded-full shadow-xl text-xs font-medium z-50 flex items-center gap-2 transition-transform hover:scale-105 ${isDark ? 'bg-rose-500/10 text-rose-500 border border-rose-500/20 hover:bg-rose-500/20' : 'bg-rose-50 text-rose-600 border border-rose-200 hover:bg-rose-100'}`}
+          className={`fixed bottom-4 left-4 px-4 py-2 rounded-full shadow-xl text-xs font-medium z-40 flex items-center gap-2 transition-transform hover:scale-105 cursor-pointer ${isDark ? 'bg-rose-500/10 text-rose-500 border border-rose-500/20 hover:bg-rose-500/20' : 'bg-rose-50 text-rose-600 border border-rose-200 hover:bg-rose-100'}`}
         >
-          <AlertTriangle size={14} /> DEV: Reset Progress
+          {demoMode ? <RotateCcw size={14} /> : <AlertTriangle size={14} />}
+          {demoMode ? "Reset Simulasi Demo" : "DEV: Reset Progress"}
         </button>
       )}
     </div>
