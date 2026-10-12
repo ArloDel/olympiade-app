@@ -46,6 +46,10 @@ async function performDemoReset() {
         update: { value: "false" },
         create: { key: "maintenanceMode", value: "false" },
       }),
+      prisma.exam.updateMany({
+        where: { isActive: true },
+        data: { requireSeb: false },
+      }),
     ]);
 
     let reactivatedExamId: string | null = null;
@@ -66,7 +70,7 @@ async function performDemoReset() {
       if (primaryExam) {
         await prisma.exam.update({
           where: { id: primaryExam.id },
-          data: { isActive: true },
+          data: { isActive: true, requireSeb: false },
         });
         reactivatedExamId = primaryExam.id;
       }

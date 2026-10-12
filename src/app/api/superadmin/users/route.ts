@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import { isDemoMode } from "@/lib/demo";
 
 export async function GET(req: NextRequest) {
   try {
@@ -43,6 +44,13 @@ export async function POST(req: NextRequest) {
     }
     if ((session.user as any)?.role !== "SUPERADMIN") {
       return NextResponse.json({ success: false, error: "Forbidden" }, { status: 403 });
+    }
+
+    if (isDemoMode()) {
+      return NextResponse.json(
+        { success: false, error: "Mode Demo: Menambahkan akun admin baru dinonaktifkan pada lingkungan demo portofolio." },
+        { status: 403 }
+      );
     }
 
     const body = await req.json();

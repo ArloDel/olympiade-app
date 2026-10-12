@@ -15,6 +15,13 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
       return NextResponse.json({ success: false, error: "Forbidden" }, { status: 403 });
     }
 
+    if (isDemoMode()) {
+      return NextResponse.json(
+        { success: false, error: "Mode Demo: Mengubah konfigurasi ujian utama dinonaktifkan agar tidak mengganggu simulasi pengunjung lain." },
+        { status: 403 }
+      );
+    }
+
     const resolvedParams = await params;
     const { id } = resolvedParams;
     const body = await req.json();
