@@ -3,8 +3,33 @@
 import { signIn, getSession } from "next-auth/react"
 import { useState } from "react"
 import { useRouter } from "next/navigation"
-import { Shield, Moon, Sun, ArrowRight } from "lucide-react"
-import { useTheme } from "@/hooks/useTheme";
+import { Shield, Moon, Sun, ArrowRight, GraduationCap, MonitorCheck, ShieldAlert } from "lucide-react"
+import { useTheme } from "@/hooks/useTheme"
+import { isDemoMode } from "@/lib/demo"
+
+const DEMO_ACCOUNTS = [
+  {
+    key: "student",
+    label: "Student",
+    subtitle: "Coba Ujian & Kamera",
+    email: "student@olym.app",
+    icon: GraduationCap,
+  },
+  {
+    key: "admin",
+    label: "Admin",
+    subtitle: "Live Monitoring & Soal",
+    email: "admin@olym.app",
+    icon: MonitorCheck,
+  },
+  {
+    key: "superadmin",
+    label: "Superadmin",
+    subtitle: "System Control & Logs",
+    email: "superadmin@olym.app",
+    icon: ShieldAlert,
+  },
+] as const
 
 export default function LoginPage() {
   const router = useRouter()
@@ -12,36 +37,60 @@ export default function LoginPage() {
   const [password, setPassword] = useState("")
   const [error, setError] = useState("")
   const [isLoading, setIsLoading] = useState(false)
+  const [activeDemoEmail, setActiveDemoEmail] = useState<string | null>(null)
   const [theme, setTheme] = useTheme()
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
+  const performLogin = async (loginIdentifier: string, loginPassword: string) => {
     setIsLoading(true)
     setError("")
 
-    const res = await signIn("credentials", {
-      identifier,
-      password,
-      redirect: false,
-    })
+    try {
+      const res = await signIn("credentials", {
+        identifier: loginIdentifier,
+        password: loginPassword,
+        redirect: false,
+      })
 
-    if (res?.error) {
-      setError(res.error)
-      setIsLoading(false)
-    } else {
-      const session = await getSession()
-      if (session?.user?.role === "SUPERADMIN") {
-        router.push("/superadmin")
-      } else if (session?.user?.role === "ADMIN") {
-        router.push("/admin")
+      if (res?.error) {
+        setError(res.error)
+        setIsLoading(false)
+        setActiveDemoEmail(null)
       } else {
-        router.push("/dashboard")
+        const session = await getSession()
+        if (session?.user?.role === "SUPERADMIN") {
+          router.push("/superadmin")
+        } else if (session?.user?.role === "ADMIN") {
+          router.push("/admin")
+        } else {
+          router.push("/dashboard")
+        }
+        router.refresh()
       }
-      router.refresh()
+    } catch {
+      setError("Terjadi kesalahan saat mengautentikasi. Silakan coba lagi.")
+      setIsLoading(false)
+      setActiveDemoEmail(null)
     }
   }
 
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (isLoading) return
+    setActiveDemoEmail(null)
+    await performLogin(identifier, password)
+  }
+
+  const handleDemoLogin = async (demoEmail: string) => {
+    if (isLoading) return
+    const demoPassword = "password123"
+    setIdentifier(demoEmail)
+    setPassword(demoPassword)
+    setActiveDemoEmail(demoEmail)
+    await performLogin(demoEmail, demoPassword)
+  }
+
   const isDark = theme === "dark"
+  const showDemoAccess = isDemoMode()
 
   return (
     <div className={`min-h-screen flex flex-col font-sans transition-colors duration-300 ${isDark ? 'bg-[#0a0a0a] text-zinc-300 selection:bg-white/20' : 'bg-white text-zinc-600 selection:bg-black/10'}`}>
@@ -133,6 +182,61 @@ export default function LoginPage() {
 
           </form>
 
+          {showDemoAccess && (
+            <div data-testid="demo-login-section" className="mt-8 pt-6 border-t border-dashed border-zinc-500/20">
+              <div className="flex items-center justify-between mb-3">
+                <span className={`text-[10px] font-bold uppercase tracking-widest ${isDark ? 'text-amber-400/90' : 'text-amber-600'}`}>
+                  Quick Demo Access
+                </span>
+                <span className={`text-[10px] ${isDark ? 'text-zinc-600' : 'text-zinc-400'}`}>
+                  1-Click Login
+                </span>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                {DEMO_ACCOUNTS.map((account) => {
+                  const Icon = account.icon
+                  const isThisActive = isLoading && activeDemoEmail === account.email
+
+                  return (
+                    <button
+                      key={account.key}
+                      type="button"
+                      data-testid={`demo-login-${account.key}`}
+                      disabled={isLoading}
+                      onClick={() => handleDemoLogin(account.email)}
+                      className={`group text-left p-3 rounded border transition-all disabled:cursor-not-allowed ${isDark
+                        ? isThisActive
+                          ? 'border-white bg-zinc-900 text-white'
+                          : 'border-zinc-800/80 bg-zinc-950/60 hover:border-zinc-600 hover:bg-zinc-900/80 text-zinc-200 disabled:opacity-50'
+                        : isThisActive
+                          ? 'border-black bg-zinc-100 text-black'
+                          : 'border-zinc-200 bg-zinc-50/70 hover:border-zinc-400 hover:bg-zinc-100/80 text-zinc-800 disabled:opacity-50'
+                        }`}
+                    >
+                      <div className="flex items-center justify-between mb-1.5">
+                        <Icon
+                          size={14}
+                          className={isDark ? 'text-zinc-400 group-hover:text-white transition-colors' : 'text-zinc-500 group-hover:text-black transition-colors'}
+                        />
+                        <ArrowRight
+                          size={12}
+                          className={`transition-transform group-hover:translate-x-0.5 ${isDark ? 'text-zinc-600 group-hover:text-zinc-300' : 'text-zinc-400 group-hover:text-zinc-700'}`}
+                        />
+                      </div>
+                      <div className="text-xs font-semibold tracking-tight">
+                        {isThisActive ? "Masuk..." : account.label}
+                      </div>
+                      <div className={`text-[10px] leading-tight mt-0.5 ${isDark ? 'text-zinc-500' : 'text-zinc-500'}`}>
+                        {account.subtitle}
+                      </div>
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+          )}
+
           <div className={`mt-10 text-center text-xs ${isDark ? 'text-zinc-600' : 'text-zinc-400'}`}>
             Mengalami kendala? Silakan hubungi proktor ujian Anda.
           </div>
@@ -142,3 +246,4 @@ export default function LoginPage() {
     </div>
   )
 }
+
