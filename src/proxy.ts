@@ -1,14 +1,38 @@
 import { NextResponse } from "next/server"
 import type { NextRequest } from "next/server"
 import { getToken } from "next-auth/jwt"
+import { checkRateLimit, isMutationMethod } from "@/lib/rate-limit"
 
 export default async function proxy(req: NextRequest) {
+  const { pathname } = req.nextUrl
+
+  if (pathname === "/api" || pathname.startsWith("/api/")) {
+    if (isMutationMethod(req.method)) {
+      const rateLimit = checkRateLimit(req)
+      if (!rateLimit.allowed) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: "Terlalu banyak permintaan dalam waktu singkat. Silakan tunggu beberapa detik.",
+          },
+          {
+            status: 429,
+            headers: {
+              "Retry-After": String(rateLimit.retryAfterSeconds),
+            },
+          }
+        )
+      }
+    }
+    return NextResponse.next()
+  }
+
   const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET })
   const isAuth = !!token
-  const isAuthPage = req.nextUrl.pathname.startsWith("/login")
-  const isAdminPage = req.nextUrl.pathname.startsWith("/admin")
-  const isDashboardPage = req.nextUrl.pathname.startsWith("/dashboard")
-  const isSuperadminPage = req.nextUrl.pathname.startsWith("/superadmin")
+  const isAuthPage = pathname.startsWith("/login")
+  const isAdminPage = pathname.startsWith("/admin")
+  const isDashboardPage = pathname.startsWith("/dashboard")
+  const isSuperadminPage = pathname.startsWith("/superadmin")
 
   // 1. Jika user sudah login dan mencoba mengakses halaman /login
   if (isAuthPage) {
@@ -56,5 +80,6 @@ export default async function proxy(req: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/dashboard/:path*", "/admin/:path*", "/superadmin/:path*", "/login"]
+  matcher: ["/dashboard/:path*", "/admin/:path*", "/superadmin/:path*", "/login", "/api/:path*"]
 }
+
