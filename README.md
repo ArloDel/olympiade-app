@@ -18,38 +18,38 @@ Engineered specifically to solve academic integrity vulnerabilities and proctori
 
 ---
 
-## 🔑 Demo Access Credentials
+## 🔑 1-Click Quick Demo Access
 
-You can explore all 3 role workspaces directly on the live website:
+You can explore all 3 role workspaces instantly via the **1-Click Quick Demo Access** buttons directly on the live website:
 
-| Role | Username / Identifier | Password | Core Focus Area |
+| Role | 1-Click Demo Login | Password | Core Focus Area |
 | :--- | :--- | :--- | :--- |
-| **🎓 Student** | `student@olym.app` | `password123` | Camera activation, anti-cheat state tracker, KaTeX formula support, timer |
-| **🛡️ Admin** | `admin@olym.app` | `password123` | Real-time proctoring command center, violation timeline, session lock/unlock |
-| **👑 Superadmin** | `superadmin@olym.app` | `password123` | Global system health diagnostics, emergency maintenance switch, admin delegation |
+| **🎓 Student** | `student@olym.app` | `password123` | 1-Click Login, Live Camera Activation, Anti-Cheat Proctoring, KaTeX Formulas |
+| **🛡️ Admin** | `admin@olym.app` | `password123` | 1-Click Login, Real-Time Command Center, Violation Telemetry, Session Lock/Unlock |
+| **👑 Superadmin** | `superadmin@olym.app` | `password123` | 1-Click Login, Global Health Diagnostics, Audit Logs, Safe Demo Guard Protection |
 
 ---
 
-## 🎬 Core Role Workflows & Live Visual Demonstrations
+## 🎬 Core Role Workflows & Live Demo Animations
 
-### 1. 🎓 Student Experience: Camera & Proctoring Activation
-Upon entering an assessment, students undergo instant hardware verification. The proctoring engine requests webcam access, initializes the live video stream widget, and tracks focus visibility throughout the exam.
+### 1. 🎓 Student Experience: 1-Click Access & Live Camera Proctoring
+Students jump directly into the dashboard via the **1-Click Student Login**. Upon launching an assessment, the proctoring engine requests webcam access, initializes the real-time proctoring stream widget, and tracks candidate focus.
 
-![Student Camera & Exam Interface](public/demo/student_camera_activation.png)
+![Student Experience & Camera Proctoring](public/demo/student_camera_demo.gif)
 
 ---
 
 ### 2. 🛡️ Admin Command Center: Live Proctoring & Telemetry Inspection
-Admins monitor candidate sessions in real time. Clicking on any participant opens a granular violation timeline detailing tab switches, warning counts, and remote session lock controls.
+Admins log in with a single click to monitor candidate sessions in real time. Clicking on any candidate opens an instant violation timeline detailing tab switches, warning counts, and remote session lock controls.
 
-![Admin Live Proctoring & Telemetry Modal](public/demo/admin_live_monitoring.png)
+![Admin Live Proctoring Command Center](public/demo/admin_proctoring_demo.gif)
 
 ---
 
-### 3. 👑 Superadmin Control: System Health & Maintenance Governance
-Superadmins govern global infrastructure health, inspect database connection states, manage privileged administrator accounts, and trigger emergency maintenance switches.
+### 3. 👑 Superadmin Control: System Health & Governance
+Superadmins govern global infrastructure health, inspect database connection states, review system audit logs, and manage administrator access under protected Demo Mode.
 
-![Superadmin Health & System Governance](public/demo/superadmin_system_governance.png)
+![Superadmin Health & System Governance](public/demo/superadmin_governance_demo.gif)
 
 ---
 
