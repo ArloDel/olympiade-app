@@ -33,21 +33,21 @@ You can explore all 3 role workspaces instantly via the **1-Click Quick Demo Acc
 ## 🎬 Core Role Workflows & Live Demo Animations
 
 ### 1. 🎓 Student Experience: 1-Click Access & Live Camera Proctoring
-Students jump directly into the dashboard via the **1-Click Student Login**. Upon launching an assessment, the proctoring engine requests webcam access, initializes the real-time proctoring stream widget, and tracks candidate focus.
+Starting from the `/login` page, clicking the **1-Click Student** card automatically authenticates into the student workspace, grants live webcam proctoring access (`Kamera terhubung dan aktif`), accepts the exam integrity rules, and launches the live proctored examination interface (`PENGAWASAN AKTIF`).
 
 ![Student Experience & Camera Proctoring](public/demo/student_camera_demo.gif)
 
 ---
 
 ### 2. 🛡️ Admin Command Center: Live Proctoring & Telemetry Inspection
-Admins log in with a single click to monitor candidate sessions in real time. Clicking on any candidate opens an instant violation timeline detailing tab switches, warning counts, and remote session lock controls.
+Starting from `/login`, clicking the **1-Click Admin** card opens the real-time proctoring command center. Admins can filter active candidates (`Siswa Tes`) and inspect their live violation and session timeline (`Log Bukti`) with one-click PDF evidence export.
 
 ![Admin Live Proctoring Command Center](public/demo/admin_proctoring_demo.gif)
 
 ---
 
 ### 3. 👑 Superadmin Control: System Health & Governance
-Superadmins govern global infrastructure health, inspect database connection states, review system audit logs, and manage administrator access under protected Demo Mode.
+Starting from `/login`, clicking the **1-Click Superadmin** card opens the global governance console. Superadmins can inspect real-time server diagnostics (`Status Kesehatan Sistem`: uptime, RAM heap usage, CPU cores) and manage administrator access (`Kelola Admin`) under protected Demo Mode.
 
 ![Superadmin Health & System Governance](public/demo/superadmin_governance_demo.gif)
 
