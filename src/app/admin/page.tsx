@@ -6,8 +6,6 @@ import Link from "next/link"
 import { useEffect, useState } from "react"
 import { Users, AlertTriangle, CheckCircle, Video, LogOut, Search, Activity, ShieldCheck, ShieldAlert, Lock, Moon, Sun, Eye, Clock, Image as ImageIcon, X, TrendingUp, TrendingDown, FileText } from "lucide-react"
 import { useTheme } from "@/hooks/useTheme";
-import jsPDF from "jspdf"
-import "jspdf-autotable"
 
 const MetricCard = ({ title, value, icon: Icon, color, trend, isDark, progress }: any) => {
   const colorMap: any = {
@@ -128,8 +126,10 @@ export default function AdminDashboard() {
     }
   }
 
-  const exportLogsToPDF = () => {
+  const exportLogsToPDF = async () => {
     if (!selectedLogUser || userLogs.length === 0) return
+    const { default: jsPDF } = await import("jspdf")
+    await import("jspdf-autotable")
     const doc = new jsPDF()
     
     doc.setFontSize(16)
