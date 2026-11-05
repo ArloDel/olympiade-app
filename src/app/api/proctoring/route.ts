@@ -5,6 +5,7 @@ import { authOptions } from "@/lib/auth";
 import { isDemoMode, isProtectedDemoEmail } from "@/lib/demo";
 
 const WARNING_THRESHOLD = 3;
+const VIOLATION_EVENTS = ["TAB_SWITCH", "DEVTOOLS_OPEN", "FULLSCREEN_EXIT", "WINDOW_BLUR"];
 
 export async function POST(req: Request) {
   try {
@@ -38,6 +39,22 @@ export async function POST(req: Request) {
       return NextResponse.json({ success: false, error: "User not found" }, { status: 404 });
     }
 
+    // Verify if student already submitted / finished the exam
+    const finishLog = await prisma.sessionLog.findFirst({
+      where: {
+        userId,
+        examId,
+        eventType: "FINISH"
+      }
+    });
+
+    if (finishLog) {
+      return NextResponse.json(
+        { success: false, error: "Ujian telah selesai." },
+        { status: 400 }
+      );
+    }
+
     const isProtectedDemoUser = isDemoMode() && isProtectedDemoEmail(user.email);
 
     let updatedWarnings = isProtectedDemoUser
@@ -46,7 +63,9 @@ export async function POST(req: Request) {
     let isNowLocked = isProtectedDemoUser ? false : user.isLocked;
 
     // Process event logic
-    if (eventType === "TAB_SWITCH" && !isNowLocked) {
+    const isViolation = VIOLATION_EVENTS.includes(eventType);
+
+    if (isViolation && !isNowLocked) {
       if (isProtectedDemoUser) {
         updatedWarnings = Math.min(user.warnings + 1, WARNING_THRESHOLD - 1);
         isNowLocked = false;
@@ -65,6 +84,20 @@ export async function POST(req: Request) {
           isLocked: isNowLocked 
         }
       });
+
+      // Log the violation event
+      await prisma.sessionLog.create({
+        data: {
+          userId,
+          examId,
+          eventType: isNowLocked && !user.isLocked ? "LOCKED" : eventType,
+          snapshotUrl: snapshotUrl || null,
+          details: JSON.stringify({ 
+            ...details, 
+            warningsCount: updatedWarnings 
+          })
+        }
+      });
     } else if (isProtectedDemoUser && (user.isLocked || user.warnings >= WARNING_THRESHOLD)) {
       await prisma.user.update({
         where: { id: userId },
@@ -73,21 +106,18 @@ export async function POST(req: Request) {
           isLocked: false
         }
       });
+    } else if (eventType === "SNAPSHOT") {
+      // Snapshot log without warning increment
+      await prisma.sessionLog.create({
+        data: {
+          userId,
+          examId,
+          eventType: "SNAPSHOT",
+          snapshotUrl: snapshotUrl || null,
+          details: details ? JSON.stringify(details) : null
+        }
+      });
     }
-
-    // Log the event
-    await prisma.sessionLog.create({
-      data: {
-        userId,
-        examId,
-        eventType: isNowLocked && !user.isLocked ? "LOCKED" : eventType,
-        snapshotUrl: snapshotUrl || null,
-        details: JSON.stringify({ 
-          ...details, 
-          warningsCount: updatedWarnings 
-        })
-      }
-    });
 
     return NextResponse.json({ 
       success: true, 
