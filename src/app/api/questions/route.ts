@@ -52,6 +52,16 @@ export async function GET(req: Request) {
     const userId = session.user.id;
     const role = (session.user as any)?.role || "STUDENT";
 
+    if (role === "STUDENT") {
+      const user = await prisma.user.findUnique({
+        where: { id: userId },
+        select: { isLocked: true }
+      });
+      if (user?.isLocked) {
+        return NextResponse.json({ success: false, error: "Akun Anda telah dikunci." }, { status: 403 });
+      }
+    }
+
     const { searchParams } = new URL(req.url);
     const examId = searchParams.get("examId");
 
