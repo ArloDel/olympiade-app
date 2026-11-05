@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { isDemoMode } from "@/lib/demo";
+import bcrypt from "bcryptjs";
 
 export async function GET(req: NextRequest) {
   try {
@@ -54,7 +55,7 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json();
-    const { name, email } = body;
+    const { name, email, password } = body;
 
     if (!email || !name) {
       return NextResponse.json({ success: false, error: "Name and email are required" }, { status: 400 });
@@ -68,11 +69,25 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ success: false, error: "Email already in use" }, { status: 400 });
     }
 
+    // Hash the password securely with bcrypt
+    const rawPassword = typeof password === "string" && password.trim().length >= 6
+      ? password.trim()
+      : "password123";
+    const hashedPassword = await bcrypt.hash(rawPassword, 10);
+
     const newAdmin = await prisma.user.create({
       data: {
         name,
         email,
+        password: hashedPassword,
         role: "ADMIN"
+      },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        role: true,
+        isLocked: true,
       }
     });
 
