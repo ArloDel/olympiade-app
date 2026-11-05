@@ -5,25 +5,35 @@ import { authOptions } from "@/lib/auth";
 import { isDemoMode } from "@/lib/demo";
 
 async function validateSubmission(userId: string, examId: string, isFinalSubmit: boolean) {
-  // 1. Check user status
-  const user = await prisma.user.findUnique({
-    where: { id: userId },
-    select: { isLocked: true, role: true }
-  });
+  // 1. Parallel fetch of user status, exam details, and relevant session logs
+  const [user, exam, sessionLogs] = await Promise.all([
+    prisma.user.findUnique({
+      where: { id: userId },
+      select: { isLocked: true, role: true }
+    }),
+    prisma.exam.findUnique({
+      where: { id: examId },
+      select: { isActive: true, duration: true, startTime: true, endTime: true }
+    }),
+    prisma.sessionLog.findMany({
+      where: {
+        userId,
+        examId,
+        eventType: { in: ["START", "FINISH"] }
+      },
+      select: {
+        eventType: true,
+        createdAt: true
+      }
+    })
+  ]);
 
   if (!user) {
     return { allowed: false, status: 404, error: "User tidak ditemukan." };
   }
 
   // 2. Check if already finished
-  const finishLog = await prisma.sessionLog.findFirst({
-    where: {
-      userId,
-      examId,
-      eventType: "FINISH"
-    }
-  });
-
+  const finishLog = sessionLogs.find(l => l.eventType === "FINISH");
   if (finishLog) {
     return {
       allowed: false,
@@ -42,11 +52,6 @@ async function validateSubmission(userId: string, examId: string, isFinalSubmit:
   }
 
   // 3. Check exam status & time limit
-  const exam = await prisma.exam.findUnique({
-    where: { id: examId },
-    select: { isActive: true, duration: true, startTime: true, endTime: true }
-  });
-
   if (!exam) {
     return { allowed: false, status: 404, error: "Ujian tidak ditemukan." };
   }
@@ -56,13 +61,7 @@ async function validateSubmission(userId: string, examId: string, isFinalSubmit:
   }
 
   // 4. Server-side duration validation with grace period
-  const startLog = await prisma.sessionLog.findFirst({
-    where: {
-      userId,
-      examId,
-      eventType: "START"
-    }
-  });
+  const startLog = sessionLogs.find(l => l.eventType === "START");
 
   const now = Date.now();
   // Allow 3 minutes grace period for network latency / final auto-submit submission
