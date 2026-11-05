@@ -33,6 +33,7 @@ export default async function proxy(req: NextRequest) {
   const isAdminPage = pathname.startsWith("/admin")
   const isDashboardPage = pathname.startsWith("/dashboard")
   const isSuperadminPage = pathname.startsWith("/superadmin")
+  const isExamPage = pathname.startsWith("/exam")
 
   // 1. Jika user sudah login dan mencoba mengakses halaman /login
   if (isAuthPage) {
@@ -49,11 +50,18 @@ export default async function proxy(req: NextRequest) {
   }
 
   // 2. Jika user belum login dan mencoba mengakses halaman yang dilindungi
-  if (!isAuth && (isAdminPage || isDashboardPage || isSuperadminPage)) {
+  if (!isAuth && (isAdminPage || isDashboardPage || isSuperadminPage || isExamPage)) {
     return NextResponse.redirect(new URL("/login", req.url))
   }
 
-  // 3. Pengecekan otorisasi Role
+  // 3. Pengecekan status akun terkunci untuk halaman ujian
+  if (isAuth && (token as any)?.isLocked) {
+    if (isExamPage) {
+      return NextResponse.redirect(new URL("/dashboard?locked=true", req.url))
+    }
+  }
+
+  // 4. Pengecekan otorisasi Role
   if (isSuperadminPage && token?.role !== "SUPERADMIN") {
     if (token?.role === "ADMIN") {
       return NextResponse.redirect(new URL("/admin", req.url))
@@ -76,10 +84,18 @@ export default async function proxy(req: NextRequest) {
     }
   }
 
+  if (isExamPage) {
+    if (token?.role === "SUPERADMIN") {
+      return NextResponse.redirect(new URL("/superadmin", req.url))
+    }
+    if (token?.role === "ADMIN") {
+      return NextResponse.redirect(new URL("/admin/exams", req.url))
+    }
+  }
+
   return NextResponse.next()
 }
 
 export const config = {
-  matcher: ["/dashboard/:path*", "/admin/:path*", "/superadmin/:path*", "/login", "/api/:path*"]
+  matcher: ["/dashboard/:path*", "/admin/:path*", "/superadmin/:path*", "/exam/:path*", "/login", "/api/:path*"]
 }
-
