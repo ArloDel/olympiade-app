@@ -67,6 +67,10 @@ export default function ExamTakingInterface() {
             handleAutoSubmit();
             return;
           }
+        } else if (startData.error === "Akun Anda telah dikunci.") {
+          alert("Akun Anda telah dikunci. Anda tidak dapat mengakses ujian ini.");
+          router.replace("/dashboard");
+          return;
         } else if (thisExam?.duration) {
           setTimeLeft(thisExam.duration * 60);
         }
@@ -101,6 +105,9 @@ export default function ExamTakingInterface() {
       } else {
         if (data.error === "SEB_REQUIRED" || data.error === "SEB_CONFIG_INVALID") {
           setSebError(data.error)
+        } else if (data.error === "Akun Anda telah dikunci.") {
+          alert("Akun Anda telah dikunci. Anda tidak dapat mengakses ujian ini.");
+          router.replace("/dashboard");
         } else {
           console.error(data.error)
         }
