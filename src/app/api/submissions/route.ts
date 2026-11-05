@@ -2,6 +2,97 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import { isDemoMode } from "@/lib/demo";
+
+async function validateSubmission(userId: string, examId: string, isFinalSubmit: boolean) {
+  // 1. Check user status
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { isLocked: true, role: true }
+  });
+
+  if (!user) {
+    return { allowed: false, status: 404, error: "User tidak ditemukan." };
+  }
+
+  // 2. Check if already finished
+  const finishLog = await prisma.sessionLog.findFirst({
+    where: {
+      userId,
+      examId,
+      eventType: "FINISH"
+    }
+  });
+
+  if (finishLog) {
+    return {
+      allowed: false,
+      status: 400,
+      error: "Ujian ini sudah selesai diserahkan dan tidak dapat diubah lagi."
+    };
+  }
+
+  // For PATCH (in-progress autosave): if user is locked, block changes
+  if (!isFinalSubmit && user.isLocked) {
+    return {
+      allowed: false,
+      status: 403,
+      error: "Akun Anda sedang terkunci karena pelanggaran. Jawaban tidak dapat diperbarui."
+    };
+  }
+
+  // 3. Check exam status & time limit
+  const exam = await prisma.exam.findUnique({
+    where: { id: examId },
+    select: { isActive: true, duration: true, startTime: true, endTime: true }
+  });
+
+  if (!exam) {
+    return { allowed: false, status: 404, error: "Ujian tidak ditemukan." };
+  }
+
+  if (!exam.isActive) {
+    return { allowed: false, status: 403, error: "Ujian sedang tidak aktif." };
+  }
+
+  // 4. Server-side duration validation with grace period
+  const startLog = await prisma.sessionLog.findFirst({
+    where: {
+      userId,
+      examId,
+      eventType: "START"
+    }
+  });
+
+  const now = Date.now();
+  // Allow 3 minutes grace period for network latency / final auto-submit submission
+  const GRACE_PERIOD_MS = 3 * 60 * 1000;
+
+  if (startLog) {
+    const startedAt = new Date(startLog.createdAt).getTime();
+    const maxDurationMs = exam.duration * 60 * 1000 + GRACE_PERIOD_MS;
+    if (now > startedAt + maxDurationMs) {
+      return {
+        allowed: false,
+        status: 403,
+        error: "Batas durasi waktu pengerjaan ujian telah berakhir."
+      };
+    }
+  }
+
+  if (!isDemoMode() && exam.endTime) {
+    const maxEndTimeMs = new Date(exam.endTime).getTime() + GRACE_PERIOD_MS;
+    if (now > maxEndTimeMs) {
+      return {
+        allowed: false,
+        status: 403,
+        error: "Jadwal penutupan ujian telah berakhir."
+      };
+    }
+  }
+
+  return { allowed: true };
+}
 
 export async function POST(req: Request) {
   try {
@@ -24,6 +115,15 @@ export async function POST(req: Request) {
     }
 
     const userId = session.user.id;
+
+    // Validate submission integrity (Locked status, finished state, duration limits)
+    const validation = await validateSubmission(userId, examId, true);
+    if (!validation.allowed) {
+      return NextResponse.json(
+        { success: false, error: validation.error },
+        { status: validation.status || 400 }
+      );
+    }
 
     // Use a Prisma transaction to upsert all answers efficiently
     const upserts = Object.entries(answers).map(([questionId, answerData]) => {
@@ -93,6 +193,15 @@ export async function PATCH(req: Request) {
     }
 
     const userId = session.user.id;
+
+    // Validate submission integrity for autosave
+    const validation = await validateSubmission(userId, examId, false);
+    if (!validation.allowed) {
+      return NextResponse.json(
+        { success: false, error: validation.error },
+        { status: validation.status || 400 }
+      );
+    }
 
     const upserts = Object.entries(answers).map(([questionId, answerData]) => {
       const data = answerData as { optionId?: string, textAnswer?: string };
