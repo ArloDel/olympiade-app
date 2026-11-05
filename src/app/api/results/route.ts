@@ -23,7 +23,14 @@ export async function GET(req: NextRequest) {
       );
     }
 
-    const userId = session.user.id;
+    const role = (session.user as any)?.role || "STUDENT";
+    const requestedUserId = searchParams.get("userId");
+
+    // Only ADMIN or SUPERADMIN can view other users' results
+    const targetUserId =
+      (role === "ADMIN" || role === "SUPERADMIN") && requestedUserId
+        ? requestedUserId
+        : session.user.id;
 
     // Fetch the exam and total questions
     const exam = await prisma.exam.findUnique({
@@ -41,13 +48,36 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ success: false, error: "Exam not found" }, { status: 404 });
     }
 
+    // Security Gate: Students cannot inspect results while the exam is still in progress (Anti Answer-Oracle)
+    if (role === "STUDENT") {
+      const finishLog = await prisma.sessionLog.findFirst({
+        where: {
+          userId: targetUserId,
+          examId: examId,
+          eventType: "FINISH"
+        }
+      });
+
+      const isExamTimeEnded = exam.endTime ? new Date() > new Date(exam.endTime) : false;
+
+      if (!finishLog && !isExamTimeEnded) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: "Hasil ujian belum dapat diakses sebelum ujian selesai diserahkan.",
+          },
+          { status: 403 }
+        );
+      }
+    }
+
     const examQuestionsList = exam.examQuestions.map(eq => eq.question);
     const totalQuestions = examQuestionsList.length;
 
     // Fetch answers for this user and this exam
     const answers = await prisma.answer.findMany({
       where: {
-        userId: userId,
+        userId: targetUserId,
         examId: examId
       },
       include: {
