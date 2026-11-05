@@ -5,9 +5,6 @@ import { useRouter, useSearchParams } from "next/navigation"
 import Link from "next/link"
 import { useEffect, useState, Suspense } from "react"
 import { Settings, LogOut, Search, ShieldCheck, Moon, Sun, FileText, FileSpreadsheet, ShieldAlert } from "lucide-react"
-import jsPDF from "jspdf"
-import "jspdf-autotable"
-import * as XLSX from "xlsx"
 import { useTheme } from "@/hooks/useTheme";
 
 function ResultsContent() {
@@ -93,8 +90,10 @@ function ResultsContent() {
     ])
   }
 
-  const exportToPDF = () => {
+  const exportToPDF = async () => {
     if (!resultsData || !resultsData.results) return
+    const { default: jsPDF } = await import("jspdf")
+    await import("jspdf-autotable")
     const doc = new jsPDF()
     
     doc.setFontSize(16)
@@ -117,8 +116,9 @@ function ResultsContent() {
     doc.save(`Rapor_${resultsData.examTitle.replace(/\s+/g, "_")}.pdf`)
   }
 
-  const exportToExcel = () => {
+  const exportToExcel = async () => {
     if (!resultsData || !resultsData.results) return
+    const XLSX = await import("xlsx")
     const headers = ["No", "Nama", "Email", "Durasi", "Pelanggaran", "Benar", "Salah", "Kosong", "Skor", "Status"]
     const data = [headers, ...getTableData()]
     
