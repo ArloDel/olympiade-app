@@ -19,10 +19,17 @@ export default async function proxy(req: NextRequest) {
             status: 429,
             headers: {
               "Retry-After": String(rateLimit.retryAfterSeconds),
+              "X-RateLimit-Limit": String(rateLimit.limit),
+              "X-RateLimit-Remaining": "0",
+              "X-RateLimit-Reset": String(rateLimit.retryAfterSeconds),
             },
           }
         )
       }
+      const res = NextResponse.next()
+      res.headers.set("X-RateLimit-Limit", String(rateLimit.limit))
+      res.headers.set("X-RateLimit-Remaining", String(rateLimit.remaining))
+      return res
     }
     return NextResponse.next()
   }
