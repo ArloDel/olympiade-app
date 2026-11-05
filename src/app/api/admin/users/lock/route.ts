@@ -10,8 +10,8 @@ export async function POST(req: NextRequest) {
     if (!session?.user) {
       return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
     }
-    const role = (session.user as any)?.role;
-    if (role !== "ADMIN" && role !== "SUPERADMIN") {
+    const callerRole = (session.user as any)?.role;
+    if (callerRole !== "ADMIN" && callerRole !== "SUPERADMIN") {
       return NextResponse.json({ success: false, error: "Forbidden" }, { status: 403 });
     }
 
@@ -21,20 +21,42 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ success: false, error: "Missing required fields" }, { status: 400 });
     }
 
-    if (isDemoMode() && isLocked) {
-      const targetUser = await prisma.user.findUnique({
-        where: { id: userId },
-        select: { email: true }
-      });
-      if (targetUser && isProtectedDemoEmail(targetUser.email)) {
-        return NextResponse.json(
-          { success: false, error: "Mode Demo: Akun demo utama tidak dapat dikunci." },
-          { status: 403 }
-        );
-      }
+    // 1. Fetch target user to check existence and role
+    const targetUser = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { id: true, name: true, email: true, role: true }
+    });
+
+    if (!targetUser) {
+      return NextResponse.json({ success: false, error: "User not found" }, { status: 404 });
     }
 
-    // Update the user's lock status. If unlocking (isLocked: false), reset warnings to 0
+    // 2. Strict IDOR / Privilege Protection:
+    // Superadmins can NEVER be locked via the regular admin lock endpoint
+    if (targetUser.role === "SUPERADMIN") {
+      return NextResponse.json(
+        { success: false, error: "Tidak dapat mengubah status penguncian akun Superadmin." },
+        { status: 403 }
+      );
+    }
+
+    // Regular Admins can ONLY lock/unlock Students
+    if (callerRole === "ADMIN" && targetUser.role !== "STUDENT") {
+      return NextResponse.json(
+        { success: false, error: "Admin hanya memiliki wewenang untuk mengunci atau membuka akses akun Siswa." },
+        { status: 403 }
+      );
+    }
+
+    // 3. Demo Mode Guard for protected accounts
+    if (isDemoMode() && isLocked && targetUser.email && isProtectedDemoEmail(targetUser.email)) {
+      return NextResponse.json(
+        { success: false, error: "Mode Demo: Akun demo utama tidak dapat dikunci." },
+        { status: 403 }
+      );
+    }
+
+    // 4. Update the user's lock status. If unlocking (isLocked: false), reset warnings to 0
     const updateData: any = { isLocked };
     if (!isLocked) {
       updateData.warnings = 0;
@@ -47,17 +69,19 @@ export async function POST(req: NextRequest) {
         id: true,
         name: true,
         email: true,
+        role: true,
         isLocked: true,
         warnings: true
       }
     });
 
+    // 5. Audit Log with target role information
     await prisma.auditLog.create({
       data: {
         userId: (session.user as any).id,
         action: isLocked ? "LOCK_STUDENT" : "UNLOCK_STUDENT",
         targetId: userId,
-        details: JSON.stringify({ name: updatedUser.name, email: updatedUser.email })
+        details: JSON.stringify({ name: updatedUser.name, email: updatedUser.email, role: updatedUser.role })
       }
     });
 
