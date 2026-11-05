@@ -11,7 +11,12 @@ const connectionString = process.env.DATABASE_URL || "postgresql://postgres:post
 const getPrisma = () => {
   if (globalForPrisma.prisma) return globalForPrisma.prisma
 
-  const pool = new Pool({ connectionString })
+  const pool = new Pool({
+    connectionString,
+    max: 5,
+    idleTimeoutMillis: 10000,
+    connectionTimeoutMillis: 5000,
+  })
   const adapter = new PrismaPg(pool)
 
   const prisma = new PrismaClient({
@@ -19,7 +24,7 @@ const getPrisma = () => {
     log: process.env.NODE_ENV === "development" ? ["query", "error", "warn"] : ["error"],
   })
 
-  if (process.env.NODE_ENV !== "production") globalForPrisma.prisma = prisma
+  globalForPrisma.prisma = prisma
 
   return prisma
 }
