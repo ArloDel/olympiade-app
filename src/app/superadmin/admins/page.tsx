@@ -17,6 +17,7 @@ export default function SuperadminAdminsPage() {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false)
   const [newAdminName, setNewAdminName] = useState("")
   const [newAdminEmail, setNewAdminEmail] = useState("")
+  const [newAdminPassword, setNewAdminPassword] = useState("")
   const [addLoading, setAddLoading] = useState(false)
 
   useEffect(() => {
@@ -93,7 +94,7 @@ export default function SuperadminAdminsPage() {
       const res = await fetch("/api/superadmin/users", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: newAdminName, email: newAdminEmail })
+        body: JSON.stringify({ name: newAdminName, email: newAdminEmail, password: newAdminPassword || undefined })
       })
       const data = await res.json()
       if (data.success) {
@@ -101,6 +102,7 @@ export default function SuperadminAdminsPage() {
         setIsAddModalOpen(false)
         setNewAdminName("")
         setNewAdminEmail("")
+        setNewAdminPassword("")
       } else {
         alert("Gagal menambah admin: " + data.error)
       }
@@ -249,8 +251,18 @@ export default function SuperadminAdminsPage() {
                   required
                 />
               </div>
+              <div>
+                <label className={`block text-xs font-medium mb-1.5 ${isDark ? 'text-zinc-400' : 'text-zinc-600'}`}>Password Admin (Opsional)</label>
+                <input 
+                  type="password" 
+                  value={newAdminPassword}
+                  onChange={(e) => setNewAdminPassword(e.target.value)}
+                  className={`w-full px-4 py-2.5 text-sm rounded-lg outline-none transition-colors border ${isDark ? 'bg-zinc-900 border-zinc-800 text-white placeholder-zinc-600 focus:border-white' : 'bg-zinc-50 border-zinc-200 text-black placeholder-zinc-400 focus:border-black'}`}
+                  placeholder="Kosongkan untuk default password123"
+                />
+              </div>
               <p className={`text-xs ${isDark ? 'text-zinc-500' : 'text-zinc-400'}`}>
-                Password default: password123 (Sesuai dengan pengaturan aplikasi).
+                Password akan di-hash secara aman dengan bcrypt. Default: password123 jika dikosongkan.
               </p>
               
               <div className="pt-4 flex gap-3">
