@@ -253,19 +253,99 @@ export default function ExamTakingInterface() {
     };
   }, [status, loading]);
 
-  // Proctoring: Tab Switch Detection
+  // Proctoring: Event listeners & Anti-tampering safeguards
   useEffect(() => {
     if (loading || status !== "authenticated") return;
 
-    const handleVisibilityChange = async () => {
+    // 1. Tab switch / Visibility change
+    const handleVisibilityChange = () => {
       if (document.hidden) {
-        await reportProctoringEvent("TAB_SWITCH");
+        reportProctoringEvent("TAB_SWITCH");
       }
     };
 
+    // 2. Window blur (switching window / dual monitor / apps)
+    const handleBlur = () => {
+      reportProctoringEvent("WINDOW_BLUR");
+    };
+
+    // 3. Prevent context menu (right-click)
+    const handleContextMenu = (e: MouseEvent) => {
+      e.preventDefault();
+    };
+
+    // 4. Prevent clipboard copy / cut on exam contents (allow inside input/textarea)
+    const handleCopy = (e: ClipboardEvent) => {
+      const target = e.target as HTMLElement;
+      if (target && (target.tagName === "INPUT" || target.tagName === "TEXTAREA")) {
+        return;
+      }
+      e.preventDefault();
+    };
+    const handleCut = (e: ClipboardEvent) => {
+      const target = e.target as HTMLElement;
+      if (target && (target.tagName === "INPUT" || target.tagName === "TEXTAREA")) {
+        return;
+      }
+      e.preventDefault();
+    };
+
+    // 5. Prevent DevTools shortcuts (F12, Ctrl+Shift+I, Ctrl+Shift+J, Ctrl+Shift+C, Ctrl+U, Ctrl+P)
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "F12") {
+        e.preventDefault();
+        reportProctoringEvent("DEVTOOLS_OPEN");
+        return;
+      }
+      if ((e.ctrlKey || e.metaKey) && e.shiftKey && ["I", "i", "J", "j", "C", "c"].includes(e.key)) {
+        e.preventDefault();
+        reportProctoringEvent("DEVTOOLS_OPEN");
+        return;
+      }
+      if ((e.ctrlKey || e.metaKey) && ["u", "U", "p", "P"].includes(e.key)) {
+        e.preventDefault();
+        return;
+      }
+    };
+
+    // 6. DevTools docking detection (window dimension diff threshold)
+    let devtoolsTriggered = false;
+    const checkDevTools = () => {
+      const widthDiff = window.outerWidth - window.innerWidth > 160;
+      const heightDiff = window.outerHeight - window.innerHeight > 160;
+      if ((widthDiff || heightDiff) && !devtoolsTriggered) {
+        devtoolsTriggered = true;
+        reportProctoringEvent("DEVTOOLS_OPEN");
+        setTimeout(() => { devtoolsTriggered = false; }, 5000);
+      }
+    };
+    const devtoolsInterval = setInterval(checkDevTools, 2000);
+
+    // 7. Active session heartbeat (every 25 seconds)
+    const heartbeatInterval = setInterval(() => {
+      if (navigator.onLine) {
+        reportProctoringEvent("HEARTBEAT");
+      }
+    }, 25000);
+
     document.addEventListener("visibilitychange", handleVisibilityChange);
-    return () => document.removeEventListener("visibilitychange", handleVisibilityChange);
-  }, [loading, status, examId]); // Remove 'answers' from dependency to avoid frequent re-binding
+    window.addEventListener("blur", handleBlur);
+    window.addEventListener("contextmenu", handleContextMenu);
+    window.addEventListener("copy", handleCopy);
+    window.addEventListener("cut", handleCut);
+    window.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+      window.removeEventListener("blur", handleBlur);
+      window.removeEventListener("contextmenu", handleContextMenu);
+      window.removeEventListener("copy", handleCopy);
+      window.removeEventListener("cut", handleCut);
+      window.removeEventListener("keydown", handleKeyDown);
+      clearInterval(devtoolsInterval);
+      clearInterval(heartbeatInterval);
+    };
+  }, [loading, status, examId]);
 
   const captureSnapshot = (): string | null => {
     if (!videoRef.current) return null;
@@ -286,7 +366,8 @@ export default function ExamTakingInterface() {
 
   const reportProctoringEvent = async (eventType: string) => {
     try {
-      const snapshotUrl = captureSnapshot();
+      const isHeartbeat = eventType === "HEARTBEAT";
+      const snapshotUrl = isHeartbeat ? null : captureSnapshot();
       const res = await fetch("/api/proctoring", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -294,18 +375,26 @@ export default function ExamTakingInterface() {
       });
       const data = await res.json();
       
-      if (data.success && eventType === "TAB_SWITCH") {
-        setWarningModal({
-          show: true,
-          warnings: data.data.warnings,
-          isLocked: data.data.isLocked
-        });
+      const VIOLATION_EVENTS = ["TAB_SWITCH", "DEVTOOLS_OPEN", "WINDOW_BLUR", "FULLSCREEN_EXIT"];
 
+      if (data.success && data.data) {
         if (data.data.isLocked) {
-          // Force submit
+          setWarningModal({
+            show: true,
+            warnings: data.data.warnings,
+            isLocked: true
+          });
+
+          // Force submit on lock
           setTimeout(() => {
             forceLockSubmit();
           }, 3000); // give them 3 seconds to read the message
+        } else if (VIOLATION_EVENTS.includes(eventType)) {
+          setWarningModal({
+            show: true,
+            warnings: data.data.warnings,
+            isLocked: false
+          });
         }
       }
     } catch (err) {
@@ -424,7 +513,7 @@ export default function ExamTakingInterface() {
   const isFlagged = flagged.has(currentQ.id)
 
   return (
-    <div className={`min-h-screen transition-colors duration-300 flex flex-col font-sans overflow-hidden relative ${isDark ? 'bg-[#0a0a0a] text-zinc-300 selection:bg-white/20' : 'bg-white text-zinc-600 selection:bg-black/10'}`}>
+    <div className={`min-h-screen select-none transition-colors duration-300 flex flex-col font-sans overflow-hidden relative ${isDark ? 'bg-[#0a0a0a] text-zinc-300 selection:bg-transparent' : 'bg-white text-zinc-600 selection:bg-transparent'}`}>
       
       {/* Dynamic Island Style Camera View */}
       <div className={`fixed top-20 left-1/2 -translate-x-1/2 z-40 h-10 md:h-12 rounded-full overflow-hidden shadow-2xl border transition-all duration-300 hover:h-48 hover:rounded-3xl hover:w-36 hover:top-1/2 hover:-translate-y-1/2 ${isDark ? 'border-white/10 bg-black/60' : 'border-black/10 bg-white/60'} backdrop-blur-xl flex items-center gap-3 pr-4 group`}>
@@ -459,7 +548,7 @@ export default function ExamTakingInterface() {
             </div>
             <h3 className={`text-xl font-medium mb-3 ${isDark ? 'text-white' : 'text-black'}`}>Pelanggaran Terdeteksi!</h3>
             <p className={`text-sm mb-6 ${isDark ? 'text-zinc-400' : 'text-zinc-600'}`}>
-              Sistem mendeteksi Anda berpindah tab atau meminimalkan jendela browser.
+              Sistem mendeteksi aktivitas mencurigakan (berpindah tab/jendela, inspect element, dll).
             </p>
             <div className={`inline-flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest mb-6 ${isDark ? 'text-rose-500' : 'text-rose-600'}`}>
               Peringatan ke-{warningModal.warnings} dari 3
