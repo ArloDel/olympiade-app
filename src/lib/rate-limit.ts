@@ -20,9 +20,12 @@ const TIER_LIMITS: Record<RateLimitTier, number> = {
 const MUTATION_METHODS = new Set(["POST", "PUT", "PATCH", "DELETE"]);
 
 const STRICT_PATH_PREFIXES = [
-  "/api/auth/callback/credentials",
+  "/api/auth",
   "/api/demo/reset",
   "/api/upload",
+  "/api/admin/users/lock",
+  "/api/superadmin/users",
+  "/api/superadmin/emergency",
 ] as const;
 
 const rateLimitStore = new Map<string, number[]>();
@@ -56,6 +59,16 @@ function cleanupStaleEntries(now: number): void {
 }
 
 export function getClientIp(headers: Headers): string {
+  const cfConnectingIp = headers.get("cf-connecting-ip")?.trim();
+  if (cfConnectingIp) {
+    return cfConnectingIp.slice(0, 128);
+  }
+
+  const trueClientIp = headers.get("true-client-ip")?.trim();
+  if (trueClientIp) {
+    return trueClientIp.slice(0, 128);
+  }
+
   const forwardedFor = headers.get("x-forwarded-for");
   if (forwardedFor) {
     const firstValidIp = forwardedFor
