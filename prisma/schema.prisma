@@ -68,6 +68,8 @@ model User {
   answers       Answer[]
   sessionLogs   SessionLog[]
   auditLogs     AuditLog[]
+
+  @@index([role])
 }
 
 // Olym-App Models
@@ -190,6 +192,7 @@ model Answer {
   updatedAt  DateTime @updatedAt
 
   @@unique([userId, examId, questionId]) // One answer per user per exam per question
+  @@index([examId])
 }
 
 model SessionLog {
@@ -204,6 +207,10 @@ model SessionLog {
   exam        Exam     @relation(fields: [examId], references: [id], onDelete: Cascade)
   
   createdAt   DateTime @default(now())
+
+  @@index([userId, examId, eventType])
+  @@index([examId, eventType])
+  @@index([createdAt])
 }
 
 model AuditLog {
@@ -215,6 +222,9 @@ model AuditLog {
   createdAt DateTime @default(now())
 
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([createdAt])
+  @@index([userId])
 }
 
 model SystemSetting {
