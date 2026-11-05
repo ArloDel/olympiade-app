@@ -56,8 +56,24 @@ export default function ExamTakingInterface() {
         return;
       }
       
-      if (thisExam?.duration) {
-        setTimeLeft(thisExam.duration * 60);
+      // Fetch or initialize server-authoritative timer
+      try {
+        const startRes = await fetch(`/api/exams/${examId}/start`, { method: "POST" });
+        const startData = await startRes.json();
+        if (startData.success && typeof startData.data?.remainingSeconds === "number") {
+          setTimeLeft(startData.data.remainingSeconds);
+          if (startData.data.remainingSeconds <= 0) {
+            alert("Waktu pengerjaan ujian Anda telah berakhir.");
+            handleAutoSubmit();
+            return;
+          }
+        } else if (thisExam?.duration) {
+          setTimeLeft(thisExam.duration * 60);
+        }
+      } catch (e) {
+        if (thisExam?.duration) {
+          setTimeLeft(thisExam.duration * 60);
+        }
       }
 
       const res = await fetch(`/api/questions?examId=${examId}`)
@@ -81,8 +97,7 @@ export default function ExamTakingInterface() {
             }
           }
         }
-        // Trigger START log
-        fetch(`/api/exams/${examId}/start`, { method: "POST" }).catch(console.error)
+        // Server timer & START log already synced above
       } else {
         if (data.error === "SEB_REQUIRED" || data.error === "SEB_CONFIG_INVALID") {
           setSebError(data.error)
