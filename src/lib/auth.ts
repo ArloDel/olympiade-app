@@ -3,6 +3,7 @@ import CredentialsProvider from "next-auth/providers/credentials"
 import { PrismaAdapter } from "@auth/prisma-adapter"
 import { prisma } from "@/lib/prisma"
 import { isDemoMode, isProtectedDemoEmail } from "@/lib/demo"
+import bcrypt from "bcryptjs"
 
 export const authOptions: NextAuthOptions = {
   adapter: PrismaAdapter(prisma) as any,
@@ -27,14 +28,28 @@ export const authOptions: NextAuthOptions = {
         const user = await prisma.user.findUnique({
           where: { email: credentials.identifier }
         })
-        console.log(user)
 
         if (!user) {
           throw new Error("User not found")
         }
 
-        // Simple mock check
-        if (credentials.password !== "password123") {
+        // Verify password using bcrypt hash or auto-upgrade legacy user
+        let isPasswordValid = false
+        if (user.password) {
+          isPasswordValid = await bcrypt.compare(credentials.password, user.password)
+        } else {
+          // Zero-downtime lazy migration for existing / demo accounts
+          if (credentials.password === "password123") {
+            isPasswordValid = true
+            const hashedPassword = await bcrypt.hash("password123", 10)
+            await prisma.user.update({
+              where: { id: user.id },
+              data: { password: hashedPassword }
+            }).catch(console.error)
+          }
+        }
+
+        if (!isPasswordValid) {
           throw new Error("Invalid password")
         }
 
@@ -64,7 +79,13 @@ export const authOptions: NextAuthOptions = {
           }
         }
 
-        return user as any
+        return {
+          id: user.id,
+          name: user.name,
+          email: user.email,
+          role: user.role,
+          isLocked: user.isLocked,
+        } as any
       }
     })
   ],
