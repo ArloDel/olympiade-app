@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { useEffect, useState, useRef } from "react"
 import { Settings, LogOut, Plus, Trash2, CheckCircle, ShieldCheck, Moon, Sun, Download, Upload, ShieldAlert } from "lucide-react"
-import * as XLSX from "xlsx"
 import { useTheme } from "@/hooks/useTheme";
 
 export default function QuestionsManagement() {
@@ -277,7 +276,8 @@ export default function QuestionsManagement() {
 
   const fileInputRef = useRef<HTMLInputElement>(null)
 
-  const handleDownloadTemplate = () => {
+  const handleDownloadTemplate = async () => {
+    const XLSX = await import("xlsx");
     const headers = ["TIPE (PG/IS/ES)", "SOAL", "POIN", "OPSI A", "OPSI B", "OPSI C", "OPSI D", "OPSI E", "KUNCI"];
     const examples = [
       ["PG", "Siapakah penemu bola lampu pijar?", 1, "Nikola Tesla", "Thomas Alva Edison", "Albert Einstein", "Isaac Newton", "", "B"],
@@ -303,6 +303,7 @@ export default function QuestionsManagement() {
     if (!file || !selectedExamId) return;
 
     setLoading(true);
+    const XLSX = await import("xlsx");
     const reader = new FileReader();
     reader.onload = async (evt) => {
       try {
