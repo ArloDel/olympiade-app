@@ -5,6 +5,16 @@ import { authOptions } from "@/lib/auth";
 import { isDemoMode } from "@/lib/demo";
 
 async function getOrInitStartSession(userId: string, examId: string) {
+  // Check if user is locked
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { isLocked: true }
+  });
+
+  if (user?.isLocked) {
+    return { error: "Akun Anda telah dikunci.", status: 403 };
+  }
+
   // Check if START event already exists
   const existingLog = await prisma.sessionLog.findFirst({
     where: {
